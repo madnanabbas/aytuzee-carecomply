@@ -1,0 +1,132 @@
+<header
+  class="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-surface/95 px-page-mobile backdrop-blur-sm sm:px-page lg:px-page-wide"
+>
+  <div class="flex min-w-0 items-center gap-3">
+    <button
+      #menuButton
+      type="button"
+      class="flex size-touch shrink-0 items-center justify-center rounded-control text-text-secondary transition-colors hover:bg-surface-muted hover:text-primary lg:hidden"
+      aria-label="Open navigation"
+      (click)="menuRequested.emit()"
+    >
+      <svg
+        lucideMenu
+        class="size-5"
+        aria-hidden="true"
+      ></svg>
+    </button>
+
+    <div class="min-w-0">
+      <p class="truncate text-label font-medium text-text-primary">
+        {{ pageContext() }}
+      </p>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-1 sm:gap-2">
+    @if (canViewNotifications()) {
+      <a
+        routerLink="/notifications"
+        class="relative flex size-touch items-center justify-center rounded-control text-text-secondary transition-colors hover:bg-primary-subtle hover:text-primary"
+        aria-label="Notifications"
+      >
+        <svg
+          lucideBell
+          class="size-5"
+          aria-hidden="true"
+        ></svg>
+      </a>
+    }
+
+    @if (currentUser(); as user) {
+      <div
+        #accountControl
+        class="relative"
+      >
+        <button
+          #accountButton
+          type="button"
+          class="flex min-h-touch max-w-72 items-center gap-2.5 rounded-control px-1.5 text-left transition-colors hover:bg-surface-muted sm:px-2"
+          aria-controls="account-menu"
+          [attr.aria-expanded]="accountMenuOpen()"
+          (click)="toggleAccountMenu()"
+        >
+          <span
+            class="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-subtle text-label font-semibold text-primary"
+          >
+            {{ initials() }}
+          </span>
+
+          <span class="hidden min-w-0 sm:block">
+            <span
+              class="block truncate text-label font-medium text-text-primary"
+            >
+              {{ user.displayName }}
+            </span>
+
+            <span
+              class="block max-w-48 truncate text-helper text-text-muted"
+            >
+              {{ user.email }}
+            </span>
+          </span>
+
+          <svg
+            lucideChevronDown
+            class="hidden size-4 shrink-0 text-text-muted transition-transform sm:block"
+            [class.rotate-180]="accountMenuOpen()"
+            aria-hidden="true"
+          ></svg>
+        </button>
+
+        @if (accountMenuOpen()) {
+          <div
+            id="account-menu"
+            class="absolute right-0 z-50 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-surface border border-border bg-surface p-2 shadow-elevated"
+          >
+            <div
+              class="flex items-center gap-3 px-3 py-2.5"
+            >
+              <span
+                class="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-subtle text-label font-semibold text-primary"
+              >
+                {{ initials() }}
+              </span>
+
+              <div class="min-w-0">
+                <p
+                  class="truncate text-label font-medium text-text-primary"
+                >
+                  {{ user.displayName }}
+                </p>
+
+                <p
+                  class="mt-0.5 truncate text-helper text-text-muted"
+                >
+                  {{ user.email }}
+                </p>
+              </div>
+            </div>
+
+            <div class="my-1 border-t border-border"></div>
+
+            <button
+              type="button"
+              class="flex h-touch w-full items-center gap-3 rounded-control px-3 text-button text-text-secondary transition-colors hover:bg-danger/5 hover:text-danger disabled:cursor-wait disabled:opacity-60"
+              [disabled]="logoutPending()"
+              (click)="logout()"
+            >
+              <svg
+                lucideLogOut
+                class="size-5"
+                aria-hidden="true"
+              ></svg>
+
+              {{ logoutPending() ? 'Signing out...' : 'Logout' }}
+            </button>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</header>

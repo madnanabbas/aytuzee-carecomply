@@ -1,0 +1,26 @@
+<a
+  href="#main-content"
+  class="fixed left-4 top-3 z-[60] -translate-y-20 rounded-control bg-primary px-4 py-2 text-button text-on-primary shadow-elevated transition-transform focus:translate-y-0 motion-reduce:transition-none"
+>
+  Skip to main content
+</a>
+
+<div class="flex min-h-screen bg-background text-text-primary">
+  <app-sidebar
+    [mobileOpen]="mobileSidebarOpen()"
+    (closeRequested)="closeMobileSidebar()"
+  />
+
+  <div
+    class="flex min-h-screen min-w-0 flex-1 flex-col"
+    [attr.inert]="mobileSidebarOpen() ? '' : null"
+  >
+    <app-header (menuRequested)="openMobileSidebar()" />
+
+    <main id="main-content" class="min-w-0 flex-1">
+      <app-page-container>
+        <router-outlet />
+      </app-page-container>
+    </main>
+  </div>
+</div>

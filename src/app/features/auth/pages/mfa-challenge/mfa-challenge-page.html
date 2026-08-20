@@ -1,0 +1,226 @@
+<main
+  class="relative flex min-h-dvh items-center justify-center overflow-hidden bg-[#F6F8FA] px-4 py-6 sm:px-6"
+>
+  <!-- Background decoration -->
+  <div
+    aria-hidden="true"
+    class="pointer-events-none absolute inset-0 overflow-hidden"
+  >
+    <span
+      class="absolute -left-24 -top-28 size-64 rounded-full border border-primary/8"
+    ></span>
+
+    <span
+      class="absolute -bottom-36 -right-20 size-72 rounded-full border border-primary/8"
+    ></span>
+
+    <span
+      class="absolute left-[9%] top-[68%] size-20 rotate-12 rounded-surface border border-primary/7"
+    ></span>
+
+    <span
+      class="absolute right-[15%] top-[13%] size-16 -rotate-12 rounded-surface border border-primary/7"
+    ></span>
+  </div>
+
+  <div class="relative w-full max-w-[29rem]">
+    <!-- Brand -->
+    <div class="mb-6 flex justify-center">
+      <div class="w-48 sm:w-56">
+        <app-brand-logo />
+      </div>
+    </div>
+
+    <!-- MFA Card -->
+    <section
+      aria-labelledby="mfa-title"
+      class="rounded-surface border border-border bg-surface px-6 py-7 shadow-elevated sm:px-8 sm:py-8"
+    >
+      <!-- Header -->
+      <header class="text-center">
+        <div
+          class="mx-auto flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary"
+        >
+          <svg
+            aria-hidden="true"
+            class="size-5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M12 3 5 6v5c0 4.7 2.8 8.2 7 10 4.2-1.8 7-5.3 7-10V6l-7-3Z"></path>
+            <path d="m8.8 12 2.1 2.1 4.5-4.5"></path>
+          </svg>
+        </div>
+
+        <h1
+          id="mfa-title"
+          class="mt-4 text-page-title text-text-primary"
+        >
+          Verify your identity
+        </h1>
+
+        <p class="mx-auto mt-2 max-w-sm text-body leading-6 text-text-secondary">
+          @if (recoveryMode()) {
+            Enter one of your saved recovery codes to continue.
+          } @else {
+            Enter the 6-digit code from your authenticator app.
+          }
+        </p>
+      </header>
+
+      <!-- Verification form -->
+      <form
+        class="mt-7"
+        [formGroup]="verificationForm"
+        (ngSubmit)="submit()"
+        novalidate
+      >
+        <div>
+          <div class="flex items-center justify-between gap-3">
+            <label
+              for="mfa-code"
+              class="block text-label text-text-primary"
+            >
+              {{ recoveryMode() ? 'Recovery code' : 'Verification code' }}
+            </label>
+
+            @if (!recoveryMode()) {
+              <span class="text-helper text-text-muted">
+                6-digit code
+              </span>
+            }
+          </div>
+
+          <input
+            id="mfa-code"
+            name="mfa-code"
+            type="text"
+            formControlName="code"
+            [autocomplete]="recoveryMode() ? 'off' : 'one-time-code'"
+            [attr.inputmode]="recoveryMode() ? 'text' : 'numeric'"
+            [attr.maxlength]="recoveryMode() ? null : 6"
+            [attr.aria-invalid]="
+              verificationForm.controls.code.invalid &&
+              (
+                verificationForm.controls.code.touched ||
+                submissionAttempted()
+              )
+            "
+            [attr.aria-describedby]="
+              verificationForm.controls.code.invalid &&
+              (
+                verificationForm.controls.code.touched ||
+                submissionAttempted()
+              )
+                ? 'mfa-code-error'
+                : null
+            "
+            autofocus
+            required
+            class="mt-1.5 h-touch w-full rounded-control border border-border-strong bg-surface px-4 text-center font-mono text-[1.05rem] text-text-primary transition-colors duration-150 placeholder:text-text-muted hover:border-text-muted focus:border-primary focus-visible:ring-2 focus-visible:ring-primary/15"
+            [class.tracking-[0.35em]]="!recoveryMode()"
+            [class.tracking-wide]="recoveryMode()"
+            [placeholder]="recoveryMode() ? 'Enter recovery code' : '000000'"
+          />
+
+          @if (
+            verificationForm.controls.code.invalid &&
+            (
+              verificationForm.controls.code.touched ||
+              submissionAttempted()
+            )
+          ) {
+            <p
+              id="mfa-code-error"
+              class="mt-1.5 text-helper text-danger"
+            >
+              Enter your
+              {{ recoveryMode() ? 'recovery' : 'verification' }}
+              code.
+            </p>
+          }
+        </div>
+
+        <!-- Error -->
+        @if (errorMessage()) {
+          <div
+            role="alert"
+            class="mt-4 flex gap-3 rounded-control border border-danger/25 bg-danger/5 px-3.5 py-3"
+          >
+            <span
+              aria-hidden="true"
+              class="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-danger/10 text-helper font-semibold text-danger"
+            >
+              !
+            </span>
+
+            <p class="text-small leading-5 text-danger">
+              {{ errorMessage() }}
+            </p>
+          </div>
+        }
+
+        <!-- Submit -->
+        <button
+          type="submit"
+          [disabled]="isSubmitting()"
+          class="mt-4 flex h-touch w-full items-center justify-center rounded-control bg-primary px-4 text-button font-semibold text-on-primary transition-colors duration-150 hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          @if (isSubmitting()) {
+            <span
+              aria-hidden="true"
+              class="mr-2 size-4 animate-spin rounded-full border-2 border-on-primary/40 border-t-on-primary"
+            ></span>
+
+            Verifying...
+          } @else {
+            Verify and continue
+          }
+        </button>
+      </form>
+
+      <!-- Alternative method -->
+      <div class="mt-5 border-t border-border pt-5 text-center">
+        <p class="text-helper text-text-muted">
+          {{ recoveryMode()
+            ? 'Have access to your authenticator app?'
+            : 'Can’t access your authenticator app?' }}
+        </p>
+
+        <button
+          type="button"
+          class="mt-1.5 text-label font-medium text-primary transition-colors duration-150 hover:text-primary-hover hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          (click)="switchMode()"
+        >
+          {{ recoveryMode()
+            ? 'Use an authenticator code'
+            : 'Use a recovery code instead' }}
+        </button>
+      </div>
+
+      <!-- Back to login -->
+      <div class="mt-4 text-center">
+        <button
+          type="button"
+          class="text-helper font-medium text-text-muted transition-colors duration-150 hover:text-text-secondary"
+          (click)="backToSignIn()"
+        >
+          Back to sign in
+        </button>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="mt-5 text-center">
+      <p class="text-helper text-text-muted">
+        Aytuzee Care Comply
+        <span aria-hidden="true" class="mx-2">•</span>
+        Multi-factor authentication
+      </p>
+    </footer>
+  </div>
+</main>

@@ -1,0 +1,493 @@
+<ng-template #navigation let-isCollapsed="collapsed">
+  <nav
+    aria-label="Primary navigation"
+    class="
+      min-h-0 flex-1 overflow-y-auto overflow-x-hidden
+      px-3 pb-5 pt-2
+      [scrollbar-width:thin]
+      [scrollbar-color:rgba(255,255,255,0.18)_transparent]
+      [&::-webkit-scrollbar]:w-1.5
+      [&::-webkit-scrollbar-track]:bg-transparent
+      [&::-webkit-scrollbar-thumb]:rounded-full
+      [&::-webkit-scrollbar-thumb]:bg-white/15
+      hover:[&::-webkit-scrollbar-thumb]:bg-white/30
+    "
+  >
+    @for (group of visibleGroups(); track group.label) {
+      <section
+        class="mt-5 first:mt-1"
+        [attr.aria-label]="group.label"
+      >
+        @if (!isCollapsed) {
+          <h2
+            class="
+              px-3
+              text-[0.65rem]
+              font-semibold
+              uppercase
+              tracking-[0.14em]
+              text-white/45
+            "
+          >
+            {{ group.label }}
+          </h2>
+        } @else {
+          <div
+            aria-hidden="true"
+            class="mx-auto mb-2 h-px w-7 bg-white/15"
+          ></div>
+        }
+
+        <ul class="mt-2 space-y-1">
+          @for (item of group.items; track item.id) {
+            <li>
+              @if (item.children?.length) {
+
+                <!-- ============================================ -->
+                <!-- COLLAPSIBLE MODULE -->
+                <!-- ============================================ -->
+
+                <button
+                  type="button"
+                  class="
+                    group/nav relative flex min-h-touch w-full
+                    items-center rounded-control
+                    text-label font-medium
+                    text-white/75
+                    transition-all duration-150
+                    hover:bg-white/10
+                    hover:text-white
+                  "
+                  [class.justify-center]="isCollapsed"
+                  [class.gap-3]="!isCollapsed"
+                  [class.px-3]="!isCollapsed"
+                  [class.px-2]="isCollapsed"
+                  [class.bg-white/10]="isChildRouteActive(item)"
+                  [class.text-white]="isChildRouteActive(item)"
+                  [attr.aria-expanded]="isModuleExpanded(item.id)"
+                  [attr.title]="isCollapsed ? item.label : null"
+                  (click)="toggleModule(item.id)"
+                >
+                  <span
+                    aria-hidden="true"
+                    class="
+                      absolute inset-y-2 left-0
+                      w-[3px]
+                      rounded-r-full
+                      bg-white
+                      opacity-0
+                      transition-opacity
+                    "
+                    [class.opacity-100]="isChildRouteActive(item)"
+                  ></span>
+
+                  <svg
+                    [lucideIcon]="item.icon"
+                    class="size-[1.15rem] shrink-0"
+                    aria-hidden="true"
+                  ></svg>
+
+                  @if (!isCollapsed) {
+                    <span class="min-w-0 flex-1 truncate text-left">
+                      {{ item.label }}
+                    </span>
+
+                    <svg
+                      lucideChevronDown
+                      aria-hidden="true"
+                      class="
+                        size-4 shrink-0
+                        text-white/45
+                        transition-transform duration-200
+                      "
+                      [class.rotate-180]="isModuleExpanded(item.id)"
+                    ></svg>
+                  }
+                </button>
+
+
+                <!-- ============================================ -->
+                <!-- CHILD FEATURES -->
+                <!-- ============================================ -->
+
+                @if (!isCollapsed && isModuleExpanded(item.id)) {
+                  <ul
+                    class="
+                      relative ml-[1.15rem]
+                      mt-1 space-y-1
+                      border-l border-white/15
+                      pl-[1.15rem]
+                    "
+                  >
+                    @for (child of item.children; track child.id) {
+                      <li>
+                        <a
+                          [routerLink]="child.route"
+                          routerLinkActive="bg-white/15 text-white"
+                          [routerLinkActiveOptions]="{ exact: true }"
+                          ariaCurrentWhenActive="page"
+                          class="
+                            group/child flex min-h-[2.4rem]
+                            items-center gap-2.5
+                            rounded-control
+                            px-3
+                            text-[0.76rem]
+                            font-medium
+                            text-white/60
+                            transition-all duration-150
+                            hover:bg-white/10
+                            hover:text-white
+                          "
+                          (click)="close()"
+                        >
+                          <svg
+                            [lucideIcon]="child.icon"
+                            aria-hidden="true"
+                            class="
+                              size-4 shrink-0
+                              text-white/50
+                              transition-colors
+                              group-hover/child:text-white
+                            "
+                          ></svg>
+
+                          <span class="truncate">
+                            {{ child.label }}
+                          </span>
+                        </a>
+                      </li>
+                    }
+                  </ul>
+                }
+
+
+                <!-- ============================================ -->
+                <!-- COLLAPSED MODULE TOOLTIP / FLYOUT -->
+                <!-- ============================================ -->
+
+                @if (isCollapsed) {
+                  <div
+                    class="
+                      group/flyout
+                      pointer-events-none
+                      absolute left-[calc(100%-0.2rem)]
+                      z-[120]
+                      hidden
+                      pl-4
+                      group-hover/nav:block
+                      group-focus-within/nav:block
+                    "
+                  >
+                    <div
+                      class="
+                        pointer-events-auto
+                        w-56
+                        rounded-surface
+                        border border-border
+                        bg-surface
+                        p-2
+                        shadow-elevated
+                      "
+                    >
+                      <div
+                        class="
+                          px-3 py-2
+                          text-helper
+                          font-semibold
+                          text-text-muted
+                        "
+                      >
+                        {{ item.label }}
+                      </div>
+
+                      <div class="my-1 border-t border-border"></div>
+
+                      @for (child of item.children; track child.id) {
+                        <a
+                          [routerLink]="child.route"
+                          routerLinkActive="bg-primary-subtle text-primary"
+                          class="
+                            flex min-h-10
+                            items-center gap-3
+                            rounded-control
+                            px-3
+                            text-small
+                            font-medium
+                            text-text-secondary
+                            transition-colors
+                            hover:bg-surface-muted
+                            hover:text-primary
+                          "
+                          (click)="close()"
+                        >
+                          <svg
+                            [lucideIcon]="child.icon"
+                            aria-hidden="true"
+                            class="size-4 shrink-0"
+                          ></svg>
+
+                          {{ child.label }}
+                        </a>
+                      }
+                    </div>
+                  </div>
+                }
+
+              } @else {
+
+                <!-- ============================================ -->
+                <!-- NORMAL NAV ITEM -->
+                <!-- ============================================ -->
+
+                <a
+                  #activeLink="routerLinkActive"
+                  [routerLink]="item.route"
+                  routerLinkActive="bg-white/15 text-white"
+                  [routerLinkActiveOptions]="{ exact: true }"
+                  ariaCurrentWhenActive="page"
+                  class="
+                    group/nav relative flex min-h-touch
+                    items-center rounded-control
+                    text-label font-medium
+                    text-white/75
+                    transition-all duration-150
+                    hover:bg-white/10
+                    hover:text-white
+                  "
+                  [class.justify-center]="isCollapsed"
+                  [class.gap-3]="!isCollapsed"
+                  [class.px-3]="!isCollapsed"
+                  [class.px-2]="isCollapsed"
+                  [attr.title]="isCollapsed ? item.label : null"
+                  (click)="close()"
+                >
+                  <span
+                    aria-hidden="true"
+                    class="
+                      absolute inset-y-2 left-0
+                      w-[3px]
+                      rounded-r-full bg-white
+                      opacity-0
+                      transition-opacity
+                    "
+                    [class.opacity-100]="activeLink.isActive"
+                  ></span>
+
+                  <svg
+                    [lucideIcon]="item.icon"
+                    class="size-[1.15rem] shrink-0"
+                    aria-hidden="true"
+                  ></svg>
+
+                  @if (!isCollapsed) {
+                    <span class="truncate">
+                      {{ item.label }}
+                    </span>
+                  }
+                </a>
+
+              }
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  </nav>
+</ng-template>
+
+
+<!-- ========================================================= -->
+<!-- DESKTOP SIDEBAR -->
+<!-- ========================================================= -->
+
+<aside
+  aria-label="Application sidebar"
+  class="
+    relative z-40 hidden h-dvh shrink-0 flex-col
+    overflow-visible bg-primary
+    transition-[width] duration-200 ease-out
+    lg:sticky lg:top-0 lg:flex
+  "
+  [class.w-64]="!collapsed()"
+  [class.w-[4.75rem]]="collapsed()"
+>
+
+  <!-- Brand -->
+  <div
+    class="
+      flex h-[5.5rem] shrink-0 items-center
+      border-b border-white/10
+    "
+    [class.justify-center]="collapsed()"
+    [class.px-5]="!collapsed()"
+  >
+    @if (!collapsed()) {
+      <img
+        src="/images/logo-light.png"
+        alt="Aytuzee Care Comply"
+        class="block h-auto w-[12.5rem] max-w-full object-contain"
+      />
+    } @else {
+      <div
+        class="flex size-11 items-center justify-center overflow-hidden"
+        title="Aytuzee Care Comply"
+      >
+        <img
+          src="/images/logo-single.png"
+          alt="Aytuzee Care Comply"
+          class="h-10 w-auto max-w-none object-contain object-left"
+        />
+      </div>
+    }
+  </div>
+
+
+  <!-- Navigation -->
+  <ng-container
+    [ngTemplateOutlet]="navigation"
+    [ngTemplateOutletContext]="{
+      collapsed: collapsed()
+    }"
+  />
+
+
+  <!-- Collapse Button -->
+  <button
+    type="button"
+    class="
+      absolute -right-[17px] bottom-[4.75rem] z-[80]
+      flex size-9
+      items-center justify-center
+      rounded-full
+      border-2 border-background
+      bg-primary-hover
+      text-white
+      shadow-lg
+      transition-all duration-150
+      hover:scale-105
+      hover:bg-primary
+    "
+    [attr.aria-label]="
+      collapsed()
+        ? 'Expand navigation'
+        : 'Collapse navigation'
+    "
+    [attr.aria-expanded]="!collapsed()"
+    (click)="toggleCollapsed()"
+    style="border-color:#359791 !important"
+  >
+    @if (collapsed()) {
+      <svg
+        aria-hidden="true"
+        class="size-[1.1rem]"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="m9 18 6-6-6-6"></path>
+      </svg>
+    } @else {
+      <svg
+        aria-hidden="true"
+        class="size-[1.1rem]"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="m15 18-6-6 6-6"></path>
+      </svg>
+    }
+  </button>
+
+</aside>
+
+
+<!-- ========================================================= -->
+<!-- MOBILE -->
+<!-- ========================================================= -->
+
+@if (mobileOpen()) {
+
+  <button
+    type="button"
+    tabindex="-1"
+    aria-label="Close navigation overlay"
+    class="fixed inset-0 z-40 bg-text-primary/45 lg:hidden"
+    (click)="close()"
+  ></button>
+
+  <aside
+    role="dialog"
+    aria-modal="true"
+    aria-label="Application navigation"
+    class="
+      fixed inset-y-0 left-0 z-50
+      flex w-72
+      max-w-[calc(100vw-3rem)]
+      flex-col
+      bg-primary
+      shadow-elevated
+      lg:hidden
+    "
+  >
+    <!-- Mobile Brand -->
+    <div
+      class="
+        flex h-[5.5rem] shrink-0
+        items-center justify-between
+        border-b border-white/10
+        px-5
+      "
+    >
+      <img
+        src="/images/logo-light.png"
+        alt="Aytuzee Care Comply"
+        class="
+          block h-auto
+          w-[11.5rem]
+          max-w-[calc(100%-3.5rem)]
+          object-contain
+        "
+      />
+
+      <button
+        #closeButton
+        type="button"
+        class="
+          flex size-touch shrink-0
+          items-center justify-center
+          rounded-control
+          text-white/75
+          transition-colors
+          hover:bg-white/10
+          hover:text-white
+        "
+        aria-label="Close navigation"
+        (click)="close()"
+      >
+        <svg
+          lucideX
+          class="size-5"
+          aria-hidden="true"
+        ></svg>
+      </button>
+    </div>
+
+
+    <!-- Mobile Navigation -->
+    <ng-container
+      [ngTemplateOutlet]="navigation"
+      [ngTemplateOutletContext]="{
+        collapsed: false
+      }"
+    />
+
+
+  </aside>
+}
