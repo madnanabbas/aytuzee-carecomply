@@ -33,7 +33,7 @@ jobs:
           lfs: false
 
       # -------------------------------------------------------
-      # Install Node.js version supported by Angular 22
+      # Setup Node.js supported by Angular 22
       # -------------------------------------------------------
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -42,19 +42,43 @@ jobs:
           cache: 'npm'
 
       # -------------------------------------------------------
-      # Install exact dependencies from package-lock.json
+      # Install dependencies
       # -------------------------------------------------------
       - name: Install dependencies
         run: npm ci
 
       # -------------------------------------------------------
-      # Build Angular production application
+      # Configure CareComply staging runtime API
+      # -------------------------------------------------------
+      - name: Configure staging API
+        run: |
+          mkdir -p public/config
+
+          cat > public/config/app-config.json <<'EOF'
+          {
+            "apiBaseUrl": "https://aytuzee-carecomply-drbhbnava8axccgu.centralus-01.azurewebsites.net/api"
+          }
+          EOF
+
+      # -------------------------------------------------------
+      # Build Angular
       # -------------------------------------------------------
       - name: Build Angular
         run: npm run build
 
       # -------------------------------------------------------
-      # Deploy already-built Angular files to Azure
+      # Verify runtime configuration exists in build output
+      # -------------------------------------------------------
+      - name: Verify staging configuration
+        run: |
+          test -f dist/care-comply/browser/config/app-config.json
+
+          grep -q \
+            "aytuzee-carecomply-drbhbnava8axccgu.centralus-01.azurewebsites.net/api" \
+            dist/care-comply/browser/config/app-config.json
+
+      # -------------------------------------------------------
+      # Deploy already-built Angular application
       # -------------------------------------------------------
       - name: Deploy to Azure Static Web Apps
         id: builddeploy
@@ -64,16 +88,15 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
 
-          # We already built Angular above.
+          # Angular was already built above.
           app_location: "dist/care-comply/browser"
 
-          # .NET API will be deployed separately.
+          # .NET API is hosted separately in Azure App Service.
           api_location: ""
 
-          # Not required when skip_app_build is true.
           output_location: ""
 
-          # Prevent Azure/Oryx from rebuilding Angular.
+          # Do not let Oryx rebuild Angular.
           skip_app_build: true
 
 
