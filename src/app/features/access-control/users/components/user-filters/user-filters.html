@@ -1,0 +1,110 @@
+<form
+  class="border-b border-border bg-surface px-4 py-3"
+  [formGroup]="form"
+  (ngSubmit)="apply()"
+>
+  <div
+    class="grid gap-3 lg:grid-cols-[minmax(20rem,1fr)_13rem_11rem_auto] lg:items-end"
+  >
+    <!-- Search -->
+    <div>
+      <label
+        for="user-search"
+        class="mb-1.5 block text-helper font-semibold text-text-secondary"
+      >
+        Search
+      </label>
+
+      <div class="relative">
+        <span
+          aria-hidden="true"
+          class="pointer-events-none absolute inset-y-0 left-0 flex w-10 items-center justify-center text-text-muted"
+        >
+          <svg
+            class="size-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5" />
+          </svg>
+        </span>
+
+        <input
+          id="user-search"
+          type="search"
+          formControlName="search"
+          autocomplete="off"
+          placeholder="Search by name or email"
+          class="h-control w-full rounded-control border border-border-strong bg-surface pl-10 pr-3 text-body text-text-primary transition-colors placeholder:text-text-muted hover:border-text-muted focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/15"
+        />
+      </div>
+    </div>
+
+    <!-- Role -->
+    <div>
+      <label
+        for="user-role-filter"
+        class="mb-1.5 block text-helper font-semibold text-text-secondary"
+      >
+        Role
+      </label>
+
+      <select
+        id="user-role-filter"
+        formControlName="roleId"
+        class="h-control w-full rounded-control border border-border-strong bg-surface px-3 text-body text-text-primary transition-colors hover:border-text-muted focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/15"
+      >
+        <option value="">All roles</option>
+
+        @for (role of roles(); track role.id) {
+          <option [value]="role.id">
+            {{ role.name }}
+          </option>
+        }
+      </select>
+    </div>
+
+    <!-- Status -->
+    <div>
+      <label
+        for="user-status-filter"
+        class="mb-1.5 block text-helper font-semibold text-text-secondary"
+      >
+        Status
+      </label>
+
+      <select
+        id="user-status-filter"
+        formControlName="status"
+        class="h-control w-full rounded-control border border-border-strong bg-surface px-3 text-body text-text-primary transition-colors hover:border-text-muted focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/15"
+      >
+        <option value="all">All statuses</option>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        class="h-control rounded-control border border-border-strong bg-surface px-3.5 text-button font-medium text-text-secondary transition-colors hover:bg-surface-muted hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        (click)="clear()"
+      >
+        Clear filters
+      </button>
+
+      <button
+        type="submit"
+        class="h-control rounded-control bg-primary px-4 text-button font-semibold text-on-primary transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+      >
+        Apply
+      </button>
+    </div>
+  </div>
+</form>

@@ -1,33 +1,29 @@
 import { TestBed } from '@angular/core/testing';
-import { AuthorizationService } from '../authorization/authorization.service';
-import { Permissions } from '../authorization/permissions';
+import { NavigationService } from '../navigation/navigation.service';
 import { AuthenticatedLandingService } from './authenticated-landing.service';
 
 describe('AuthenticatedLandingService', () => {
-  let authorization: AuthorizationService;
   let landing: AuthenticatedLandingService;
+  const navigation = { firstAllowedPath: vi.fn() };
 
   beforeEach(() => {
-    authorization = TestBed.inject(AuthorizationService);
+    navigation.firstAllowedPath.mockReset().mockReturnValue('/forbidden');
+    TestBed.configureTestingModule({
+      providers: [{ provide: NavigationService, useValue: navigation }],
+    });
     landing = TestBed.inject(AuthenticatedLandingService);
   });
 
-  it('should select the first configured permitted route', () => {
-    authorization.setPermissions([Permissions.Employee.View, Permissions.Dashboard.View]);
+  it('should select the first backend-filtered navigation route', () => {
+    navigation.firstAllowedPath.mockReturnValue('/dashboard');
 
     expect(landing.firstAllowedPath()).toBe('/dashboard');
   });
 
   it('should support non-dashboard users without role assumptions', () => {
-    authorization.setPermissions([Permissions.Employee.View]);
+    navigation.firstAllowedPath.mockReturnValue('/employees');
 
     expect(landing.firstAllowedPath()).toBe('/employees');
-  });
-
-  it('should select the Documents route for any configured document view permission', () => {
-    authorization.setPermissions([Permissions.TrainingDocument.View]);
-
-    expect(landing.firstAllowedPath()).toBe('/documents');
   });
 
   it('should fail closed when no application route is permitted', () => {

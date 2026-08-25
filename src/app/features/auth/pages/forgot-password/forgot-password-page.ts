@@ -1,10 +1,12 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import {
   FormBuilder,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
+import { AuthApiService } from '../../../../core/auth/auth-api.service';
 import {
   LucideArrowLeft,
   LucideCheckCircle2,
@@ -26,17 +28,12 @@ import {
   templateUrl: './forgot-password-page.html',
 })
 export class ForgotPasswordPageComponent {
+  private readonly authApi = inject(AuthApiService);
+
   readonly submissionAttempted = signal(false);
-
-  /**
-   * Frontend preview only.
-   *
-   * Later this will only become true after the API accepts the
-   * forgot-password request.
-   */
   readonly requestSubmitted = signal(false);
-
   readonly isSubmitting = signal(false);
+  readonly requestFailed = signal(false);
 
   readonly form = new FormBuilder().nonNullable.group({
     email: [
@@ -49,7 +46,7 @@ export class ForgotPasswordPageComponent {
     ],
   });
 
-  submit(): void {
+  async submit(): Promise<void> {
     this.submissionAttempted.set(true);
 
     if (this.form.invalid) {
@@ -57,10 +54,22 @@ export class ForgotPasswordPageComponent {
       return;
     }
 
-    // Frontend-only preview.
-    // Later:
-    // POST /api/auth/forgot-password
-    this.requestSubmitted.set(true);
+    if (this.isSubmitting()) {
+      return;
+    }
+
+    this.isSubmitting.set(true);
+    this.requestFailed.set(false);
+    try {
+      await firstValueFrom(
+        this.authApi.requestPasswordReset(this.form.controls.email.value),
+      );
+      this.requestSubmitted.set(true);
+    } catch {
+      this.requestFailed.set(true);
+    } finally {
+      this.isSubmitting.set(false);
+    }
   }
 
   useAnotherEmail(): void {
@@ -70,5 +79,6 @@ export class ForgotPasswordPageComponent {
 
     this.submissionAttempted.set(false);
     this.requestSubmitted.set(false);
+    this.requestFailed.set(false);
   }
 }

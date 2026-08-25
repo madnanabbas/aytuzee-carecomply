@@ -4,6 +4,7 @@ import { provideRouter, Router } from '@angular/router';
 import { AuthSessionService } from '../../core/auth/auth-session.service';
 import { AuthorizationService } from '../../core/authorization/authorization.service';
 import { Permissions } from '../../core/authorization/permissions';
+import { NavigationService } from '../../core/navigation/navigation.service';
 import { HeaderComponent } from './header';
 
 describe('HeaderComponent', () => {
@@ -25,6 +26,14 @@ describe('HeaderComponent', () => {
       providers: [
         provideRouter([{ path: 'employees', component: HeaderComponent }]),
         { provide: AuthSessionService, useValue: session },
+        {
+          provide: NavigationService,
+          useValue: {
+            findByUrl: (url: string) => url.startsWith('/employees')
+              ? { label: 'Employees' }
+              : undefined,
+          },
+        },
       ],
     });
   });

@@ -11,6 +11,8 @@ import {
   ActivatedRoute,
   RouterLink,
 } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
+import { AuthApiService } from '../../../../core/auth/auth-api.service';
 import {
   LucideArrowLeft,
   LucideCheck,
@@ -54,28 +56,24 @@ const passwordsMatchValidator: ValidatorFn = (
 })
 export class ResetPasswordPageComponent {
   private readonly route = inject(ActivatedRoute);
+  private readonly authApi = inject(AuthApiService);
 
   readonly submissionAttempted = signal(false);
   readonly isSubmitting = signal(false);
   readonly passwordVisible = signal(false);
   readonly confirmPasswordVisible = signal(false);
-
-  /**
-   * Frontend preview only.
-   *
-   * Later set only after the API successfully resets the password.
-   */
   readonly resetCompleted = signal(false);
+  readonly resetFailed = signal(false);
 
-  readonly email =
-    this.route.snapshot.queryParamMap.get('email') ?? '';
+  readonly userId =
+    this.route.snapshot.queryParamMap.get('userId') ?? '';
 
   readonly token =
     this.route.snapshot.queryParamMap.get('token') ?? '';
 
   readonly resetLinkPresent = computed(
     () =>
-      this.email.trim().length > 0 &&
+      this.userId.trim().length > 0 &&
       this.token.trim().length > 0,
   );
 
@@ -85,7 +83,7 @@ export class ResetPasswordPageComponent {
         '',
         [
           Validators.required,
-          Validators.minLength(12),
+          Validators.minLength(15),
           Validators.maxLength(128),
         ],
       ],
@@ -100,7 +98,7 @@ export class ResetPasswordPageComponent {
     },
   );
 
-  submit(): void {
+  async submit(): Promise<void> {
     this.submissionAttempted.set(true);
 
     if (!this.resetLinkPresent()) {
@@ -112,18 +110,27 @@ export class ResetPasswordPageComponent {
       return;
     }
 
-    // Frontend-only preview.
-    //
-    // Later send:
-    // {
-    //   email: this.email,
-    //   token: this.token,
-    //   newPassword: this.form.controls.password.value
-    // }
-    //
-    // Backend must validate the reset token.
+    if (this.isSubmitting()) {
+      return;
+    }
 
-    this.resetCompleted.set(true);
+    this.isSubmitting.set(true);
+    this.resetFailed.set(false);
+    try {
+      await firstValueFrom(this.authApi.resetPassword({
+        userId: this.userId,
+        token: this.token,
+        newPassword: this.form.controls.password.value,
+        confirmPassword: this.form.controls.confirmPassword.value,
+      }));
+      this.form.reset({ password: '', confirmPassword: '' });
+      this.resetCompleted.set(true);
+    } catch {
+      this.form.reset({ password: '', confirmPassword: '' });
+      this.resetFailed.set(true);
+    } finally {
+      this.isSubmitting.set(false);
+    }
   }
 
   togglePasswordVisibility(): void {

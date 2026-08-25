@@ -5,6 +5,7 @@ import { firstValueFrom, timeout } from 'rxjs';
 import { AuthorizationService } from '../authorization/authorization.service';
 import { isPermission } from '../authorization/permissions';
 import { AuthApiService } from './auth-api.service';
+import { NavigationService } from '../navigation/navigation.service';
 import {
   AuthSessionStatus,
   CurrentUser,
@@ -15,9 +16,12 @@ import {
   MfaContextResult,
   MfaEnrollmentBeginResult,
   MfaEnrollmentConfirmResult,
+  MfaEmailResendResult,
+  MfaMethod,
 } from './auth.models';
 
 const AUTH_REQUEST_TIMEOUT_MS = 10_000;
+const AUTH_EMAIL_DELIVERY_TIMEOUT_MS = 60_000;
 
 @Injectable({
   providedIn: 'root',
@@ -26,15 +30,18 @@ export class AuthSessionService {
   private readonly api = inject(AuthApiService);
   private readonly authorization = inject(AuthorizationService);
   private readonly router = inject(Router);
+  private readonly navigation = inject(NavigationService);
   private readonly statusState = signal<AuthSessionStatus>('initializing');
   private readonly currentUserState = signal<CurrentUser | null>(null);
   private readonly csrfTokenState = signal<string | null>(null);
+  private readonly mfaMethodState = signal<MfaMethod | null>(null);
   private initializationPromise: Promise<void> | undefined;
 
   readonly status = this.statusState.asReadonly();
   readonly currentUser = this.currentUserState.asReadonly();
   readonly isInitialized = computed(() => this.statusState() !== 'initializing');
   readonly isAuthenticated = computed(() => this.statusState() === 'authenticated');
+  readonly mfaMethod = this.mfaMethodState.asReadonly();
 
   initialize(): Promise<void> {
     this.initializationPromise ??= this.initializeCore();
@@ -46,7 +53,7 @@ export class AuthSessionService {
 
     try {
       const response = await firstValueFrom(
-        this.api.login(credentials).pipe(timeout(AUTH_REQUEST_TIMEOUT_MS)),
+        this.api.login(credentials).pipe(timeout(AUTH_EMAIL_DELIVERY_TIMEOUT_MS)),
       );
 
       if (response.status === 202) {
@@ -96,13 +103,15 @@ export class AuthSessionService {
       if (
         (response.status !== 'mfaRequired' && response.status !== 'mfaEnrollmentRequired') ||
         typeof response.requestToken !== 'string' ||
-        !response.requestToken
+        !response.requestToken ||
+        (response.method !== 'Authenticator' && response.method !== 'Email')
       ) {
         return { status: 'unavailable' };
       }
 
       this.csrfTokenState.set(response.requestToken);
-      return { status: response.status };
+      this.mfaMethodState.set(response.method);
+      return { status: response.status, method: response.method };
     } catch (error: unknown) {
       this.csrfTokenState.set(null);
       return error instanceof HttpErrorResponse && error.status === 401
@@ -160,6 +169,21 @@ export class AuthSessionService {
 
   async verifyMfaRecoveryCode(recoveryCode: string): Promise<MfaAttemptResult> {
     return this.completeMfa(() => this.api.verifyMfaRecoveryCode(recoveryCode));
+  }
+
+  async resendMfaEmailCode(): Promise<MfaEmailResendResult> {
+    try {
+      await firstValueFrom(
+        this.api.resendMfaEmailCode().pipe(timeout(AUTH_EMAIL_DELIVERY_TIMEOUT_MS)),
+      );
+      return { status: 'succeeded' };
+    } catch (error: unknown) {
+      if (error instanceof HttpErrorResponse) {
+        if (error.status === 429) return { status: 'rateLimited' };
+        if (error.status === 401) return { status: 'expired' };
+      }
+      return { status: 'unavailable' };
+    }
   }
 
   async cancelMfa(): Promise<void> {
@@ -224,6 +248,10 @@ export class AuthSessionService {
     this.currentUserState.set(user);
     this.csrfTokenState.set(csrfResponse.requestToken);
     this.authorization.setPermissions(user.permissions);
+    await this.navigation.loadForSession(user.id);
+    if (this.currentUserState()?.id !== user.id) {
+      throw new Error('The authenticated session changed while navigation was loading.');
+    }
     this.statusState.set('authenticated');
   }
 
@@ -294,7 +322,9 @@ export class AuthSessionService {
   private clearSession(status: Exclude<AuthSessionStatus, 'initializing' | 'authenticated'>): void {
     this.currentUserState.set(null);
     this.csrfTokenState.set(null);
+    this.mfaMethodState.set(null);
     this.authorization.clearPermissions();
+    this.navigation.clear();
     this.statusState.set(status);
   }
 }

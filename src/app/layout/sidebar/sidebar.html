@@ -13,7 +13,18 @@
       hover:[&::-webkit-scrollbar-thumb]:bg-white/30
     "
   >
-    @for (group of visibleGroups(); track group.label) {
+    @if (navigationStatus() === 'loading') {
+      <p role="status" class="px-3 py-5 text-small text-white/65">
+        Loading navigation...
+      </p>
+    } @else if (navigationStatus() === 'error') {
+      <div role="alert" class="mx-3 mt-3 rounded-control border border-white/15 px-3 py-3">
+        <p class="text-small font-medium text-white">Navigation unavailable</p>
+        <p class="mt-1 text-helper text-white/60">Refresh the page to try again.</p>
+      </div>
+    }
+
+    @for (group of groups(); track group.key) {
       <section
         class="mt-5 first:mt-1"
         [attr.aria-label]="group.label"
@@ -41,7 +52,7 @@
         <ul class="mt-2 space-y-1">
           @for (item of group.items; track item.id) {
             <li>
-              @if (item.children?.length) {
+              @if (item.children.length) {
 
                 <!-- ============================================ -->
                 <!-- COLLAPSIBLE MODULE -->

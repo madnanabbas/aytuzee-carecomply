@@ -25,7 +25,6 @@ export const authRoutes: Routes = [
   },
   {
     path: 'reset-password',
-    canActivate: [anonymousOnlyGuard],
     loadComponent: () =>
       import('./pages/reset-password/reset-password-page').then(
         (module) => module.ResetPasswordPageComponent,

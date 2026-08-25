@@ -55,11 +55,31 @@ describe('AuthApiService', () => {
     request.flush(null, { status: 204, statusText: 'No Content' });
   });
 
+  it('should use the focused password recovery endpoints and contracts', () => {
+    api.requestPasswordReset('user@example.com').subscribe();
+    const forgot = http.expectOne('/api/auth/password/forgot');
+    expect(forgot.request.method).toBe('POST');
+    expect(forgot.request.body).toEqual({ email: 'user@example.com' });
+    forgot.flush({ message: 'Generic response' }, { status: 202, statusText: 'Accepted' });
+
+    const resetRequest = {
+      userId: 'f2cdf03e-bd6b-4e8c-a42e-6fbd62ffad71',
+      token: 'opaque-token',
+      newPassword: 'a-secure-password',
+      confirmPassword: 'a-secure-password',
+    };
+    api.resetPassword(resetRequest).subscribe();
+    const reset = http.expectOne('/api/auth/password/reset');
+    expect(reset.request.method).toBe('POST');
+    expect(reset.request.body).toEqual(resetRequest);
+    reset.flush(null, { status: 204, statusText: 'No Content' });
+  });
+
   it('should use the focused MFA endpoints and contracts', () => {
     api.getMfaContext().subscribe();
     const context = http.expectOne('/api/auth/mfa/context');
     expect(context.request.method).toBe('GET');
-    context.flush({ status: 'mfaRequired', requestToken: 'token' });
+    context.flush({ status: 'mfaRequired', method: 'Email', requestToken: 'token' });
 
     api.beginMfaEnrollment().subscribe();
     const begin = http.expectOne('/api/auth/mfa/enrollment/begin');
@@ -81,6 +101,12 @@ describe('AuthApiService', () => {
     const recovery = http.expectOne('/api/auth/mfa/recovery');
     expect(recovery.request.body).toEqual({ recoveryCode: 'recovery-code' });
     recovery.flush(null, { status: 204, statusText: 'No Content' });
+
+    api.resendMfaEmailCode().subscribe();
+    const resend = http.expectOne('/api/auth/mfa/email/resend');
+    expect(resend.request.method).toBe('POST');
+    expect(resend.request.body).toBeNull();
+    resend.flush(null, { status: 204, statusText: 'No Content' });
 
     api.cancelMfa().subscribe();
     const cancel = http.expectOne('/api/auth/mfa/cancel');

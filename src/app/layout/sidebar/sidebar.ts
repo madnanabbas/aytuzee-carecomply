@@ -1,6 +1,5 @@
 import {
   Component,
-  computed,
   effect,
   ElementRef,
   inject,
@@ -21,12 +20,8 @@ import {
   LucideX,
 } from '@lucide/angular';
 
-import { AuthorizationService } from '../../core/authorization/authorization.service';
-import {
-  APP_NAVIGATION_GROUPS,
-  canViewNavigationItem,
-  NavigationItem,
-} from '../../core/navigation/app-navigation';
+import { NavigationItem } from '../../core/navigation/navigation.models';
+import { NavigationService } from '../../core/navigation/navigation.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -45,7 +40,7 @@ import {
   },
 })
 export class SidebarComponent {
-  private readonly authorization = inject(AuthorizationService);
+  private readonly navigation = inject(NavigationService);
   private readonly router = inject(Router);
 
   private readonly closeButton =
@@ -63,27 +58,8 @@ export class SidebarComponent {
     ReadonlySet<string>
   >(new Set<string>());
 
-  readonly visibleGroups = computed(() =>
-    APP_NAVIGATION_GROUPS
-      .map((group) => ({
-        ...group,
-
-        items: group.items
-          .map((item) =>
-            this.createVisibleItem(item),
-          )
-          .filter(
-            (
-              item,
-            ): item is NavigationItem =>
-              item !== null,
-          ),
-      }))
-      .filter(
-        (group) =>
-          group.items.length > 0,
-      ),
-  );
+  readonly groups = this.navigation.groups;
+  readonly navigationStatus = this.navigation.status;
 
   constructor() {
     effect(() => {
@@ -132,7 +108,7 @@ export class SidebarComponent {
   isChildRouteActive(
     item: NavigationItem,
   ): boolean {
-    if (!item.children?.length) {
+    if (!item.children.length) {
       return false;
     }
 
@@ -174,43 +150,6 @@ export class SidebarComponent {
     if (this.mobileOpen()) {
       this.close();
     }
-  }
-
-  private createVisibleItem(
-    item: NavigationItem,
-  ): NavigationItem | null {
-    const visibleChildren =
-      item.children?.filter(
-        (child) =>
-          canViewNavigationItem(
-            this.authorization,
-            child,
-          ),
-      );
-
-    const parentVisible =
-      canViewNavigationItem(
-        this.authorization,
-        item,
-      );
-
-    const hasVisibleChildren =
-      visibleChildren !== undefined &&
-      visibleChildren.length > 0;
-
-    if (
-      !parentVisible &&
-      !hasVisibleChildren
-    ) {
-      return null;
-    }
-
-    return {
-      ...item,
-
-      children:
-        visibleChildren,
-    };
   }
 
   private normalizeUrl(

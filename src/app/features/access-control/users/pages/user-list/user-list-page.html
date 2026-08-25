@@ -1,0 +1,233 @@
+<div class="mx-auto w-full max-w-[88rem]">
+  <header
+    class="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-center sm:justify-between"
+  >
+    <div>
+      <h1 class="text-page-title text-text-primary">Users</h1>
+      <p class="mt-1 text-body text-text-secondary">
+        Manage user accounts, assigned roles, status, and MFA enrollment.
+      </p>
+    </div>
+
+    @if (canManageUsers()) {
+      <a
+        routerLink="/access-control/users/new/general"
+        class="inline-flex h-control items-center justify-center gap-2 rounded-control bg-primary px-4 text-button font-semibold text-on-primary transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+      >
+        <svg
+          aria-hidden="true"
+          class="size-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M15 19a6 6 0 0 0-12 0" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M19 8v6" />
+          <path d="M16 11h6" />
+        </svg>
+
+        Add User
+      </a>
+    }
+  </header>
+
+  <section
+    aria-labelledby="user-directory-title"
+    class="mt-section overflow-hidden rounded-surface border border-border bg-surface shadow-sm"
+  >
+    <h2 id="user-directory-title" class="sr-only">
+      User directory
+    </h2>
+
+    <app-user-filters
+      [query]="query()"
+      [roles]="response()?.availableRoles ?? []"
+      (filtersApplied)="applyFilters($event)"
+    />
+
+    @if (loading()) {
+      <div
+        class="flex min-h-64 items-center justify-center p-8 text-center"
+        role="status"
+        aria-live="polite"
+      >
+        <div>
+          <span
+            aria-hidden="true"
+            class="mx-auto block size-6 animate-spin rounded-full border-2 border-border border-t-primary"
+          ></span>
+
+          <p class="mt-3 text-body text-text-secondary">
+            Loading users…
+          </p>
+        </div>
+      </div>
+    } @else if (loadFailed()) {
+      <div class="flex min-h-64 items-center justify-center p-8 text-center" role="alert">
+        <div class="max-w-md">
+          <div
+            aria-hidden="true"
+            class="mx-auto flex size-10 items-center justify-center rounded-full bg-danger/10 text-danger"
+          >
+            <svg
+              class="size-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 8v5" />
+              <path d="M12 16.5h.01" />
+            </svg>
+          </div>
+
+          <h3 class="mt-3 text-card-title text-text-primary">
+            Users could not be loaded
+          </h3>
+
+          <p class="mt-1 text-small leading-5 text-text-secondary">
+            Try again. If the problem continues, contact your administrator.
+          </p>
+
+          <button
+            type="button"
+            class="mt-4 h-control rounded-control border border-border-strong bg-surface px-4 text-button font-medium text-text-primary transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            (click)="retry()"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    } @else if (response()?.items?.length === 0) {
+      <div class="flex min-h-64 items-center justify-center p-8 text-center">
+        <div class="max-w-md">
+          <div
+            aria-hidden="true"
+            class="mx-auto flex size-10 items-center justify-center rounded-full bg-surface-muted text-text-muted"
+          >
+            <svg
+              class="size-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M19 8v6" />
+              <path d="M22 11h-6" />
+            </svg>
+          </div>
+
+          <h3 class="mt-3 text-card-title text-text-primary">
+            {{ hasFilters() ? 'No users match these filters' : 'No users found' }}
+          </h3>
+
+          <p class="mt-1 text-small leading-5 text-text-secondary">
+            {{
+              hasFilters()
+                ? 'Adjust or clear the current filters.'
+                : 'Provisioned users will appear here.'
+            }}
+          </p>
+        </div>
+      </div>
+    } @else if (response(); as userPage) {
+      <app-user-table [users]="userPage.items" />
+
+      <footer
+        class="flex flex-col gap-3 border-t border-border bg-surface px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <p class="text-small text-text-secondary">
+          {{ ((userPage.pageNumber - 1) * userPage.pageSize) + 1 }}
+          –
+          {{
+            Math.min(
+              userPage.pageNumber * userPage.pageSize,
+              userPage.totalCount
+            )
+          }}
+          of {{ userPage.totalCount }} users
+        </p>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <label
+            for="user-page-size"
+            class="text-small font-medium text-text-secondary"
+          >
+            Rows per page
+          </label>
+
+          <select
+            id="user-page-size"
+            class="h-control-compact rounded-control border border-border-strong bg-surface px-2.5 text-small text-text-primary transition-colors hover:border-text-muted focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/15"
+            [value]="userPage.pageSize"
+            (change)="changePageSize($event)"
+          >
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+
+          <button
+            type="button"
+            aria-label="Previous page"
+            class="flex size-9 items-center justify-center rounded-control border border-border-strong bg-surface text-text-secondary transition-colors hover:bg-surface-muted hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-40"
+            [disabled]="userPage.pageNumber <= 1"
+            (click)="changePage(userPage.pageNumber - 1)"
+          >
+            <svg
+              aria-hidden="true"
+              class="size-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+          </button>
+
+          <span
+            class="min-w-16 text-center text-small font-medium text-text-secondary"
+          >
+            {{ userPage.pageNumber }} / {{ totalPages() }}
+          </span>
+
+          <button
+            type="button"
+            aria-label="Next page"
+            class="flex size-9 items-center justify-center rounded-control border border-border-strong bg-surface text-text-secondary transition-colors hover:bg-surface-muted hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-40"
+            [disabled]="userPage.pageNumber >= totalPages()"
+            (click)="changePage(userPage.pageNumber + 1)"
+          >
+            <svg
+              aria-hidden="true"
+              class="size-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="m9 18 6-6-6-6" />
+            </svg>
+          </button>
+        </div>
+      </footer>
+    }
+  </section>
+</div>

@@ -1,18 +1,13 @@
 import { inject, Injectable } from '@angular/core';
-import { AuthorizationService } from '../authorization/authorization.service';
-import { APP_NAVIGATION_ORDER, canViewNavigationItem } from '../navigation/app-navigation';
+import { NavigationService } from '../navigation/navigation.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthenticatedLandingService {
-  private readonly authorization = inject(AuthorizationService);
+  private readonly navigation = inject(NavigationService);
 
   firstAllowedPath(): string {
-    return (
-      APP_NAVIGATION_ORDER.find((item) =>
-        canViewNavigationItem(this.authorization, item),
-      )?.route ?? '/forbidden'
-    );
+    return this.navigation.firstAllowedPath();
   }
 }

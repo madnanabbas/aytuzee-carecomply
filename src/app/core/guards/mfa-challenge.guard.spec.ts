@@ -18,7 +18,7 @@ describe('MFA route guards', () => {
 
   beforeEach(() => {
     authenticated = false;
-    context = { status: 'mfaRequired' };
+    context = { status: 'mfaRequired', method: 'Authenticator' };
     vi.clearAllMocks();
     TestBed.configureTestingModule({
       providers: [
@@ -34,7 +34,7 @@ describe('MFA route guards', () => {
     await expect(runGuard(mfaChallengeGuard)).resolves.toBe(true);
     expectUrl(await runGuard(mfaEnrollmentGuard), '/auth/mfa');
 
-    context = { status: 'mfaEnrollmentRequired' };
+    context = { status: 'mfaEnrollmentRequired', method: 'Authenticator' };
     await expect(runGuard(mfaEnrollmentGuard)).resolves.toBe(true);
     expectUrl(await runGuard(mfaChallengeGuard), '/auth/mfa/setup');
   });

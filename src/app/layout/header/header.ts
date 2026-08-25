@@ -6,7 +6,7 @@ import { filter, map, startWith } from 'rxjs';
 import { AuthSessionService } from '../../core/auth/auth-session.service';
 import { AuthorizationService } from '../../core/authorization/authorization.service';
 import { Permissions } from '../../core/authorization/permissions';
-import { findNavigationItem } from '../../core/navigation/app-navigation';
+import { NavigationService } from '../../core/navigation/navigation.service';
 
 @Component({
   selector: 'app-header',
@@ -22,6 +22,7 @@ export class HeaderComponent {
   private readonly session = inject(AuthSessionService);
   private readonly authorization = inject(AuthorizationService);
   private readonly router = inject(Router);
+  private readonly navigation = inject(NavigationService);
   private readonly accountControl = viewChild<ElementRef<HTMLElement>>('accountControl');
   private readonly accountButton = viewChild<ElementRef<HTMLButtonElement>>('accountButton');
   private readonly menuButton = viewChild<ElementRef<HTMLButtonElement>>('menuButton');
@@ -42,7 +43,7 @@ export class HeaderComponent {
     this.authorization.hasPermission(Permissions.Notification.View),
   );
   readonly pageContext = computed(
-    () => findNavigationItem(this.currentUrl())?.label ?? 'Care workspace',
+    () => this.navigation.findByUrl(this.currentUrl())?.label ?? 'Care workspace',
   );
   readonly initials = computed(() => {
     const words = this.currentUser()?.displayName.trim().split(/\s+/u).filter(Boolean) ?? [];

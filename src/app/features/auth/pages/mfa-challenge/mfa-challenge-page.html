@@ -66,6 +66,8 @@
         <p class="mx-auto mt-2 max-w-sm text-body leading-6 text-text-secondary">
           @if (recoveryMode()) {
             Enter one of your saved recovery codes to continue.
+          } @else if (method() === 'Email') {
+            Enter the verification code sent to your registered email.
           } @else {
             Enter the 6-digit code from your authenticator app.
           }
@@ -164,6 +166,15 @@
           </div>
         }
 
+        @if (statusMessage()) {
+          <div
+            role="status"
+            class="mt-4 rounded-control border border-success/30 bg-success/5 px-3.5 py-3 text-small text-text-primary"
+          >
+            {{ statusMessage() }}
+          </div>
+        }
+
         <!-- Submit -->
         <button
           type="submit"
@@ -183,7 +194,24 @@
         </button>
       </form>
 
+      @if (method() === 'Email') {
+        <div class="mt-5 border-t border-border pt-5 text-center">
+          <p class="text-helper text-text-muted">
+            Didn't receive the email?
+          </p>
+          <button
+            type="button"
+            [disabled]="isResending()"
+            class="mt-1.5 text-label font-medium text-primary transition-colors duration-150 hover:text-primary-hover hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+            (click)="resendCode()"
+          >
+            {{ isResending() ? 'Sending...' : 'Resend code' }}
+          </button>
+        </div>
+      }
+
       <!-- Alternative method -->
+      @if (method() === 'Authenticator') {
       <div class="mt-5 border-t border-border pt-5 text-center">
         <p class="text-helper text-text-muted">
           {{ recoveryMode()
@@ -201,6 +229,7 @@
             : 'Use a recovery code instead' }}
         </button>
       </div>
+      }
 
       <!-- Back to login -->
       <div class="mt-4 text-center">
