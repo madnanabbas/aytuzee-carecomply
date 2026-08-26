@@ -61,4 +61,25 @@ export const accessControlRoutes: Routes = [
       ),
     children: userEditorChildren,
   },
+  {
+    path: 'roles',
+    loadComponent: () =>
+      import(
+        './roles/pages/role-list/role-list-page'
+      ).then((m) => m.RoleListPage),
+  },
+  {
+    path: 'roles/new',
+    loadComponent: () =>
+      import(
+        './roles/pages/role-editor/role-editor-page'
+      ).then((m) => m.RoleEditorPage),
+  },
+  {
+    path: 'roles/:roleId',
+    loadComponent: () =>
+      import(
+        './roles/pages/role-editor/role-editor-page'
+      ).then((m) => m.RoleEditorPage),
+  },
 ];

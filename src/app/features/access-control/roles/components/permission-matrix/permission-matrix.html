@@ -1,0 +1,232 @@
+<div>
+  <!-- =====================================================
+       TOOLBAR
+       ===================================================== -->
+  <div
+    class="flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-end lg:justify-between"
+  >
+    <div class="w-full max-w-lg">
+      <label
+        for="permission-search"
+        class="mb-1.5 block text-helper font-semibold text-text-secondary"
+      >
+        Search permissions
+      </label>
+
+      <div class="relative">
+        <span
+          aria-hidden="true"
+          class="pointer-events-none absolute inset-y-0 left-0 flex w-10 items-center justify-center text-text-muted"
+        >
+          <svg
+            class="size-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5" />
+          </svg>
+        </span>
+
+        <input
+          id="permission-search"
+          type="search"
+          placeholder="Search feature or permission"
+          class="h-control w-full rounded-control border border-border-strong bg-surface pl-10 pr-3 text-body text-text-primary placeholder:text-text-muted transition-colors hover:border-text-muted focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/15"
+          [value]="search()"
+          (input)="updateSearch($event)"
+        />
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3 pb-1">
+      <button
+        type="button"
+        class="text-small font-medium text-primary hover:underline"
+        (click)="expandAll()"
+      >
+        Expand all
+      </button>
+
+      <span class="text-border-strong">|</span>
+
+      <button
+        type="button"
+        class="text-small font-medium text-primary hover:underline"
+        (click)="collapseAll()"
+      >
+        Collapse all
+      </button>
+    </div>
+  </div>
+
+  <!-- =====================================================
+       MODULES
+       ===================================================== -->
+  <div class="mt-4 space-y-3">
+    @for (module of filteredModules(); track module.id) {
+      <section
+        class="overflow-hidden rounded-control border border-border bg-surface"
+      >
+        <!-- ===============================================
+             CLICKABLE ACCORDION HEADER
+             =============================================== -->
+        <div
+          class="flex min-h-12 items-center justify-between gap-4 bg-surface-muted/65 px-4"
+        >
+          <button
+            type="button"
+            class="flex min-w-0 flex-1 items-center gap-3 py-3 text-left focus-visible:outline-none"
+            [attr.aria-expanded]="isModuleExpanded(module.id)"
+            (click)="toggleModule(module.id)"
+          >
+            <span
+              class="flex size-7 shrink-0 items-center justify-center rounded-control text-text-secondary transition-colors hover:bg-surface"
+            >
+              <svg
+                aria-hidden="true"
+                class="size-4 transition-transform duration-150"
+                [class.rotate-90]="isModuleExpanded(module.id)"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="m9 18 6-6-6-6" />
+              </svg>
+            </span>
+
+            <div class="min-w-0">
+              <span
+                class="block text-label font-semibold text-text-primary"
+              >
+                {{ module.name }}
+              </span>
+
+            </div>
+          </button>
+
+          <label
+            class="flex shrink-0 cursor-pointer items-center gap-2 text-small font-medium text-text-secondary"
+            (click)="$event.stopPropagation()"
+          >
+            <input
+              type="checkbox"
+              class="size-4 accent-primary"
+              [checked]="moduleSelected(module)"
+              (change)="toggleModulePermissions(module)"
+            />
+
+            Select all
+          </label>
+        </div>
+
+        <!-- ===============================================
+             MODULE CONTENT
+             =============================================== -->
+        @if (isModuleExpanded(module.id)) {
+          <div class="border-t border-border">
+            <!-- Desktop heading -->
+
+            @for (
+              feature of module.features;
+              track feature.id;
+              let last = $last
+            ) {
+              <div
+                class="grid gap-3 px-4 py-3 md:grid-cols-[minmax(11rem,1.15fr)_minmax(0,3fr)] md:items-start"
+                [class.border-b]="!last"
+                [class.border-border]="!last"
+              >
+                <!-- =======================================
+                     FEATURE
+                     ======================================= -->
+                <div>
+                  <label
+                    class="inline-flex cursor-pointer items-center gap-2.5"
+                  >
+                    <input
+                      type="checkbox"
+                      class="size-4 shrink-0 accent-primary"
+                      [checked]="featureSelected(feature)"
+                      (change)="toggleFeature(feature)"
+                    />
+
+                    <span
+                      class="text-small font-semibold text-text-primary"
+                    >
+                      {{ feature.name }}
+                    </span>
+                  </label>
+                </div>
+
+                <!-- =======================================
+                     PERMISSIONS
+                     ======================================= -->
+                <div
+                  class="grid gap-x-6 gap-y-2 sm:grid-cols-2 xl:grid-cols-3"
+                >
+                  @for (
+                    permission of feature.permissions;
+                    track permission.id
+                  ) {
+                    <label
+                      class="flex min-w-0 cursor-pointer items-start gap-2.5"
+                    >
+                      <input
+                        type="checkbox"
+                        class="mt-0.5 size-4 shrink-0 accent-primary"
+                        [checked]="
+                          selectedPermissionIds().has(
+                            permission.id
+                          )
+                        "
+                        (change)="
+                          togglePermission(permission.id)
+                        "
+                      />
+
+                      <span class="min-w-0">
+                        <span
+                          class="block text-small font-medium text-text-primary"
+                        >
+                          {{ permission.name }}
+                        </span>
+
+                        @if (permission.description) {
+                          <span
+                            class="mt-0.5 block text-helper leading-4 text-text-muted"
+                          >
+                            {{ permission.description }}
+                          </span>
+                        }
+                      </span>
+                    </label>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </section>
+    } @empty {
+      <div
+        class="rounded-control border border-border bg-surface px-6 py-10 text-center"
+      >
+        <p class="text-label font-semibold text-text-primary">
+          No permissions found
+        </p>
+
+        <p class="mt-1 text-small text-text-secondary">
+          Try another search.
+        </p>
+      </div>
+    }
+  </div>
+</div>

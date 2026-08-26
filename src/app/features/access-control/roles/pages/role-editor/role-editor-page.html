@@ -1,0 +1,154 @@
+<div class="mx-auto w-full max-w-[88rem]">
+  <a
+    routerLink="/access-control/roles"
+    class="inline-flex items-center gap-1 text-small font-medium text-primary hover:underline"
+  >
+    ← Back to roles
+  </a>
+
+  <header class="mt-5 border-b border-border pb-5">
+    <h1 class="text-page-title text-text-primary">
+      {{ isCreateMode() ? 'Add Role' : 'Edit Role' }}
+    </h1>
+
+    <p class="mt-1 text-body text-text-secondary">
+      {{
+        isCreateMode()
+          ? 'Create a role and assign its system permissions.'
+          : 'Manage role information and assigned system permissions.'
+      }}
+    </p>
+  </header>
+
+  <form
+    class="mt-section overflow-hidden rounded-surface border border-border bg-surface"
+    [formGroup]="form"
+    (ngSubmit)="save()"
+  >
+    <!-- =====================================================
+         ROLE DETAILS
+         ===================================================== -->
+    <section class="p-5">
+      <div>
+        <h2 class="text-section-title text-text-primary">
+          Role details
+        </h2>
+
+        <p class="mt-1 text-small text-text-secondary">
+          Enter the role name and a short description.
+        </p>
+      </div>
+
+      <div class="mt-5 grid gap-4 md:grid-cols-2">
+        <!-- Role name -->
+        <div>
+          <label
+            for="role-name"
+            class="block text-label font-medium text-text-primary"
+          >
+            Role name
+            <span class="text-danger">*</span>
+          </label>
+
+          <input
+            id="role-name"
+            type="text"
+            formControlName="name"
+            placeholder="e.g. Compliance Manager"
+            class="mt-1.5 h-control w-full rounded-control border border-border-strong bg-surface px-3.5 text-body text-text-primary transition-colors placeholder:text-text-muted hover:border-text-muted focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/15"
+          />
+
+          @if (
+            form.controls.name.touched &&
+            form.controls.name.invalid
+          ) {
+            <p class="mt-1.5 text-helper text-danger">
+              Enter a valid role name.
+            </p>
+          }
+        </div>
+
+        <!-- Description -->
+        <div>
+          <label
+            for="role-description"
+            class="block text-label font-medium text-text-primary"
+          >
+            Description
+          </label>
+
+          <input
+            id="role-description"
+            type="text"
+            formControlName="description"
+            placeholder="Describe the role responsibility"
+            class="mt-1.5 h-control w-full rounded-control border border-border-strong bg-surface px-3.5 text-body text-text-primary transition-colors placeholder:text-text-muted hover:border-text-muted focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/15"
+          />
+
+          @if (
+            form.controls.description.touched &&
+            form.controls.description.invalid
+          ) {
+            <p class="mt-1.5 text-helper text-danger">
+              Description must be 500 characters or fewer.
+            </p>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================
+         PERMISSIONS
+         ===================================================== -->
+    <section class="border-t border-border p-5">
+      <div class="mb-5">
+        <h2 class="text-section-title text-text-primary">
+          Permissions
+        </h2>
+
+        <p class="mt-1 text-small text-text-secondary">
+          Select the features and actions users with this role can access.
+        </p>
+
+        <p class="mt-1 text-helper text-text-muted">
+          Choose a feature, then select the actions this role is allowed to perform.
+        </p>
+      </div>
+
+      <app-permission-matrix
+        [modules]="permissionCatalog"
+        [selectedPermissionIds]="selectedPermissionIds()"
+        (permissionChanged)="updatePermissions($event)"
+      />
+    </section>
+
+    <!-- =====================================================
+         ACTIONS
+         ===================================================== -->
+    <footer
+      class="flex flex-wrap justify-end gap-2 border-t border-border bg-surface px-5 py-4"
+    >
+      <button
+        type="button"
+        class="h-control rounded-control border border-border-strong bg-surface px-4 text-button font-medium text-text-secondary transition-colors hover:bg-surface-muted hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        (click)="cancel()"
+      >
+        Cancel
+      </button>
+
+      <button
+        type="submit"
+        class="h-control rounded-control bg-primary px-5 text-button font-semibold text-on-primary transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+        [disabled]="form.invalid || saving()"
+      >
+        {{
+          saving()
+            ? 'Saving…'
+            : isCreateMode()
+              ? 'Create Role'
+              : 'Save changes'
+        }}
+      </button>
+    </footer>
+  </form>
+</div>
