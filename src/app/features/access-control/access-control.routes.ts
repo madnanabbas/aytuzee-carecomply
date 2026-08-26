@@ -63,6 +63,10 @@ export const accessControlRoutes: Routes = [
   },
   {
     path: 'roles',
+    canActivate: [permissionGuard],
+    data: {
+      permissions: [Permissions.Role.View],
+    } satisfies PermissionRouteData,
     loadComponent: () =>
       import(
         './roles/pages/role-list/role-list-page'
@@ -70,6 +74,10 @@ export const accessControlRoutes: Routes = [
   },
   {
     path: 'roles/new',
+    canActivate: [permissionGuard],
+    data: {
+      permissions: [Permissions.Role.Manage],
+    } satisfies PermissionRouteData,
     loadComponent: () =>
       import(
         './roles/pages/role-editor/role-editor-page'
@@ -77,6 +85,10 @@ export const accessControlRoutes: Routes = [
   },
   {
     path: 'roles/:roleId',
+    canActivate: [permissionGuard],
+    data: {
+      permissions: [Permissions.Role.View],
+    } satisfies PermissionRouteData,
     loadComponent: () =>
       import(
         './roles/pages/role-editor/role-editor-page'

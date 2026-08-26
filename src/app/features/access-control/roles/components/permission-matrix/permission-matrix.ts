@@ -1,10 +1,4 @@
-import {
-  Component,
-  computed,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { Component, computed, input, output, signal } from '@angular/core';
 import {
   FeaturePermissionGroup,
   ModulePermissionGroup,
@@ -16,21 +10,13 @@ import {
   templateUrl: './permission-matrix.html',
 })
 export class PermissionMatrixComponent {
-  readonly modules = input.required<
-    readonly ModulePermissionGroup[]
-  >();
+  readonly modules = input.required<readonly ModulePermissionGroup[]>();
+  readonly selectedPermissionIds = input.required<ReadonlySet<number>>();
+  readonly disabled = input(false);
 
-  readonly selectedPermissionIds = input.required<
-    ReadonlySet<string>
-  >();
-
-  readonly permissionChanged = output<ReadonlySet<string>>();
-
+  readonly permissionChanged = output<ReadonlySet<number>>();
   readonly search = signal('');
-
-  readonly expandedModules = signal<ReadonlySet<string>>(
-    new Set<string>(),
-  );
+  readonly expandedModules = signal<ReadonlySet<number>>(new Set<number>());
 
   readonly filteredModules = computed(() => {
     const search = this.search().trim().toLowerCase();
@@ -42,37 +28,31 @@ export class PermissionMatrixComponent {
     return this.modules()
       .map((module) => ({
         ...module,
-        features: module.features.filter((feature) => {
-          return (
+        features: module.features.filter(
+          (feature) =>
             feature.name.toLowerCase().includes(search) ||
             feature.permissions.some(
               (permission) =>
-                permission.name.toLowerCase().includes(search) ||
+                permission.action.toLowerCase().includes(search) ||
                 permission.code.toLowerCase().includes(search),
-            )
-          );
-        }),
+            ),
+        ),
       }))
       .filter(
         (module) =>
-          module.name.toLowerCase().includes(search) ||
-          module.features.length > 0,
+          module.name.toLowerCase().includes(search) || module.features.length > 0,
       );
   });
 
   constructor() {
-    queueMicrotask(() => {
-      this.expandedModules.set(
-        new Set(this.modules().map((module) => module.id)),
-      );
-    });
+    queueMicrotask(() => this.expandAll());
   }
 
   updateSearch(event: Event): void {
     this.search.set((event.target as HTMLInputElement).value);
   }
 
-  toggleModule(moduleId: string): void {
+  toggleModule(moduleId: number): void {
     const next = new Set(this.expandedModules());
 
     if (next.has(moduleId)) {
@@ -84,11 +64,15 @@ export class PermissionMatrixComponent {
     this.expandedModules.set(next);
   }
 
-  isModuleExpanded(moduleId: string): boolean {
+  isModuleExpanded(moduleId: number): boolean {
     return this.expandedModules().has(moduleId);
   }
 
-  togglePermission(permissionId: string): void {
+  togglePermission(permissionId: number): void {
+    if (this.disabled()) {
+      return;
+    }
+
     const next = new Set(this.selectedPermissionIds());
 
     if (next.has(permissionId)) {
@@ -101,14 +85,20 @@ export class PermissionMatrixComponent {
   }
 
   featureSelected(feature: FeaturePermissionGroup): boolean {
-    return feature.permissions.every((permission) =>
-      this.selectedPermissionIds().has(permission.id),
+    return (
+      feature.permissions.length > 0 &&
+      feature.permissions.every((permission) =>
+        this.selectedPermissionIds().has(permission.id),
+      )
     );
   }
 
   toggleFeature(feature: FeaturePermissionGroup): void {
-    const next = new Set(this.selectedPermissionIds());
+    if (this.disabled()) {
+      return;
+    }
 
+    const next = new Set(this.selectedPermissionIds());
     const allSelected = this.featureSelected(feature);
 
     for (const permission of feature.permissions) {
@@ -123,9 +113,7 @@ export class PermissionMatrixComponent {
   }
 
   moduleSelected(module: ModulePermissionGroup): boolean {
-    const permissions = module.features.flatMap(
-      (feature) => feature.permissions,
-    );
+    const permissions = module.features.flatMap((feature) => feature.permissions);
 
     return (
       permissions.length > 0 &&
@@ -136,8 +124,11 @@ export class PermissionMatrixComponent {
   }
 
   toggleModulePermissions(module: ModulePermissionGroup): void {
-    const next = new Set(this.selectedPermissionIds());
+    if (this.disabled()) {
+      return;
+    }
 
+    const next = new Set(this.selectedPermissionIds());
     const allSelected = this.moduleSelected(module);
 
     for (const feature of module.features) {
@@ -154,9 +145,7 @@ export class PermissionMatrixComponent {
   }
 
   expandAll(): void {
-    this.expandedModules.set(
-      new Set(this.modules().map((module) => module.id)),
-    );
+    this.expandedModules.set(new Set(this.modules().map((module) => module.id)));
   }
 
   collapseAll(): void {

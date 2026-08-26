@@ -20,6 +20,39 @@
     </p>
   </header>
 
+  @if (!isCreateMode() && !canManage()) {
+    <div class="mt-4 rounded-control border border-border bg-surface-muted px-4 py-3 text-small text-text-secondary">
+      You have view-only access to this role.
+    </div>
+  }
+
+  @if (successMessage()) {
+    <div class="mt-4 rounded-control border border-success/30 bg-success/5 px-4 py-3 text-small text-text-primary" role="status">
+      {{ successMessage() }}
+    </div>
+  }
+
+  @if (error()) {
+    <div class="mt-4 rounded-control border border-danger/30 bg-danger/5 px-4 py-3 text-small text-text-primary" role="alert">
+      @switch (error()) {
+        @case ('notFound') { Role not found. }
+        @case ('duplicateName') { A role with this name already exists. }
+        @case ('invalidPermission') { One or more selected permissions are no longer available. Reload and try again. }
+        @case ('lastRoleManager') { Role.Manage cannot be removed from the last active role-management path. }
+        @case ('conflict') { This role changed after you opened it. Reload before saving again. }
+        @default { The role could not be loaded or saved. Try again. }
+      }
+      @if (!saving()) {
+        <button type="button" class="ml-2 font-medium text-primary hover:underline" (click)="reload()">Reload</button>
+      }
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="mt-section rounded-surface border border-border bg-surface px-5 py-12 text-center text-small text-text-secondary">
+      Loading role permissions…
+    </div>
+  } @else {
   <form
     class="mt-section overflow-hidden rounded-surface border border-border bg-surface"
     [formGroup]="form"
@@ -116,8 +149,9 @@
       </div>
 
       <app-permission-matrix
-        [modules]="permissionCatalog"
+        [modules]="permissionCatalog()"
         [selectedPermissionIds]="selectedPermissionIds()"
+        [disabled]="!canManage()"
         (permissionChanged)="updatePermissions($event)"
       />
     </section>
@@ -125,6 +159,7 @@
     <!-- =====================================================
          ACTIONS
          ===================================================== -->
+    @if (canManage()) {
     <footer
       class="flex flex-wrap justify-end gap-2 border-t border-border bg-surface px-5 py-4"
     >
@@ -139,7 +174,7 @@
       <button
         type="submit"
         class="h-control rounded-control bg-primary px-5 text-button font-semibold text-on-primary transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-        [disabled]="form.invalid || saving()"
+        [disabled]="form.invalid || saving() || !hasChanges()"
       >
         {{
           saving()
@@ -150,5 +185,7 @@
         }}
       </button>
     </footer>
+    }
   </form>
+  }
 </div>

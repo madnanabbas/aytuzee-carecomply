@@ -1,30 +1,26 @@
-import {
-  Component,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, computed, inject, signal } from '@angular/core';
 import {
   FormBuilder,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import {
-  ActivatedRoute,
-  Router,
-  RouterLink,
-} from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { finalize, forkJoin, Observable, of, switchMap } from 'rxjs';
+import { AuthorizationService } from '../../../../../core/authorization/authorization.service';
+import { Permissions } from '../../../../../core/authorization/permissions';
 import { PermissionMatrixComponent } from '../../components/permission-matrix/permission-matrix';
 import { RoleManagementService } from '../../data-access/role-management.service';
+import {
+  ModulePermissionGroup,
+  RoleEditorError,
+  RoleEditorModel,
+} from '../../models/role-management.models';
 
 @Component({
   selector: 'app-role-editor-page',
   standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    RouterLink,
-    PermissionMatrixComponent,
-  ],
+  imports: [ReactiveFormsModule, RouterLink, PermissionMatrixComponent],
   templateUrl: './role-editor-page.html',
 })
 export class RoleEditorPage {
@@ -32,82 +28,239 @@ export class RoleEditorPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly roleService = inject(RoleManagementService);
+  private readonly authorization = inject(AuthorizationService);
 
   readonly roleId = this.route.snapshot.paramMap.get('roleId');
-
   readonly isCreateMode = computed(() => !this.roleId);
+  readonly canManage = computed(() =>
+    this.authorization.hasPermission(Permissions.Role.Manage),
+  );
 
-  readonly permissionCatalog =
-    this.roleService.getPermissionCatalog();
-
-  readonly selectedPermissionIds =
-    signal<ReadonlySet<string>>(new Set());
-
+  readonly permissionCatalog = signal<readonly ModulePermissionGroup[]>([]);
+  readonly selectedPermissionIds = signal<ReadonlySet<number>>(new Set<number>());
+  readonly loading = signal(true);
   readonly saving = signal(false);
+  readonly error = signal<RoleEditorError | null>(null);
+  readonly successMessage = signal<string | null>(null);
 
   readonly form = this.formBuilder.nonNullable.group({
-    name: [
-      '',
-      [
-        Validators.required,
-        Validators.maxLength(100),
-      ],
-    ],
-    description: [
-      '',
-      Validators.maxLength(500),
-    ],
+    name: ['', [Validators.required, Validators.maxLength(100)]],
+    description: ['', Validators.maxLength(500)],
   });
 
+  private loadedRole: RoleEditorModel | null = null;
+  private initialPermissionIds = new Set<number>();
+
+  readonly permissionsChanged = computed(() =>
+    !setsEqual(this.selectedPermissionIds(), this.initialPermissionIds),
+  );
+
+  readonly hasChanges = computed(() =>
+    this.isCreateMode() || this.form.dirty || this.permissionsChanged(),
+  );
+
   constructor() {
-    if (!this.roleId) {
-      return;
+    if (!this.isCreateMode() && !this.canManage()) {
+      this.form.disable({ emitEvent: false });
     }
 
-    const role = this.roleService.getRole(this.roleId);
-
-    if (!role) {
-      return;
-    }
-
-    this.form.patchValue({
-      name: role.name,
-      description: role.description,
-    });
-
-    this.selectedPermissionIds.set(
-      new Set(role.permissionIds),
-    );
+    this.load();
   }
 
-  updatePermissions(
-    permissionIds: ReadonlySet<string>,
-  ): void {
-    this.selectedPermissionIds.set(permissionIds);
+  updatePermissions(permissionIds: ReadonlySet<number>): void {
+    if (!this.canManage()) {
+      return;
+    }
+
+    this.selectedPermissionIds.set(new Set(permissionIds));
+    this.successMessage.set(null);
   }
 
   cancel(): void {
     void this.router.navigate(['/access-control/roles']);
   }
 
-  save(): void {
-    this.form.markAllAsTouched();
+  reload(): void {
+    this.load();
+  }
 
-    if (this.form.invalid) {
+  save(): void {
+    if (!this.canManage()) {
       return;
     }
 
+    this.form.markAllAsTouched();
+
+    if (this.form.invalid || this.saving()) {
+      return;
+    }
+
+    this.error.set(null);
+    this.successMessage.set(null);
     this.saving.set(true);
 
-    // API will be added later.
-    console.log({
-      roleId: this.roleId,
-      ...this.form.getRawValue(),
-      permissionIds: [
-        ...this.selectedPermissionIds(),
-      ],
-    });
+    if (this.isCreateMode()) {
+      this.createRole();
+      return;
+    }
 
-    this.saving.set(false);
+    const roleId = this.roleId;
+    const loadedRole = this.loadedRole;
+
+    if (!roleId || !loadedRole) {
+      this.saving.set(false);
+      this.error.set('failed');
+      return;
+    }
+
+    const generalChanged = this.form.dirty;
+    const permissionsChanged = this.permissionsChanged();
+
+    if (!generalChanged && !permissionsChanged) {
+      this.saving.set(false);
+      return;
+    }
+
+    const updateGeneral$: Observable<RoleEditorModel> = generalChanged
+      ? this.roleService.updateGeneral(roleId, {
+          name: this.form.controls.name.value.trim(),
+          description: normalizeDescription(this.form.controls.description.value),
+          editorVersion: loadedRole.editorVersion,
+        })
+      : of(loadedRole);
+
+    updateGeneral$
+      .pipe(
+        switchMap((roleAfterGeneral) =>
+          permissionsChanged
+            ? this.roleService.replacePermissions(roleId, {
+                permissionIds: sortedPermissionIds(this.selectedPermissionIds()),
+                editorVersion: roleAfterGeneral.editorVersion,
+              })
+            : of(roleAfterGeneral),
+        ),
+        finalize(() => this.saving.set(false)),
+      )
+      .subscribe({
+        next: (role) => {
+          this.applyRole(role);
+          this.successMessage.set('Role changes saved successfully.');
+        },
+        error: (error: HttpErrorResponse) => this.error.set(mapRoleError(error)),
+      });
   }
+
+  private createRole(): void {
+    this.roleService
+      .createRole({
+        name: this.form.controls.name.value.trim(),
+        description: normalizeDescription(this.form.controls.description.value),
+        permissionIds: sortedPermissionIds(this.selectedPermissionIds()),
+      })
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: (role) => {
+          void this.router.navigate(['/access-control/roles', role.id]);
+        },
+        error: (error: HttpErrorResponse) => this.error.set(mapRoleError(error)),
+      });
+  }
+
+  private load(): void {
+    this.loading.set(true);
+    this.error.set(null);
+    this.successMessage.set(null);
+
+    if (this.isCreateMode()) {
+      this.roleService
+        .getPermissionCatalog()
+        .pipe(finalize(() => this.loading.set(false)))
+        .subscribe({
+          next: (catalog) => {
+            this.permissionCatalog.set(catalog);
+            this.selectedPermissionIds.set(new Set<number>());
+            this.initialPermissionIds = new Set<number>();
+          },
+          error: (_error: HttpErrorResponse) => this.error.set('failed'),
+        });
+      return;
+    }
+
+    const roleId = this.roleId;
+    if (!roleId) {
+      this.loading.set(false);
+      this.error.set('notFound');
+      return;
+    }
+
+    forkJoin({
+      role: this.roleService.getRole(roleId),
+      catalog: this.roleService.getPermissionCatalog(),
+    })
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: ({ role, catalog }) => {
+          this.permissionCatalog.set(catalog);
+          this.applyRole(role);
+        },
+        error: (error: HttpErrorResponse) => this.error.set(mapRoleError(error)),
+      });
+  }
+
+  private applyRole(role: RoleEditorModel): void {
+    this.loadedRole = role;
+    this.form.reset(
+      {
+        name: role.name,
+        description: role.description,
+      },
+      { emitEvent: false },
+    );
+
+    if (!this.canManage()) {
+      this.form.disable({ emitEvent: false });
+    }
+
+    this.initialPermissionIds = new Set(role.permissionIds);
+    this.selectedPermissionIds.set(new Set(role.permissionIds));
+  }
+}
+
+function sortedPermissionIds(ids: ReadonlySet<number>): readonly number[] {
+  return [...ids].sort((left, right) => left - right);
+}
+
+function setsEqual(left: ReadonlySet<number>, right: ReadonlySet<number>): boolean {
+  return left.size === right.size && [...left].every((value) => right.has(value));
+}
+
+function normalizeDescription(value: string): string | null {
+  const description = value.trim();
+  return description.length === 0 ? null : description;
+}
+
+function mapRoleError(error: HttpErrorResponse): RoleEditorError {
+  if (error.status === 404) {
+    return 'notFound';
+  }
+
+  const type = typeof error.error?.type === 'string' ? error.error.type.toLowerCase() : '';
+
+  if (type.includes('duplicate')) {
+    return 'duplicateName';
+  }
+
+  if (type.includes('permission') && type.includes('invalid')) {
+    return 'invalidPermission';
+  }
+
+  if (type.includes('last') && type.includes('manager')) {
+    return 'lastRoleManager';
+  }
+
+  if (error.status === 409) {
+    return 'conflict';
+  }
+
+  return 'failed';
 }

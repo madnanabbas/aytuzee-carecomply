@@ -120,6 +120,7 @@
               type="checkbox"
               class="size-4 accent-primary"
               [checked]="moduleSelected(module)"
+              [disabled]="disabled()"
               (change)="toggleModulePermissions(module)"
             />
 
@@ -155,6 +156,7 @@
                       type="checkbox"
                       class="size-4 shrink-0 accent-primary"
                       [checked]="featureSelected(feature)"
+                      [disabled]="disabled()"
                       (change)="toggleFeature(feature)"
                     />
 
@@ -187,6 +189,7 @@
                             permission.id
                           )
                         "
+                        [disabled]="disabled()"
                         (change)="
                           togglePermission(permission.id)
                         "
@@ -196,16 +199,10 @@
                         <span
                           class="block text-small font-medium text-text-primary"
                         >
-                          {{ permission.name }}
+                          {{ permission.action }}
                         </span>
 
-                        @if (permission.description) {
-                          <span
-                            class="mt-0.5 block text-helper leading-4 text-text-muted"
-                          >
-                            {{ permission.description }}
-                          </span>
-                        }
+                       
                       </span>
                     </label>
                   }

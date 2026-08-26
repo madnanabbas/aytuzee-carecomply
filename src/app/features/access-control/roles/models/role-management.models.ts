@@ -4,32 +4,61 @@ export interface RoleListItem {
   readonly description: string;
   readonly assignedUsers: number;
   readonly permissionCount: number;
+  readonly editorVersion: string;
 }
 
 export interface PermissionOption {
-  readonly id: string;
+  readonly id: number;
   readonly code: string;
-  readonly name: string;
-  readonly description?: string;
+  readonly action: string;
 }
 
 export interface FeaturePermissionGroup {
-  readonly id: string;
+  readonly id: number;
   readonly key: string;
   readonly name: string;
+  readonly sortOrder: number;
   readonly permissions: readonly PermissionOption[];
 }
 
 export interface ModulePermissionGroup {
-  readonly id: string;
+  readonly id: number;
   readonly key: string;
   readonly name: string;
+  readonly sortOrder: number;
   readonly features: readonly FeaturePermissionGroup[];
 }
 
 export interface RoleEditorModel {
-  readonly id: string | null;
+  readonly id: string;
   readonly name: string;
   readonly description: string;
-  readonly permissionIds: readonly string[];
+  readonly permissionIds: readonly number[];
+  readonly assignedUsers: number;
+  readonly editorVersion: string;
 }
+
+export interface CreateRoleRequest {
+  readonly name: string;
+  readonly description: string | null;
+  readonly permissionIds: readonly number[];
+}
+
+export interface UpdateRoleGeneralRequest {
+  readonly name: string;
+  readonly description: string | null;
+  readonly editorVersion: string;
+}
+
+export interface ReplaceRolePermissionsRequest {
+  readonly permissionIds: readonly number[];
+  readonly editorVersion: string;
+}
+
+export type RoleEditorError =
+  | 'notFound'
+  | 'conflict'
+  | 'duplicateName'
+  | 'invalidPermission'
+  | 'lastRoleManager'
+  | 'failed';
