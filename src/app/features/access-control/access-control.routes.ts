@@ -94,4 +94,16 @@ export const accessControlRoutes: Routes = [
         './roles/pages/role-editor/role-editor-page'
       ).then((m) => m.RoleEditorPage),
   },
+  {
+    path: 'modules-features',
+    canActivate: [permissionGuard],
+    data: {
+      permissions: [Permissions.Permission.View],
+    } satisfies PermissionRouteData,
+    loadComponent: () =>
+      import('./modules-features/pages/module-feature-page/module-feature-page').then(
+        (m) => m.ModuleFeaturePage,
+      ),
+  },
+
 ];

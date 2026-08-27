@@ -1,0 +1,365 @@
+<div class="mx-auto w-full max-w-[88rem]">
+  <header
+    class="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between"
+  >
+    <div>
+      <h1 class="text-page-title text-text-primary">Modules &amp; Features</h1>
+      <p class="mt-1 text-body text-text-secondary">
+        Organize CareComply modules, features and navigation settings.
+      </p>
+    </div>
+    @if (canManage) {
+      <button
+        type="button"
+        class="h-control rounded-control bg-primary px-4 text-button font-semibold text-on-primary hover:bg-primary-hover"
+        (click)="addModule()"
+      >
+        + Add Module
+      </button>
+    }
+  </header>
+
+  @if (error()) {
+    <div
+      class="mt-4 rounded-control border border-danger/30 bg-danger/5 px-4 py-3 text-small text-danger"
+    >
+      {{ error() }}
+      <button type="button" class="ml-2 font-semibold underline" (click)="load()">Try again</button>
+    </div>
+  }
+
+  <section
+    class="mt-section grid min-h-[36rem] overflow-hidden rounded-surface border border-border bg-surface shadow-sm lg:grid-cols-[20rem_minmax(0,1fr)]"
+  >
+    <aside class="border-b border-border bg-surface-muted/25 lg:border-b-0 lg:border-r">
+      <div class="border-b border-border p-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-section-title text-text-primary">Modules</h2>
+            <p class="mt-0.5 text-helper text-text-muted">
+              Select a module to manage its features.
+            </p>
+          </div>
+          <span
+            class="rounded-status bg-surface-muted px-2 py-0.5 text-helper font-medium text-text-secondary"
+            >{{ modules().length }}</span
+          >
+        </div>
+        <input
+          type="search"
+          class="mt-3 h-control w-full rounded-control border border-border-strong bg-surface px-3 text-body text-text-primary"
+          placeholder="Search modules"
+          [value]="moduleSearch()"
+          (input)="updateModuleSearch($event)"
+        />
+      </div>
+      <div class="p-2">
+        @if (loading()) {
+          <div class="px-3 py-8 text-center text-small text-text-muted">Loading modules...</div>
+        }
+        @for (module of filteredModules(); track module.id) {
+          <button
+            type="button"
+            class="mb-1 flex w-full items-center justify-between rounded-control border px-3 py-3 text-left transition-colors"
+            [class.border-primary]="selectedModuleId() === module.id"
+            [class.bg-primary-subtle]="selectedModuleId() === module.id"
+            [class.border-transparent]="selectedModuleId() !== module.id"
+            (click)="selectModule(module.id)"
+          >
+            <span class="min-w-0"
+              ><span class="block truncate text-small font-semibold text-text-primary">{{
+                module.name
+              }}</span
+              ><span class="mt-0.5 block truncate text-helper text-text-muted">{{
+                module.key
+              }}</span></span
+            >
+            <span
+              class="ml-3 rounded-status bg-surface px-2 py-0.5 text-helper font-medium text-text-secondary"
+              >{{ module.features.length }}</span
+            >
+          </button>
+        } @empty {
+          @if (!loading()) {
+            <div class="px-3 py-8 text-center text-small text-text-muted">No modules found.</div>
+          }
+        }
+      </div>
+    </aside>
+
+    <div class="min-w-0">
+      @if (selectedModule(); as module) {
+        <div
+          class="flex flex-col gap-4 border-b border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-section-title text-text-primary">{{ module.name }}</h2>
+              <span
+                class="rounded-status px-2 py-0.5 text-helper font-medium"
+                [class.bg-success-subtle]="module.isActive"
+                [class.text-success]="module.isActive"
+                [class.bg-surface-muted]="!module.isActive"
+                [class.text-text-muted]="!module.isActive"
+                >{{ module.isActive ? 'Active' : 'Inactive' }}</span
+              >
+            </div>
+            <p class="mt-1 text-small text-text-secondary">Manage features inside this module.</p>
+          </div>
+          @if (canManage) {
+            <div class="flex gap-2">
+              <button
+                type="button"
+                class="h-control-compact rounded-control border border-border-strong bg-surface px-3 text-small font-medium text-text-secondary"
+                (click)="editModule()"
+              >
+                Edit module</button
+              ><button
+                type="button"
+                class="h-control-compact rounded-control bg-primary px-3 text-small font-semibold text-on-primary"
+                (click)="addFeature()"
+              >
+                + Add Feature
+              </button>
+            </div>
+          }
+        </div>
+        <div class="border-b border-border px-5 py-3">
+          <input
+            type="search"
+            class="h-control w-full max-w-lg rounded-control border border-border-strong bg-surface px-3 text-body text-text-primary"
+            placeholder="Search features"
+            [value]="featureSearch()"
+            (input)="updateFeatureSearch($event)"
+          />
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[48rem] text-left">
+            <thead
+              class="border-b border-border bg-surface-muted/70 text-table-heading uppercase tracking-[0.04em] text-text-secondary"
+            >
+              <tr>
+                <th class="px-5 py-2.5 font-semibold">Feature</th>
+                <th class="px-5 py-2.5 font-semibold">Route</th>
+                <th class="px-5 py-2.5 font-semibold">Icon</th>
+                <th class="px-5 py-2.5 text-center font-semibold">Order</th>
+                <th class="px-5 py-2.5 font-semibold">Status</th>
+                @if (canManage) {
+                  <th class="px-5 py-2.5 text-right font-semibold">Actions</th>
+                }
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              @for (feature of visibleFeatures(); track feature.id) {
+                <tr class="hover:bg-surface-muted/30">
+                  <td class="px-5 py-3">
+                    <p class="text-small font-semibold text-text-primary">{{ feature.name }}</p>
+                    <p class="text-helper text-text-muted">{{ feature.key }}</p>
+                  </td>
+                  <td class="px-5 py-3 text-small text-text-secondary">
+                    {{ feature.route || '—' }}
+                  </td>
+                  <td class="px-5 py-3 text-small text-text-secondary">
+                    {{ feature.iconKey || '—' }}
+                  </td>
+                  <td class="px-5 py-3 text-center text-small text-text-secondary">
+                    {{ feature.sortOrder }}
+                  </td>
+                  <td class="px-5 py-3">
+                    <span
+                      class="rounded-status px-2 py-0.5 text-helper font-medium"
+                      [class.bg-success-subtle]="feature.isActive"
+                      [class.text-success]="feature.isActive"
+                      [class.bg-surface-muted]="!feature.isActive"
+                      [class.text-text-muted]="!feature.isActive"
+                      >{{ feature.isActive ? 'Active' : 'Inactive' }}</span
+                    >
+                  </td>
+                  @if (canManage) {
+                    <td class="px-5 py-3 text-right">
+                      <button
+                        type="button"
+                        class="h-control-compact rounded-control border border-border bg-surface px-3 text-small font-medium text-text-secondary"
+                        (click)="editFeature(feature)"
+                      >
+                        Edit
+                      </button>
+                    </td>
+                  }
+                </tr>
+              } @empty {
+                <tr>
+                  <td
+                    [attr.colspan]="canManage ? 6 : 5"
+                    class="px-5 py-12 text-center text-small text-text-muted"
+                  >
+                    No features found.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else if (!loading()) {
+        <div class="flex min-h-[30rem] items-center justify-center text-small text-text-muted">
+          Select a module to view its features.
+        </div>
+      }
+    </div>
+  </section>
+
+  @if (editor(); as state) {
+    <div class="fixed inset-0 z-40 bg-black/25" (click)="closeEditor()"></div>
+    <aside
+      class="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-border bg-surface shadow-xl"
+    >
+      <div class="flex items-start justify-between border-b border-border px-5 py-4">
+        <div>
+          <h2 class="text-section-title text-text-primary">
+            {{ state.mode === 'create' ? 'Add' : 'Edit' }}
+            {{ state.kind === 'module' ? 'module' : 'feature' }}
+          </h2>
+          <p class="mt-1 text-small text-text-secondary">
+            {{
+              state.kind === 'module'
+                ? 'Configure the module used to group
+          related features.'
+                : 'Configure this feature and its navigation metadata.'
+            }}
+          </p>
+        </div>
+        <button
+          type="button"
+          class="rounded-control px-2 py-1 text-text-muted"
+          aria-label="Close"
+          (click)="closeEditor()"
+        >
+          ✕
+        </button>
+      </div>
+      <div class="flex-1 overflow-y-auto p-5">
+        @if (saveError()) {
+          <div
+            class="mb-4 rounded-control border border-danger/30 bg-danger/5 px-3 py-2 text-small text-danger"
+          >
+            {{ saveError() }}
+          </div>
+        }
+        @if (state.kind === 'module') {
+          <form class="space-y-4" [formGroup]="moduleForm">
+            <div>
+              <label class="block text-label font-medium text-text-primary">Module name *</label
+              ><input
+                formControlName="name"
+                class="mt-1.5 h-control w-full rounded-control border border-border-strong px-3 text-body"
+              />
+            </div>
+            <div>
+              <label class="block text-label font-medium text-text-primary">Key *</label
+              ><input
+                formControlName="key"
+                class="mt-1.5 h-control w-full rounded-control border border-border-strong px-3 text-body"
+              />
+            </div>
+            <div>
+              <label class="block text-label font-medium text-text-primary">Display order</label
+              ><input
+                type="number"
+                formControlName="sortOrder"
+                class="mt-1.5 h-control w-full rounded-control border border-border-strong px-3 text-body"
+              />
+            </div>
+            <label class="flex items-center gap-2 text-small text-text-primary"
+              ><input type="checkbox" formControlName="isActive" class="size-4 accent-primary" />
+              Active</label
+            >
+          </form>
+        } @else {
+          <form class="space-y-4" [formGroup]="featureForm">
+            <div>
+              <label class="block text-label font-medium text-text-primary">Feature name *</label
+              ><input
+                formControlName="name"
+                class="mt-1.5 h-control w-full rounded-control border border-border-strong px-3 text-body"
+              />
+            </div>
+            <div>
+              <label class="block text-label font-medium text-text-primary">Key *</label
+              ><input
+                formControlName="key"
+                class="mt-1.5 h-control w-full rounded-control border border-border-strong px-3 text-body"
+              />
+            </div>
+            <div>
+              <label class="block text-label font-medium text-text-primary">Route *</label
+              ><input
+                formControlName="route"
+                class="mt-1.5 h-control w-full rounded-control border border-border-strong px-3 text-body"
+                placeholder="/feature-route"
+              />
+            </div>
+            <div>
+              <label class="block text-label font-medium text-text-primary">Parent feature</label
+              ><select
+                formControlName="parentFeatureId"
+                class="mt-1.5 h-control w-full rounded-control border border-border-strong px-3 text-body"
+              >
+                <option [ngValue]="null">None</option>
+                @for (parent of selectedModule()?.features ?? []; track parent.id) {
+                  @if (parent.id !== state.feature?.id) {
+                    <option [ngValue]="parent.id">{{ parent.name }}</option>
+                  }
+                }
+              </select>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-label font-medium text-text-primary">Icon key *</label
+                ><input
+                  formControlName="iconKey"
+                  class="mt-1.5 h-control w-full rounded-control border border-border-strong px-3 text-body"
+                />
+              </div>
+              <div>
+                <label class="block text-label font-medium text-text-primary">Display order</label
+                ><input
+                  type="number"
+                  formControlName="sortOrder"
+                  class="mt-1.5 h-control w-full rounded-control border border-border-strong px-3 text-body"
+                />
+              </div>
+            </div>
+            <label class="flex items-center gap-2 text-small text-text-primary"
+              ><input type="checkbox" formControlName="isActive" class="size-4 accent-primary" />
+              Active</label
+            >
+          </form>
+        }
+      </div>
+      <footer class="flex justify-end gap-2 border-t border-border bg-surface px-5 py-4">
+        <button
+          type="button"
+          class="h-control rounded-control border border-border-strong bg-surface px-4 text-button font-medium text-text-secondary"
+          [disabled]="saving()"
+          (click)="closeEditor()"
+        >
+          Cancel</button
+        ><button
+          type="button"
+          class="h-control rounded-control bg-primary px-4 text-button font-semibold text-on-primary disabled:opacity-60"
+          [disabled]="saving()"
+          (click)="save()"
+        >
+          {{
+            saving()
+              ? 'Saving…'
+              : state.mode === 'create'
+                ? 'Add'
+                : 'Save
+        changes'
+          }}
+        </button>
+      </footer>
+    </aside>
+  }
+</div>

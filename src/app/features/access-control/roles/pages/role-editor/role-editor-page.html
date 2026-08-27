@@ -189,3 +189,11 @@
   </form>
   }
 </div>
+@if (completionDialog(); as dialog) {
+  <app-success-dialog
+    [open]="true"
+    [title]="dialog.title"
+    [message]="dialog.message"
+    (confirmed)="confirmCompletion()"
+  />
+}

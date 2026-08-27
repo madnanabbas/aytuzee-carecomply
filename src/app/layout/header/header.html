@@ -1,7 +1,8 @@
 <header
   class="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-surface/95 px-page-mobile backdrop-blur-sm sm:px-page lg:px-page-wide"
 >
-  <div class="flex min-w-0 items-center gap-3">
+  <div class="flex min-w-0 flex-1 items-center gap-3">
+    <!-- Mobile menu -->
     <button
       #menuButton
       type="button"
@@ -16,14 +17,175 @@
       ></svg>
     </button>
 
-    <div class="min-w-0">
-      <p class="truncate text-label font-medium text-text-primary">
-        {{ pageContext() }}
-      </p>
+    <!-- Global navigation search -->
+    <div
+      #searchControl
+      class="relative w-full max-w-xl"
+    >
+      <div class="relative">
+        <svg
+          lucideSearch
+          class="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-text-muted"
+          aria-hidden="true"
+        ></svg>
+
+        <input
+          #searchInput
+          type="search"
+          autocomplete="off"
+          aria-label="Search CareComply"
+          aria-autocomplete="list"
+          aria-haspopup="listbox"
+          aria-controls="header-navigation-search-results"
+          [attr.aria-expanded]="searchOpen()"
+          [attr.aria-activedescendant]="
+            activeSearchIndex() >= 0
+              ? 'header-search-result-' + activeSearchIndex()
+              : null
+          "
+          placeholder="Search modules and features"
+          class="h-10 w-full rounded-control border border-border bg-surface-muted/55 pl-10 pr-10 text-small text-text-primary outline-none transition-colors placeholder:text-text-muted hover:border-border-strong hover:bg-surface focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/10"
+          [value]="searchQuery()"
+          (input)="onSearchInput($event)"
+          (focus)="onSearchFocus()"
+          (keydown)="onSearchKeydown($event)"
+        />
+
+        @if (searchQuery()) {
+          <button
+            type="button"
+            class="absolute right-1.5 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-control text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary"
+            aria-label="Clear search"
+            (click)="clearSearch()"
+          >
+            <svg
+              lucideX
+              class="size-4"
+              aria-hidden="true"
+            ></svg>
+          </button>
+        }
+      </div>
+
+      <!-- Search / quick access dropdown -->
+      @if (searchOpen()) {
+        <div
+          id="header-navigation-search-results"
+          role="listbox"
+          class="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-surface border border-border bg-surface shadow-elevated"
+        >
+          <!-- Dropdown heading -->
+          <div
+            class="flex items-center justify-between border-b border-border px-3.5 py-2"
+          >
+            <span
+              class="text-helper font-semibold uppercase tracking-[0.05em] text-text-muted"
+            >
+              {{
+                searchQuery().trim()
+                  ? 'Search results'
+                  : 'Quick access'
+              }}
+            </span>
+
+            @if (!searchQuery().trim()) {
+              <span class="text-helper text-text-muted">
+                {{ searchResults().length }} features
+              </span>
+            }
+          </div>
+
+          @if (searchResults().length > 0) {
+            <div
+              class="max-h-[26rem] overflow-y-auto py-1.5"
+            >
+              @for (
+                result of searchResults();
+                track result.id;
+                let index = $index
+              ) {
+                <!-- Module divider when the module changes -->
+                @if (
+                  !searchQuery().trim() &&
+                  (index === 0 ||
+                    searchResults()[index - 1]?.moduleLabel !==
+                      result.moduleLabel)
+                ) {
+                  <div
+                    class="px-3.5 pb-1 pt-2.5 text-helper font-semibold uppercase tracking-[0.04em] text-text-muted"
+                  >
+                    {{ result.moduleLabel }}
+                  </div>
+                }
+
+                <button
+                  type="button"
+                  role="option"
+                  class="flex w-full items-center justify-between gap-4 px-3.5 py-2.5 text-left transition-colors hover:bg-surface-muted focus:bg-surface-muted focus:outline-none"
+                  [id]="'header-search-result-' + index"
+                  [attr.aria-selected]="
+                    activeSearchIndex() === index
+                  "
+                  [class.bg-surface-muted]="
+                    activeSearchIndex() === index
+                  "
+                  (mouseenter)="
+                    activeSearchIndex.set(index)
+                  "
+                  (click)="openSearchResult(result)"
+                >
+                  <span class="min-w-0">
+                    <span
+                      class="block truncate text-small font-medium text-text-primary"
+                    >
+                      {{ result.label }}
+                    </span>
+
+                    <span
+                      class="mt-0.5 block truncate text-helper text-text-muted"
+                    >
+                      @if (result.parentLabel) {
+                        {{ result.moduleLabel }}
+                        <span aria-hidden="true"> › </span>
+                        {{ result.parentLabel }}
+                      } @else {
+                        {{ result.moduleLabel }}
+                      }
+                    </span>
+                  </span>
+
+                  <span
+                    class="shrink-0 text-helper text-text-muted"
+                  >
+                    Open
+                  </span>
+                </button>
+              }
+            </div>
+          } @else {
+            <div class="px-4 py-7 text-center">
+              <p
+                class="text-small font-medium text-text-primary"
+              >
+                No matching features
+              </p>
+
+              <p
+                class="mt-1 text-helper text-text-muted"
+              >
+                Try another module or feature name.
+              </p>
+            </div>
+          }
+        </div>
+      }
     </div>
   </div>
 
-  <div class="flex items-center gap-1 sm:gap-2">
+  <!-- Header actions -->
+  <div
+    class="ml-3 flex shrink-0 items-center gap-1 sm:gap-2"
+  >
     @if (canViewNotifications()) {
       <a
         routerLink="/notifications"
@@ -108,7 +270,9 @@
               </div>
             </div>
 
-            <div class="my-1 border-t border-border"></div>
+            <div
+              class="my-1 border-t border-border"
+            ></div>
 
             <button
               type="button"
@@ -122,7 +286,11 @@
                 aria-hidden="true"
               ></svg>
 
-              {{ logoutPending() ? 'Signing out...' : 'Logout' }}
+              {{
+                logoutPending()
+                  ? 'Signing out...'
+                  : 'Logout'
+              }}
             </button>
           </div>
         }

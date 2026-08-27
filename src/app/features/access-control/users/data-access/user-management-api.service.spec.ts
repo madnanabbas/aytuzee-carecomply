@@ -126,6 +126,7 @@ describe('UserManagementApiService', () => {
       firstName: 'Ada',
       lastName: 'Lovelace',
       email: 'ada@example.test',
+      password: 'StrongPassword123!',
       phoneNumber: null,
       isActive: true,
       requiresMfa: true,
@@ -138,13 +139,14 @@ describe('UserManagementApiService', () => {
       firstName: 'Ada',
       lastName: 'Lovelace',
       email: 'ada@example.test',
+      password: 'StrongPassword123!',
       phoneNumber: null,
       isActive: true,
       requiresMfa: true,
       mfaMethod: 'Authenticator',
       roleIds: ['role-1', 'role-2'],
     });
-    expect(JSON.stringify(create.request.body).toLocaleLowerCase()).not.toContain('password');
+    expect(create.request.body.password).toBe('StrongPassword123!');
     create.flush({ id: 'user-1' });
   });
 });

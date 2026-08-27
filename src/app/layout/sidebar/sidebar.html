@@ -333,20 +333,20 @@
     [class.px-5]="!collapsed()"
   >
     @if (!collapsed()) {
-      <img
+      <img routerLink="/"
         src="/images/logo-light.png"
         alt="Aytuzee Care Comply"
-        class="block h-auto w-[12.5rem] max-w-full object-contain"
+        class="block h-auto w-[12.5rem] max-w-full object-contain" style="cursor:pointer"
       />
     } @else {
       <div
         class="flex size-11 items-center justify-center overflow-hidden"
         title="Aytuzee Care Comply"
       >
-        <img
+        <img routerLink="/"
           src="/images/logo-single.png"
           alt="Aytuzee Care Comply"
-          class="h-10 w-auto max-w-none object-contain object-left"
+          class="h-10 w-auto max-w-none object-contain object-left" style="cursor:pointer"
         />
       </div>
     }
@@ -456,7 +456,7 @@
         px-5
       "
     >
-      <img
+      <img routerLink="/"
         src="/images/logo-light.png"
         alt="Aytuzee Care Comply"
         class="
@@ -464,7 +464,7 @@
           w-[11.5rem]
           max-w-[calc(100%-3.5rem)]
           object-contain
-        "
+        " style="cursor:pointer"
       />
 
       <button

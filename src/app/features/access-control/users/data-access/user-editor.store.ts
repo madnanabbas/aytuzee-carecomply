@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { computed, DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { finalize, forkJoin, of } from 'rxjs';
+import { finalize, forkJoin, Observable, of, switchMap } from 'rxjs';
 import { AuthorizationService } from '../../../../core/authorization/authorization.service';
 import { Permissions } from '../../../../core/authorization/permissions';
 import {
@@ -14,6 +14,19 @@ import {
   UserMfaMethod,
 } from '../models/user-management.models';
 import { UserManagementApiService } from './user-management-api.service';
+
+
+export interface SaveUserEditRequest {
+  readonly general: UpdateUserGeneralRequest;
+  readonly isActive: boolean;
+  readonly roleIds: readonly string[];
+  readonly mfaEnabled: boolean;
+  readonly mfaMethod: UserMfaMethod;
+  readonly generalChanged: boolean;
+  readonly statusChanged: boolean;
+  readonly rolesChanged: boolean;
+  readonly mfaChanged: boolean;
+}
 
 export type UserEditorError =
   | 'conflict'
@@ -44,6 +57,7 @@ export class UserEditorStore {
   readonly saving = signal(false);
   readonly error = signal<UserEditorError>(null);
   readonly successMessage = signal<string | null>(null);
+  readonly completionDialog = signal<{ readonly title: string; readonly message: string } | null>(null);
   readonly selectedRoles = computed(() => {
     const selectedIds = new Set(this.selectedRoleIds());
     return this.roles().filter((role) => selectedIds.has(role.id));
@@ -143,6 +157,7 @@ export class UserEditorStore {
       firstName: general.firstName.trim(),
       lastName: general.lastName.trim(),
       email: general.email.trim(),
+      password: general.password,
       phoneNumber: general.phoneNumber.trim() || null,
       isActive: general.isActive,
       requiresMfa: this.createMfaEnabled(),
@@ -154,14 +169,102 @@ export class UserEditorStore {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        next: (created) => {
-          void this.router.navigate(['/access-control/users', created.id, 'general']);
+        next: (_created) => {
+          this.completionDialog.set({
+            title: 'User created successfully',
+            message: 'The new CareComply user account was created and is ready for assigned access.',
+          });
         },
         error: (error: HttpErrorResponse) => {
           const problemType = typeof error.error?.type === 'string' ? error.error.type : '';
           this.error.set(problemType.endsWith('user-duplicate-email')
             ? 'duplicateEmail'
             : problemType.endsWith('user-role-invalid') ? 'invalidRoles' : 'failed');
+        },
+      });
+  }
+
+  saveEdit(request: SaveUserEditRequest): void {
+    const currentUser = this.user();
+    if (!currentUser || this.saving()) {
+      return;
+    }
+
+    this.beginOperation();
+
+    let operation$: Observable<UserDetails> = of(currentUser);
+
+    if (request.generalChanged) {
+      operation$ = operation$.pipe(
+        switchMap((user) =>
+          this.api.updateGeneral(user.id, {
+            ...request.general,
+            editorVersion: user.editorVersion,
+          }),
+        ),
+      );
+    }
+
+    if (request.rolesChanged) {
+      operation$ = operation$.pipe(
+        switchMap((user) =>
+          this.api.replaceRoles(user.id, {
+            roleIds: request.roleIds,
+            editorVersion: user.editorVersion,
+          }),
+        ),
+      );
+    }
+
+    if (request.statusChanged) {
+      operation$ = operation$.pipe(
+        switchMap((user) =>
+          this.api.setActive(user.id, request.isActive, user.editorVersion),
+        ),
+      );
+    }
+
+    if (request.mfaChanged) {
+      operation$ = operation$.pipe(
+        switchMap((user) =>
+          this.api.setMfa(
+            user.id,
+            request.mfaEnabled,
+            request.mfaMethod,
+            user.editorVersion,
+          ),
+        ),
+      );
+    }
+
+    operation$
+      .pipe(
+        finalize(() => this.saving.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (updated) => {
+          this.acceptUser(updated);
+          this.completionDialog.set({
+            title: 'User updated successfully',
+            message: 'The user account, access settings, and security changes were saved successfully.',
+          });
+        },
+        error: (error: HttpErrorResponse) => {
+          const problemType =
+            typeof error.error?.type === 'string' ? error.error.type : '';
+
+          this.error.set(
+            problemType.endsWith('user-duplicate-email')
+              ? 'duplicateEmail'
+              : problemType.endsWith('user-role-invalid')
+                ? 'invalidRoles'
+                : problemType.endsWith('user-mfa-required-by-permissions')
+                  ? 'mfaRequiredByPermissions'
+                  : error.status === 409
+                    ? 'conflict'
+                    : 'failed',
+          );
         },
       });
   }
@@ -179,7 +282,10 @@ export class UserEditorStore {
       .subscribe({
         next: (updated) => {
           this.acceptUser(updated);
-          this.successMessage.set('User details saved.');
+          this.completionDialog.set({
+            title: 'User updated',
+            message: 'The user details were updated successfully.',
+          });
         },
         error: (error: HttpErrorResponse) => this.error.set(error.status === 409 ? 'conflict' : 'failed'),
       });
@@ -259,6 +365,12 @@ export class UserEditorStore {
   clearMessages(): void {
     this.error.set(null);
     this.successMessage.set(null);
+  }
+
+  confirmCompletion(): void {
+    if (!this.completionDialog()) return;
+    this.completionDialog.set(null);
+    void this.router.navigate(['/access-control/users']);
   }
 
   private beginOperation(): void {

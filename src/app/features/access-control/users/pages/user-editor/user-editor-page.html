@@ -61,3 +61,12 @@
     </div>
   }
 </section>
+
+@if (store.completionDialog(); as dialog) {
+  <app-success-dialog
+    [open]="true"
+    [title]="dialog.title"
+    [message]="dialog.message"
+    (confirmed)="store.confirmCompletion()"
+  />
+}

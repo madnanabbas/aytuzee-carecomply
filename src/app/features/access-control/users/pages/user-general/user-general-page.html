@@ -164,6 +164,46 @@
           }
         </div>
 
+        <!-- Password -->
+        <div>
+          <label
+            for="user-password"
+            class="block text-label font-medium text-text-primary"
+          >
+            {{ store.isCreateMode() ? 'Password' : 'New password' }}
+            @if (store.isCreateMode()) {
+              <span class="text-danger">*</span>
+            }
+          </label>
+
+          <input
+            id="user-password"
+            type="password"
+            formControlName="password"
+            [attr.autocomplete]="store.isCreateMode() ? 'new-password' : 'off'"
+            [placeholder]="store.isCreateMode() ? 'Enter initial password' : 'Leave blank to keep current password'"
+            class="mt-1.5 h-control w-full rounded-control border border-border-strong bg-surface px-3.5 text-body text-text-primary transition-colors placeholder:text-text-muted hover:border-text-muted focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/15"
+          />
+
+          <p class="mt-1.5 text-helper text-text-muted">
+            {{
+              store.isCreateMode()
+                ? 'Minimum 15 characters. The user can change it later.'
+                : 'Optional. Enter at least 15 characters only when changing the password.'
+            }}
+          </p>
+
+          @if (form.controls.password.touched && form.controls.password.hasError('required')) {
+            <p class="mt-1.5 text-helper text-danger">
+              Enter a password for the new user.
+            </p>
+          } @else if (form.controls.password.touched && form.controls.password.value && form.controls.password.value.length < 15) {
+            <p class="mt-1.5 text-helper text-danger">
+              Password must be at least 15 characters.
+            </p>
+          }
+        </div>
+
         <!-- Phone -->
         <div>
           <label
@@ -224,37 +264,15 @@
             Account status
           </label>
 
-          @if (store.isCreateMode()) {
-            <select
-              id="user-account-status"
-              formControlName="isActive"
-              class="mt-1.5 h-control w-full rounded-control border border-border-strong bg-surface px-3 text-body text-text-primary transition-colors hover:border-text-muted focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/15"
-            >
-              <option [ngValue]="true">
-                Active
-              </option>
-
-              <option [ngValue]="false">
-                Inactive
-              </option>
-            </select>
-          } @else {
-            <select
-              id="user-account-status"
-              [value]="store.user()!.isActive ? 'active' : 'inactive'"
-              [disabled]="!canManage() || store.saving()"
-              class="mt-1.5 h-control w-full rounded-control border border-border-strong bg-surface px-3 text-body text-text-primary transition-colors hover:border-text-muted focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/15 disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-text-muted"
-              (change)="changeStatus($event)"
-            >
-              <option value="active">
-                Active
-              </option>
-
-              <option value="inactive">
-                Inactive
-              </option>
-            </select>
-          }
+          <select
+            id="user-account-status"
+            formControlName="isActive"
+            [disabled]="!store.isCreateMode() && (!canManage() || store.saving())"
+            class="mt-1.5 h-control w-full rounded-control border border-border-strong bg-surface px-3 text-body text-text-primary transition-colors hover:border-text-muted focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/15 disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-text-muted"
+          >
+            <option [ngValue]="true">Active</option>
+            <option [ngValue]="false">Inactive</option>
+          </select>
 
           <p class="mt-1.5 text-helper text-text-muted">
             Inactive users cannot sign in to CareComply.
@@ -290,11 +308,11 @@
           } @else {
             <select
               id="user-role"
-              [value]="store.selectedRoleIds().at(0) ?? ''"
+              [value]="store.isCreateMode() ? (store.selectedRoleIds().at(0) ?? '') : editRoleId()"
               [disabled]="
                 store.loading() ||
                 store.saving() ||
-                (!store.isCreateMode() && (!canManage() || form.dirty))
+                (!store.isCreateMode() && !canManage())
               "
               class="mt-1.5 h-control w-full rounded-control border border-border-strong bg-surface px-3 text-body text-text-primary transition-colors hover:border-text-muted focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/15 disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-text-muted"
               (change)="store.isCreateMode() ? changeCreateRole($event) : changeEditRole($event)"
@@ -310,10 +328,8 @@
                 Select the initial access role for this user.
               } @else if (!canManage()) {
                 Role assignment is read-only.
-              } @else if (form.dirty) {
-                Save or cancel profile changes before changing the role.
               } @else {
-                Changing the role recalculates access and revokes existing sessions.
+                Role changes are applied only when you select Save changes.
               }
             </p>
           }
@@ -372,8 +388,7 @@
                 role="switch"
                 aria-label="Require multi-factor authentication"
                 [attr.aria-checked]="
-                  store.user()!.isMfaRequired ||
-                  store.user()!.isMfaEnabled
+                  editMfaEnabled()
                 "
                 [disabled]="
                   !canManage() ||
@@ -382,33 +397,22 @@
                 "
                 class="relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
                 [class.bg-primary]="
-                  store.user()!.isMfaRequired ||
-                  store.user()!.isMfaEnabled
+                  editMfaEnabled()
                 "
                 [class.bg-border-strong]="
-                  !store.user()!.isMfaRequired &&
-                  !store.user()!.isMfaEnabled
+                  !editMfaEnabled()
                 "
                 (click)="
                   changeMfa(
-                    !(
-                      store.user()!.isMfaRequired ||
-                      store.user()!.isMfaEnabled
-                    )
+                    !editMfaEnabled()
                   )
                 "
               >
                 <span
                   aria-hidden="true"
                   class="pointer-events-none absolute left-0.5 top-0.5 size-4 rounded-full bg-white shadow-sm transition-transform duration-200"
-                  [class.translate-x-4]="
-                    store.user()!.isMfaRequired ||
-                    store.user()!.isMfaEnabled
-                  "
-                  [class.translate-x-0]="
-                    !store.user()!.isMfaRequired &&
-                    !store.user()!.isMfaEnabled
-                  "
+                  [class.translate-x-4]="editMfaEnabled()"
+                  [class.translate-x-0]="!editMfaEnabled()"
                 ></span>
               </button>
 
@@ -416,7 +420,7 @@
                 Require MFA
               </span>
 
-              @if (store.user()!.isMfaEnabled) {
+              @if (store.user()!.isMfaEnabled && editMfaEnabled()) {
                 <span
                   class="rounded-status bg-primary-subtle px-2 py-0.5 text-helper font-medium text-primary"
                 >
@@ -457,8 +461,7 @@
 
           @if (
             (store.isCreateMode() && store.createRequiresMfa()) ||
-            (!store.isCreateMode() &&
-              (store.user()!.isMfaRequired || store.user()!.isMfaEnabled))
+            (!store.isCreateMode() && editMfaEnabled())
           ) {
             <fieldset class="mt-4 space-y-2" aria-label="MFA method">
               <legend class="text-label font-medium text-text-primary">
@@ -475,7 +478,7 @@
                   class="mt-0.5 size-4 shrink-0 accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                   [checked]="store.isCreateMode()
                     ? store.createMfaMethod() === 'Authenticator'
-                    : store.user()!.mfaMethod === 'Authenticator'"
+                    : editMfaMethod() === 'Authenticator'"
                   [disabled]="store.saving() || (!store.isCreateMode() && !canManage())"
                   (change)="store.isCreateMode()
                     ? changeCreateMfaMethod('Authenticator')
@@ -501,7 +504,7 @@
                   class="mt-0.5 size-4 shrink-0 accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                   [checked]="store.isCreateMode()
                     ? store.createMfaMethod() === 'Email'
-                    : store.user()!.mfaMethod === 'Email'"
+                    : editMfaMethod() === 'Email'"
                   [disabled]="store.saving() || (!store.isCreateMode() && !canManage())"
                   (change)="store.isCreateMode()
                     ? changeCreateMfaMethod('Email')
@@ -524,116 +527,19 @@
     </section>
 
 
-    <!-- =====================================================
-         DEACTIVATION CONFIRMATION
-         ===================================================== -->
-    @if (confirmingDeactivation()) {
+    @if (!store.isCreateMode() && hasPendingChanges()) {
       <div
-        role="alert"
-        class="mb-5 rounded-control border border-danger/30 bg-danger/5 p-4"
+        class="mb-5 rounded-control border border-primary/20 bg-primary-subtle/40 px-4 py-3"
+        role="status"
       >
-        <p class="text-label font-semibold text-text-primary">
-          Deactivate this user?
+        <p class="text-small font-medium text-text-primary">
+          You have unsaved changes.
         </p>
-
-        <p class="mt-1 text-small text-text-secondary">
-          The user will no longer be able to sign in and their active sessions
-          will be revoked.
+        <p class="mt-0.5 text-helper text-text-secondary">
+          Account, role, password, and MFA changes are applied only when you select Save changes.
         </p>
-
-        <div class="mt-4 flex flex-wrap gap-2">
-
-          <button
-            type="button"
-            class="h-control rounded-control bg-danger px-4 text-button font-semibold text-on-primary"
-            (click)="confirmDeactivation()"
-          >
-            Deactivate user
-          </button>
-
-          <button
-            type="button"
-            class="h-control rounded-control border border-border-strong bg-surface px-4 text-button font-medium text-text-secondary transition-colors hover:bg-surface-muted"
-            (click)="confirmingDeactivation.set(false)"
-          >
-            Cancel
-          </button>
-
-        </div>
       </div>
     }
-
-
-    <!-- =====================================================
-         MFA DISABLE CONFIRMATION
-         ===================================================== -->
-    @if (confirmingMfaDisable()) {
-      <div
-        role="alert"
-        class="mb-5 rounded-control border border-warning/30 bg-warning/5 p-4"
-      >
-        <p class="text-label font-semibold text-text-primary">
-          Turn off multi-factor authentication?
-        </p>
-
-        <p class="mt-1 text-small text-text-secondary">
-          The current authenticator enrollment, recovery codes, and active
-          sessions will be invalidated.
-        </p>
-
-        <div class="mt-4 flex flex-wrap gap-2">
-
-          <button
-            type="button"
-            class="h-control rounded-control bg-danger px-4 text-button font-semibold text-on-primary"
-            (click)="confirmMfaDisable()"
-          >
-            Turn off MFA
-          </button>
-
-          <button
-            type="button"
-            class="h-control rounded-control border border-border-strong bg-surface px-4 text-button font-medium text-text-secondary transition-colors hover:bg-surface-muted"
-            (click)="confirmingMfaDisable.set(false)"
-          >
-            Cancel
-          </button>
-
-        </div>
-      </div>
-    }
-
-    @if (pendingMfaMethod()) {
-      <div
-        role="alert"
-        class="mb-5 rounded-control border border-warning/30 bg-warning/5 p-4"
-      >
-        <p class="text-label font-semibold text-text-primary">
-          Change MFA method?
-        </p>
-        <p class="mt-1 text-small text-text-secondary">
-          Existing sessions and the previous MFA enrollment will be revoked.
-          Authenticator selection requires fresh enrollment at the next login.
-        </p>
-        <div class="mt-4 flex flex-wrap gap-2">
-          <button
-            type="button"
-            class="h-control rounded-control bg-primary px-4 text-button font-semibold text-on-primary"
-            (click)="confirmMfaMethodChange()"
-          >
-            Change method
-          </button>
-          <button
-            type="button"
-            class="h-control rounded-control border border-border-strong bg-surface px-4 text-button font-medium text-text-secondary transition-colors hover:bg-surface-muted"
-            (click)="pendingMfaMethod.set(null)"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    }
-
 
     <!-- =====================================================
          EDIT MODE ACTIONS
@@ -656,7 +562,7 @@
           class="h-control rounded-control bg-primary px-5 text-button font-semibold text-on-primary transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
           [disabled]="
             form.invalid ||
-            form.pristine ||
+            !hasPendingChanges() ||
             store.saving()
           "
         >

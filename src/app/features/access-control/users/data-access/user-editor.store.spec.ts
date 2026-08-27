@@ -33,13 +33,14 @@ describe('UserEditorStore create mode', () => {
     });
   });
 
-  it('loads roles, submits the focused contract once, and redirects to the editor', () => {
+  it('loads roles, submits the focused contract once, and waits for success acknowledgement', () => {
     const store = TestBed.inject(UserEditorStore);
     store.initializeCreate();
     store.updateCreateGeneral({
       firstName: ' Ada ',
       lastName: ' Lovelace ',
       email: ' ada@example.test ',
+      password: 'StrongPassword123!',
       phoneNumber: ' ',
       isActive: true,
     }, true);
@@ -52,17 +53,19 @@ describe('UserEditorStore create mode', () => {
       firstName: 'Ada',
       lastName: 'Lovelace',
       email: 'ada@example.test',
+      password: 'StrongPassword123!',
       phoneNumber: null,
       isActive: true,
       requiresMfa: false,
       mfaMethod: 'Authenticator',
       roleIds: ['role-1'],
     });
-    expect(JSON.stringify(api.createUser.mock.calls[0][0]).toLocaleLowerCase())
-      .not.toContain('password');
-    expect(router.navigate).toHaveBeenCalledWith([
-      '/access-control/users', 'created-user', 'general',
-    ]);
+    expect(api.createUser.mock.calls[0][0].password).toBe('StrongPassword123!');
+    expect(store.completionDialog()?.title).toContain('User created');
+    expect(router.navigate).not.toHaveBeenCalled();
+
+    store.confirmCompletion();
+    expect(router.navigate).toHaveBeenCalledWith(['/access-control/users']);
   });
 
   it('requires General data and at least one role before calling the API', () => {
@@ -75,6 +78,7 @@ describe('UserEditorStore create mode', () => {
 
     store.updateCreateGeneral({
       firstName: 'Ada', lastName: 'Lovelace', email: 'ada@example.test',
+      password: 'StrongPassword123!',
       phoneNumber: '', isActive: true,
     }, true);
     store.create();
@@ -89,6 +93,7 @@ describe('UserEditorStore create mode', () => {
     store.initializeCreate();
     store.updateCreateGeneral({
       firstName: 'Ada', lastName: 'Lovelace', email: 'ada@example.test',
+      password: 'StrongPassword123!',
       phoneNumber: '', isActive: true,
     }, true);
     store.toggleRole('role-1', true);

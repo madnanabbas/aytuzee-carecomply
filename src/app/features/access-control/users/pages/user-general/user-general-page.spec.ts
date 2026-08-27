@@ -24,7 +24,7 @@ describe('UserGeneralPageComponent', () => {
   };
   const store = {
     isCreateMode: signal(false),
-    createGeneral: signal({ firstName: '', lastName: '', email: '', phoneNumber: '', isActive: true }),
+    createGeneral: signal({ firstName: '', lastName: '', email: '', password: '', phoneNumber: '', isActive: true }),
     roles: signal([{ id: 'role-1', name: 'Database Role', permissions: [], requiresMfa: false }]),
     selectedRoleIds: signal<readonly string[]>([]),
     createRequiresMfa: signal(false),
@@ -36,6 +36,7 @@ describe('UserGeneralPageComponent', () => {
     error: signal(null),
     successMessage: signal(null),
     saveGeneral: vi.fn(),
+    saveEdit: vi.fn(),
     setActive: vi.fn(),
     setMfa: vi.fn(),
     replaceRoles: vi.fn(),
@@ -69,25 +70,22 @@ describe('UserGeneralPageComponent', () => {
     expect(() => fixture.detectChanges()).not.toThrow();
     const form = (fixture.nativeElement as HTMLElement).querySelector('form');
     expect(form).not.toBeNull();
-    expect(form?.querySelectorAll('[formcontrolname]')).toHaveLength(4);
+    expect(form?.querySelectorAll('[formcontrolname]')).toHaveLength(6);
     expect(Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('select option'))
       .map((option) => option.textContent?.trim())).toEqual(['Active', 'Inactive']);
     expect((fixture.nativeElement as HTMLElement).querySelectorAll('input[type="radio"]'))
       .toHaveLength(2);
   });
 
-  it('requires confirmation before disabling an enrolled authenticator', () => {
-    store.setMfa.mockClear();
+  it('keeps MFA changes local until Save changes is selected', () => {
     const fixture = TestBed.createComponent(UserGeneralPageComponent);
     fixture.detectChanges();
 
     fixture.componentInstance.changeMfa(false);
-    fixture.detectChanges();
-    expect(store.setMfa).not.toHaveBeenCalled();
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Confirm MFA disable');
 
-    fixture.componentInstance.confirmMfaDisable();
-    expect(store.setMfa).toHaveBeenCalledWith(false, 'Authenticator');
+    expect(fixture.componentInstance.editMfaEnabled()).toBe(false);
+    expect(store.setMfa).not.toHaveBeenCalled();
+    expect(store.saveEdit).not.toHaveBeenCalled();
   });
 
   it('captures validated create-mode General data without a password field', () => {
@@ -98,6 +96,7 @@ describe('UserGeneralPageComponent', () => {
       firstName: 'Ada',
       lastName: 'Lovelace',
       email: 'ada@example.test',
+      password: 'StrongPassword123!',
       phoneNumber: '+1 555 0100',
       isActive: false,
     });
@@ -107,13 +106,14 @@ describe('UserGeneralPageComponent', () => {
       firstName: 'Ada',
       lastName: 'Lovelace',
       email: 'ada@example.test',
+      password: 'StrongPassword123!',
       phoneNumber: '+1 555 0100',
       isActive: false,
     }, true);
     expect((fixture.nativeElement as HTMLElement).querySelector('[formcontrolname="isActive"]'))
       .not.toBeNull();
     expect((fixture.nativeElement as HTMLElement).querySelector('input[type="password"]'))
-      .toBeNull();
+      .not.toBeNull();
     expect((fixture.nativeElement as HTMLElement).querySelectorAll('input[name="mfa-method"]'))
       .toHaveLength(0);
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('Database Role');
@@ -153,7 +153,8 @@ describe('UserGeneralPageComponent', () => {
     select!.value = 'role-2';
     select!.dispatchEvent(new Event('change'));
 
-    expect(store.replaceRoles).toHaveBeenCalledWith(['role-2']);
+    expect(fixture.componentInstance.editRoleId()).toBe('role-2');
+    expect(store.replaceRoles).not.toHaveBeenCalled();
   });
 
   it('keeps role assignment read-only without User.Manage', () => {

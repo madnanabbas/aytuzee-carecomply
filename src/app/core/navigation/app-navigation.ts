@@ -36,6 +36,7 @@ export const APP_ROUTE_METADATA = {
   ]),
   users: route('users', '/access-control/users', [Permissions.User.View]),
   roles: route('roles', '/access-control/roles', [Permissions.Role.View]),
+  modulesFeatures: route('modules-features', '/access-control/modules-features', [Permissions.Permission.View]),
   permissions: route('permissions', '/access-control/permissions', [Permissions.Permission.View]),
   auditLogs: route('audit-logs', '/access-control/audit-logs', [Permissions.AuditLog.View]),
 } as const satisfies Record<string, RegisteredNavigationRoute>;

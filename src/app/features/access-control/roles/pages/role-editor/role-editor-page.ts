@@ -9,6 +9,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize, forkJoin, Observable, of, switchMap } from 'rxjs';
 import { AuthorizationService } from '../../../../../core/authorization/authorization.service';
 import { Permissions } from '../../../../../core/authorization/permissions';
+import { SuccessDialogComponent } from '../../../../../shared/components/success-dialog/success-dialog';
 import { PermissionMatrixComponent } from '../../components/permission-matrix/permission-matrix';
 import { RoleManagementService } from '../../data-access/role-management.service';
 import {
@@ -20,7 +21,7 @@ import {
 @Component({
   selector: 'app-role-editor-page',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, PermissionMatrixComponent],
+  imports: [ReactiveFormsModule, RouterLink, PermissionMatrixComponent, SuccessDialogComponent],
   templateUrl: './role-editor-page.html',
 })
 export class RoleEditorPage {
@@ -42,6 +43,7 @@ export class RoleEditorPage {
   readonly saving = signal(false);
   readonly error = signal<RoleEditorError | null>(null);
   readonly successMessage = signal<string | null>(null);
+  readonly completionDialog = signal<{ readonly title: string; readonly message: string } | null>(null);
 
   readonly form = this.formBuilder.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(100)]],
@@ -144,10 +146,19 @@ export class RoleEditorPage {
       .subscribe({
         next: (role) => {
           this.applyRole(role);
-          this.successMessage.set('Role changes saved successfully.');
+          this.completionDialog.set({
+            title: 'Role updated successfully',
+            message: 'The role details and assigned permissions were saved successfully.',
+          });
         },
         error: (error: HttpErrorResponse) => this.error.set(mapRoleError(error)),
       });
+  }
+
+  confirmCompletion(): void {
+    if (!this.completionDialog()) return;
+    this.completionDialog.set(null);
+    void this.router.navigate(['/access-control/roles']);
   }
 
   private createRole(): void {
@@ -159,8 +170,11 @@ export class RoleEditorPage {
       })
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
-        next: (role) => {
-          void this.router.navigate(['/access-control/roles', role.id]);
+        next: (_role) => {
+          this.completionDialog.set({
+            title: 'Role created successfully',
+            message: 'The new role and its assigned permissions were created successfully.',
+          });
         },
         error: (error: HttpErrorResponse) => this.error.set(mapRoleError(error)),
       });

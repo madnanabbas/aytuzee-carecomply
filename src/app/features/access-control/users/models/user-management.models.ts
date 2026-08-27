@@ -74,6 +74,7 @@ export interface UpdateUserGeneralRequest {
   readonly lastName: string;
   readonly email: string;
   readonly phoneNumber: string | null;
+  readonly password?: string | null;
   readonly editorVersion: string;
 }
 
@@ -81,6 +82,7 @@ export interface CreateUserGeneral {
   readonly firstName: string;
   readonly lastName: string;
   readonly email: string;
+  readonly password: string;
   readonly phoneNumber: string;
   readonly isActive: boolean;
 }
@@ -89,6 +91,7 @@ export interface CreateUserRequest {
   readonly firstName: string;
   readonly lastName: string;
   readonly email: string;
+  readonly password: string;
   readonly phoneNumber: string | null;
   readonly isActive: boolean;
   readonly requiresMfa: boolean;
@@ -109,6 +112,7 @@ export const EMPTY_CREATE_USER_GENERAL: CreateUserGeneral = {
   firstName: '',
   lastName: '',
   email: '',
+  password: '',
   phoneNumber: '',
   isActive: true,
 };
