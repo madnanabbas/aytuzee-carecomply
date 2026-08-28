@@ -28,6 +28,34 @@ describe('authInterceptor', () => {
 
   afterEach(() => http.verify());
 
+  it('should send credentials with every CareComply API request', () => {
+    const client = TestBed.inject(HttpClient);
+
+    client.post('/api/auth/login', {}).subscribe();
+    const loginRequest = http.expectOne('/api/auth/login');
+    expect(loginRequest.request.withCredentials).toBe(true);
+    loginRequest.flush({ status: 'mfaEnrollmentRequired' }, { status: 202, statusText: 'Accepted' });
+
+    client.get('/api/auth/mfa/context').subscribe();
+    const mfaContextRequest = http.expectOne('/api/auth/mfa/context');
+    expect(mfaContextRequest.request.withCredentials).toBe(true);
+    mfaContextRequest.flush({});
+
+    client.get('/api/auth/me').subscribe();
+    const meRequest = http.expectOne('/api/auth/me');
+    expect(meRequest.request.withCredentials).toBe(true);
+    meRequest.flush({});
+  });
+
+  it('should not attach credentials to non-API requests', () => {
+    const client = TestBed.inject(HttpClient);
+    client.get('https://example.test/resource').subscribe();
+
+    const request = http.expectOne('https://example.test/resource');
+    expect(request.request.withCredentials).toBe(false);
+    request.flush({});
+  });
+
   it('should add the in-memory csrf token to unsafe API requests', () => {
     const client = TestBed.inject(HttpClient);
     client.post('/api/auth/logout', null).subscribe();
