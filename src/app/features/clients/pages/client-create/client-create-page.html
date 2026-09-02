@@ -44,6 +44,18 @@
     </ol>
   </nav>
 
+
+  @if (errorMessage() || validationErrors().length) {
+    <div class="mt-3 rounded-control border border-red-200 bg-red-50 px-3 py-2.5 text-[11px] text-red-800" role="alert">
+      @if (errorMessage()) { <p class="font-semibold">{{ errorMessage() }}</p> }
+      @if (validationErrors().length) {
+        <ul class="mt-1 list-disc space-y-0.5 pl-4">
+          @for (error of validationErrors(); track error) { <li>{{ error }}</li> }
+        </ul>
+      }
+    </div>
+  }
+
   <main class="mt-3 rounded-surface border border-border bg-surface">
     <div class="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
       <div>
@@ -73,7 +85,7 @@
                 <label><span class="form-label">Age</span><input [value]="ageFromDob()" class="form-control bg-surface-muted" readonly /></label>
                 <label><span class="form-label">Gender *</span><select [(ngModel)]="draft.gender" class="form-control"><option value="">Select gender</option><option>Male</option><option>Female</option><option>Other</option><option>Prefer not to say</option></select></label>
                 <label><span class="form-label">PMI # *</span><input [(ngModel)]="draft.pmi" class="form-control" placeholder="Member identifier" /></label>
-                <label><span class="form-label">SSN</span><input [(ngModel)]="draft.ssn" type="password" class="form-control" placeholder="•••-••-••••" /></label>
+                <label><span class="form-label">SSN</span><input [(ngModel)]="draft.ssn" type="password" class="form-control bg-surface-muted" placeholder="Protected storage will be added in a later security phase" disabled title="SSN is intentionally not collected by the Client Core API until protected storage and access controls are implemented." /></label>
                 <label><span class="form-label">Insurance</span><input [(ngModel)]="draft.insurance" class="form-control" placeholder="Insurance provider" /></label>
               </div>
             </section>
@@ -87,7 +99,7 @@
                 <label><span class="form-label">Intake date</span><input type="date" [(ngModel)]="draft.intakeDate" class="form-control" /></label>
                 <label><span class="form-label">SOC date *</span><input type="date" [(ngModel)]="draft.socDate" class="form-control" /></label>
                 <label><span class="form-label">Referral source</span><select [(ngModel)]="draft.referralSource" class="form-control"><option value="">Select source</option><option>Self</option><option>County</option><option>Hospital</option><option>Clinic</option><option>Family / Friend</option><option>Other</option></select></label>
-                <label><span class="form-label">Status</span><select [(ngModel)]="draft.status" class="form-control"><option>Active</option><option>Pending</option><option>Inactive</option><option>Discharged</option></select></label>
+                <label><span class="form-label">Status</span><select [(ngModel)]="draft.status" class="form-control"><option>Active</option><option>Pending</option><option>On hold</option><option>Inactive</option><option>Discharged</option></select></label>
                 <label><span class="form-label">Location</span><select [(ngModel)]="draft.location" class="form-control"><option value="">Select location</option>@for (option of locationOptions; track option) {<option [value]="option">{{ option }}</option>}</select></label>
 
                 <div class="relative">
@@ -96,7 +108,7 @@
                   @if (servicesOpen()) {<div class="absolute z-30 mt-1 w-full rounded-control border border-border bg-surface p-1.5 shadow-lg">@for (option of serviceOptions; track option) {<label class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-[12px] hover:bg-surface-muted"><input type="checkbox" [checked]="draft.services.includes(option)" (change)="onToggleArray('services', option, $event)" /><span>{{ option }}</span></label>}</div>}
                 </div>
 
-                <label><span class="form-label">Supervisor</span><select [(ngModel)]="draft.supervisor" class="form-control"><option value="">Select supervisor</option><option>Jane Doe</option><option>Michael Brown</option><option>Sarah Johnson</option></select></label>
+                <label><span class="form-label">Supervisor</span><select [(ngModel)]="draft.supervisor" class="form-control bg-surface-muted" disabled title="Supervisor assignment will be connected when the Employee module is implemented."><option value="">Assigned after client creation</option></select></label>
                 <label><span class="form-label">EVV hours</span><input type="number" min="0" [(ngModel)]="draft.evvHours" class="form-control" placeholder="Authorized hours" /></label>
                 <label class="flex items-center gap-2 self-end pb-2"><input type="checkbox" [(ngModel)]="draft.onboarding" /><span class="text-[12px] font-medium text-text-secondary">Client is onboarding</span></label>
                 @if (draft.status === 'Discharged') {
@@ -180,9 +192,9 @@
             <section>
               <div class="section-heading"><h3>Providers & emergency references</h3><p>Preferred clinic, hospital and ambulance references. These are not hospitalization history records.</p></div>
               <div class="grid gap-3 xl:grid-cols-3">
-                <div class="rounded-control border border-border p-3"><p class="text-[12px] font-semibold text-text-primary">Clinic</p><div class="mt-2 grid gap-2"><input [(ngModel)]="draft.clinicName" class="form-control" placeholder="Clinic name" /><input [(ngModel)]="draft.clinicPhone" class="form-control" placeholder="Phone" /><input [(ngModel)]="draft.clinicFax" class="form-control" placeholder="Fax" /><input [(ngModel)]="draft.clinicAddress" class="form-control" placeholder="Address" /></div></div>
-                <div class="rounded-control border border-border p-3"><p class="text-[12px] font-semibold text-text-primary">Preferred hospital</p><div class="mt-2 grid gap-2"><input [(ngModel)]="draft.hospitalName" class="form-control" placeholder="Hospital name" /><input [(ngModel)]="draft.hospitalPhone" class="form-control" placeholder="Phone" /><input [(ngModel)]="draft.hospitalFax" class="form-control" placeholder="Fax" /><input [(ngModel)]="draft.hospitalAddress" class="form-control" placeholder="Address" /></div></div>
-                <div class="rounded-control border border-border p-3"><p class="text-[12px] font-semibold text-text-primary">Ambulance company</p><div class="mt-2 grid gap-2"><input [(ngModel)]="draft.ambulanceName" class="form-control" placeholder="Company name" /><input [(ngModel)]="draft.ambulancePhone" class="form-control" placeholder="Phone" /><input [(ngModel)]="draft.ambulanceFax" class="form-control" placeholder="Fax" /><input [(ngModel)]="draft.ambulanceAddress" class="form-control" placeholder="Address" /></div></div>
+                <div class="rounded-control border border-border p-3"><p class="text-[12px] font-semibold text-text-primary">Clinic</p><div class="mt-2 grid gap-2"><input [(ngModel)]="draft.clinicName" class="form-control" placeholder="Clinic name" /><p class="text-[10px] leading-4 text-text-muted">Detailed clinic contact information will be managed in the Contacts/Providers phase.</p></div></div>
+                <div class="rounded-control border border-border p-3"><p class="text-[12px] font-semibold text-text-primary">Preferred hospital</p><div class="mt-2 grid gap-2"><input [(ngModel)]="draft.hospitalName" class="form-control" placeholder="Hospital name" /><p class="text-[10px] leading-4 text-text-muted">Hospitalization history remains a separate related record after creation.</p></div></div>
+                <div class="rounded-control border border-border p-3"><p class="text-[12px] font-semibold text-text-primary">Ambulance company</p><div class="mt-2 grid gap-2"><input [(ngModel)]="draft.ambulanceName" class="form-control" placeholder="Company name" /><p class="text-[10px] leading-4 text-text-muted">Detailed provider contact information is deferred to the related Contacts/Providers phase.</p></div></div>
               </div>
             </section>
 
@@ -205,7 +217,7 @@
           <div class="space-y-4">
             <div class="grid gap-3 lg:grid-cols-3">
               <section class="rounded-control border border-border p-3"><div class="flex items-center justify-between"><h3 class="text-[13px] font-semibold text-text-primary">Client</h3><button type="button" class="text-[11px] font-medium text-primary" (click)="goToStep(0)">Edit</button></div><dl class="mt-3 grid grid-cols-[7rem_1fr] gap-x-2 gap-y-1.5 text-[11px]"><dt class="text-text-muted">Name</dt><dd>{{ draft.firstName || '—' }} {{ draft.middleName }} {{ draft.lastName }}</dd><dt class="text-text-muted">PMI</dt><dd>{{ draft.pmi || '—' }}</dd><dt class="text-text-muted">DOB</dt><dd>{{ draft.dob || '—' }} · {{ ageFromDob() }}</dd><dt class="text-text-muted">Status</dt><dd>{{ draft.status }}</dd></dl></section>
-              <section class="rounded-control border border-border p-3"><div class="flex items-center justify-between"><h3 class="text-[13px] font-semibold text-text-primary">Care setup</h3><button type="button" class="text-[11px] font-medium text-primary" (click)="goToStep(0)">Edit</button></div><dl class="mt-3 grid grid-cols-[7rem_1fr] gap-x-2 gap-y-1.5 text-[11px]"><dt class="text-text-muted">SOC</dt><dd>{{ draft.socDate || '—' }}</dd><dt class="text-text-muted">Location</dt><dd>{{ draft.location || '—' }}</dd><dt class="text-text-muted">Services</dt><dd>{{ draft.services.length ? draft.services.join(', ') : '—' }}</dd><dt class="text-text-muted">Supervisor</dt><dd>{{ draft.supervisor || '—' }}</dd></dl></section>
+              <section class="rounded-control border border-border p-3"><div class="flex items-center justify-between"><h3 class="text-[13px] font-semibold text-text-primary">Care setup</h3><button type="button" class="text-[11px] font-medium text-primary" (click)="goToStep(0)">Edit</button></div><dl class="mt-3 grid grid-cols-[7rem_1fr] gap-x-2 gap-y-1.5 text-[11px]"><dt class="text-text-muted">SOC</dt><dd>{{ draft.socDate || '—' }}</dd><dt class="text-text-muted">Location</dt><dd>{{ draft.location || '—' }}</dd><dt class="text-text-muted">Services</dt><dd>{{ draft.services.length ? draft.services.join(', ') : '—' }}</dd><dt class="text-text-muted">Supervisor</dt><dd>Assigned after creation</dd></dl></section>
               <section class="rounded-control border border-border p-3"><div class="flex items-center justify-between"><h3 class="text-[13px] font-semibold text-text-primary">Additional</h3><button type="button" class="text-[11px] font-medium text-primary" (click)="goToStep(1)">Edit</button></div><dl class="mt-3 grid grid-cols-[7rem_1fr] gap-x-2 gap-y-1.5 text-[11px]"><dt class="text-text-muted">Program</dt><dd>{{ draft.programType || '—' }}</dd><dt class="text-text-muted">Complexity</dt><dd>{{ draft.pcaComplexity || '—' }}</dd><dt class="text-text-muted">Living</dt><dd>{{ draft.livingArrangement || '—' }}</dd><dt class="text-text-muted">Hospital</dt><dd>{{ draft.hospitalName || '—' }}</dd></dl></section>
             </div>
 
@@ -237,7 +249,7 @@
         @if (!isLastStep()) {
           <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-control bg-primary px-4 text-[12px] font-semibold text-on-primary hover:bg-primary-hover" (click)="next()">Next<svg aria-hidden="true" class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m9 18 6-6-6-6"/></svg></button>
         } @else {
-          <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-control bg-primary px-4 text-[12px] font-semibold text-on-primary hover:bg-primary-hover" (click)="createClient()"><svg aria-hidden="true" class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4 4L19 6"/></svg>Create client</button>
+          <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-control bg-primary px-4 text-[12px] font-semibold text-on-primary hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60" [disabled]="saving()" (click)="createClient()"><svg aria-hidden="true" class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4 4L19 6"/></svg>{{ saving() ? 'Creating…' : 'Create client' }}</button>
         }
       </div>
     </div>

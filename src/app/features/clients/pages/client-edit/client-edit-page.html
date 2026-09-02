@@ -1,30 +1,161 @@
 <div class="mx-auto w-full max-w-[96rem] pb-8">
   <header class="border-b border-border pb-3">
-    <a [routerLink]="['/clients','1']" class="inline-flex items-center gap-1.5 text-[11px] font-medium text-primary hover:text-primary-hover"><svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m15 18-6-6 6-6"/></svg>Back to client</a>
-    <div class="mt-1 flex items-center justify-between gap-4"><div><h1 class="text-[20px] font-semibold text-text-primary">Edit client</h1><p class="mt-0.5 text-[11px] text-text-secondary">Update core client information. Related records are managed from the client profile.</p></div>@if (saved()) {<span class="rounded-status bg-green-50 px-2.5 py-1 text-[10px] font-semibold text-success ring-1 ring-inset ring-green-200">Changes saved</span>}</div>
+    <a [routerLink]="backLink" class="inline-flex items-center gap-1.5 text-[11px] font-medium text-primary hover:text-primary-hover">
+      <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m15 18-6-6 6-6"/></svg>
+      Back to client
+    </a>
+    <div class="mt-1 flex items-center justify-between gap-4">
+      <div>
+        <h1 class="text-[20px] font-semibold text-text-primary">Edit client</h1>
+        <p class="mt-0.5 text-[11px] text-text-secondary">Update the core client record. Related records remain managed from the client profile.</p>
+      </div>
+      @if (saved()) { <span class="rounded-status bg-green-50 px-2.5 py-1 text-[10px] font-semibold text-success ring-1 ring-inset ring-green-200">Changes saved</span> }
+    </div>
   </header>
 
-  <nav class="mt-3 border-b border-border bg-surface"><div class="flex gap-6"><button type="button" class="edit-tab" [class.active]="section()==='basic'" (click)="section.set('basic')">Basic information</button><button type="button" class="edit-tab" [class.active]="section()==='additional'" (click)="section.set('additional')">Additional information</button></div></nav>
-
-  <main class="mt-3 space-y-3">
-    @if (section() === 'basic') {
-      <section class="form-section"><header><h2>Client identity</h2><p>Legal identity and primary identifiers.</p></header><div class="form-grid"><label><span class="form-label">First name *</span><input class="form-control" [(ngModel)]="model.firstName" /></label><label><span class="form-label">Middle name</span><input class="form-control" [(ngModel)]="model.middleName" /></label><label><span class="form-label">Last name *</span><input class="form-control" [(ngModel)]="model.lastName" /></label><label><span class="form-label">Goes by</span><input class="form-control" [(ngModel)]="model.goesBy" /></label><label><span class="form-label">Date of birth *</span><input class="form-control" type="date" [(ngModel)]="model.dob" /></label><label><span class="form-label">Gender *</span><select class="form-control" [(ngModel)]="model.gender"><option>Male</option><option>Female</option><option>Other</option></select></label><label><span class="form-label">PMI # *</span><input class="form-control" [(ngModel)]="model.pmi" /></label><label><span class="form-label">Insurance</span><input class="form-control" [(ngModel)]="model.insurance" /></label></div></section>
-      <section class="form-section"><header><h2>Intake & service setup</h2><p>Dates, program assignment, location and oversight.</p></header><div class="form-grid"><label><span class="form-label">Intake date</span><input class="form-control" type="date" [(ngModel)]="model.intakeDate" /></label><label><span class="form-label">SOC date *</span><input class="form-control" type="date" [(ngModel)]="model.socDate" /></label><label><span class="form-label">Referral source</span><input class="form-control" [(ngModel)]="model.referralSource" /></label><label><span class="form-label">Status</span><select class="form-control" [(ngModel)]="model.status"><option>Active</option><option>Pending</option><option>Inactive</option><option>Discharged</option></select></label><label><span class="form-label">Location</span><select class="form-control" [(ngModel)]="model.location">@for (value of locations; track value) {<option>{{ value }}</option>}</select></label><label><span class="form-label">Client service</span><select class="form-control" [(ngModel)]="model.service">@for (value of services; track value) {<option>{{ value }}</option>}</select></label><label><span class="form-label">EVV authorized hours</span><input class="form-control" [(ngModel)]="model.evvHours" /></label><label><span class="form-label">Supervisor</span><input class="form-control" [(ngModel)]="model.supervisor" /></label></div></section>
-      <section class="form-section"><header><h2>Contact & address</h2><p>Primary contact channels and home address.</p></header><div class="form-grid"><label><span class="form-label">Email</span><input class="form-control" type="email" [(ngModel)]="model.email" /></label><label><span class="form-label">Phone #01 *</span><input class="form-control" [(ngModel)]="model.phone1" /></label><label><span class="form-label">Phone #02</span><input class="form-control" [(ngModel)]="model.phone2" /></label><label><span class="form-label">Preferred language</span><select class="form-control" [(ngModel)]="model.language">@for (value of languages; track value) {<option>{{ value }}</option>}</select></label><label class="xl:col-span-2"><span class="form-label">Street</span><input class="form-control" [(ngModel)]="model.street" /></label><label><span class="form-label">Apartment</span><input class="form-control" [(ngModel)]="model.apartment" /></label><label><span class="form-label">City</span><input class="form-control" [(ngModel)]="model.city" /></label><label><span class="form-label">County</span><input class="form-control" [(ngModel)]="model.county" /></label><label><span class="form-label">State</span><input class="form-control" [(ngModel)]="model.state" /></label><label><span class="form-label">ZIP</span><input class="form-control" [(ngModel)]="model.zip" /></label></div></section>
-      <section class="form-section"><header><h2>Care & safety</h2><p>Important safety, equipment and allergy information.</p></header><div class="form-grid"><label class="xl:col-span-2"><span class="form-label">Safety measure</span><input class="form-control" [(ngModel)]="model.safetyMeasure" /></label><label><span class="form-label">Special equipment</span><input class="form-control" [(ngModel)]="model.specialEquipment" /></label><label><span class="form-label">Allergies</span><input class="form-control" [(ngModel)]="model.allergies" /></label><label class="xl:col-span-2"><span class="form-label">Other services</span><input class="form-control" [(ngModel)]="model.otherServices" /></label><label class="flex items-center gap-2 pt-5 text-[11px] text-text-secondary"><input type="checkbox" [(ngModel)]="model.onboarding" />Client is in onboarding</label></div></section>
-    } @else {
-      <section class="form-section"><header><h2>Program & demographics</h2><p>Additional program and client profile information.</p></header><div class="form-grid"><label><span class="form-label">Program type</span><select class="form-control" [(ngModel)]="model.programType"><option>PCA Traditional</option><option>PCA Choice</option><option>245D</option><option>CFSS Agency</option><option>CFSS Budget</option></select></label><label><span class="form-label">Home care rating</span><input class="form-control" [(ngModel)]="model.homeCareRatingStatus" /></label><label><span class="form-label">Medical equipment</span><input class="form-control" [(ngModel)]="model.medicalEquipment" /></label><label><span class="form-label">PCA complexity</span><input class="form-control" [(ngModel)]="model.pcaComplexity" /></label><label><span class="form-label">Marital status</span><input class="form-control" [(ngModel)]="model.maritalStatus" /></label><label><span class="form-label">Ethnicity</span><input class="form-control" [(ngModel)]="model.ethnicity" /></label><label><span class="form-label">Race</span><input class="form-control" [(ngModel)]="model.race" /></label><label><span class="form-label">Smoking</span><select class="form-control" [(ngModel)]="model.smoking"><option>No</option><option>Yes</option></select></label><label><span class="form-label">US Military Veteran</span><select class="form-control" [(ngModel)]="model.veteran"><option>No</option><option>Yes</option></select></label><label><span class="form-label">Pets</span><select class="form-control" [(ngModel)]="model.pets"><option>No</option><option>Yes</option></select></label><label><span class="form-label">Living arrangement</span><input class="form-control" [(ngModel)]="model.livingArrangement" /></label><label><span class="form-label">Caregiver preference</span><input class="form-control" [(ngModel)]="model.caregiverPreference" /></label></div></section>
-      <section class="form-section"><header><h2>Provider references</h2><p>Preferred clinic, hospital and ambulance information. Hospitalization history is managed separately.</p></header><div class="form-grid"><label><span class="form-label">Clinic name</span><input class="form-control" [(ngModel)]="model.clinicName" /></label><label><span class="form-label">Clinic phone</span><input class="form-control" [(ngModel)]="model.clinicPhone" /></label><label><span class="form-label">Preferred hospital</span><input class="form-control" [(ngModel)]="model.hospitalName" /></label><label><span class="form-label">Hospital phone</span><input class="form-control" [(ngModel)]="model.hospitalPhone" /></label><label><span class="form-label">Ambulance company</span><input class="form-control" [(ngModel)]="model.ambulanceName" /></label><label><span class="form-label">Ambulance phone</span><input class="form-control" [(ngModel)]="model.ambulancePhone" /></label></div></section>
-      <section class="form-section"><header><h2>Nutrition & notes</h2><p>Additional care preferences and contextual information.</p></header><div class="form-grid"><label class="xl:col-span-2"><span class="form-label">Nutritional requirements</span><input class="form-control" [(ngModel)]="model.nutritionalRequirements" /></label><label class="xl:col-span-4"><span class="form-label">Notes</span><textarea class="form-control min-h-[90px] py-2" [(ngModel)]="model.notes"></textarea></label><label class="xl:col-span-4"><span class="form-label">Additional information</span><textarea class="form-control min-h-[90px] py-2" [(ngModel)]="model.additionalInformation"></textarea></label></div></section>
+  @if (loading()) {
+    <div class="mt-4 flex min-h-60 items-center justify-center rounded-surface border border-border bg-surface">
+      <div class="text-center"><div class="mx-auto size-7 animate-spin rounded-full border-2 border-border border-t-primary"></div><p class="mt-3 text-[11px] text-text-secondary">Loading client…</p></div>
+    </div>
+  } @else if (loadFailed()) {
+    <div class="mt-4 flex min-h-60 items-center justify-center rounded-surface border border-border bg-surface p-6 text-center">
+      <div><h2 class="text-[13px] font-semibold text-text-primary">Client could not be loaded</h2><p class="mt-1 text-[11px] text-text-secondary">The record may no longer exist or the API is unavailable.</p><button type="button" class="mt-3 h-8 rounded-control border border-border-strong px-3 text-[11px] font-medium text-primary" (click)="load()">Retry</button></div>
+    </div>
+  } @else {
+    @if (errorMessage() || validationErrors().length) {
+      <div class="mt-3 rounded-control border border-red-200 bg-red-50 px-3 py-2.5 text-[11px] text-red-800" role="alert">
+        @if (errorMessage()) { <p class="font-semibold">{{ errorMessage() }}</p> }
+        @if (validationErrors().length) { <ul class="mt-1 list-disc space-y-0.5 pl-4">@for (error of validationErrors(); track error) { <li>{{ error }}</li> }</ul> }
+      </div>
     }
-  </main>
 
-  <div class="mt-4 flex items-center justify-end gap-2 border-t border-border pt-3"><a [routerLink]="['/clients','1']" class="h-8 rounded-control border border-border-strong bg-surface px-3 text-[11px] font-medium leading-8 text-text-primary hover:bg-surface-muted">Cancel</a><button type="button" class="h-8 rounded-control bg-primary px-4 text-[11px] font-semibold text-on-primary hover:bg-primary-hover" (click)="save()">Save changes</button></div>
+    <nav class="mt-3 border-b border-border bg-surface">
+      <div class="flex gap-6">
+        <button type="button" class="edit-tab" [class.active]="section()==='basic'" (click)="section.set('basic')">Basic information</button>
+        <button type="button" class="edit-tab" [class.active]="section()==='additional'" (click)="section.set('additional')">Additional information</button>
+      </div>
+    </nav>
+
+    <main class="mt-3 space-y-3">
+      @if (section() === 'basic') {
+        <section class="form-section">
+          <header><h2>Client identity</h2><p>Legal identity and primary identifiers.</p></header>
+          <div class="form-grid">
+            <label><span class="form-label">First name *</span><input class="form-control" [(ngModel)]="model.firstName" /></label>
+            <label><span class="form-label">Middle name</span><input class="form-control" [(ngModel)]="model.middleName" /></label>
+            <label><span class="form-label">Last name *</span><input class="form-control" [(ngModel)]="model.lastName" /></label>
+            <label><span class="form-label">Goes by</span><input class="form-control" [(ngModel)]="model.goesBy" /></label>
+            <label><span class="form-label">Date of birth *</span><input class="form-control" type="date" [(ngModel)]="model.dob" /></label>
+            <label><span class="form-label">Gender *</span><select class="form-control" [(ngModel)]="model.gender"><option value="">Select</option><option>Female</option><option>Male</option><option>Non-binary</option><option>Other</option><option>Prefer not to say</option></select></label>
+            <label><span class="form-label">PMI # *</span><input class="form-control" [(ngModel)]="model.pmi" /></label>
+            <label><span class="form-label">Insurance</span><input class="form-control" [(ngModel)]="model.insurance" /></label>
+          </div>
+        </section>
+
+        <section class="form-section">
+          <header><h2>Intake & service setup</h2><p>Dates, status, location and active client services.</p></header>
+          <div class="form-grid">
+            <label><span class="form-label">Intake date</span><input class="form-control" type="date" [(ngModel)]="model.intakeDate" /></label>
+            <label><span class="form-label">SOC date *</span><input class="form-control" type="date" [(ngModel)]="model.socDate" /></label>
+            <label><span class="form-label">Referral source</span><input class="form-control" [(ngModel)]="model.referralSource" /></label>
+            <label><span class="form-label">Status</span><select class="form-control" [(ngModel)]="model.status"><option>Pending</option><option>Active</option><option>On hold</option><option>Discharged</option><option>Inactive</option></select></label>
+            <label><span class="form-label">Location</span><select class="form-control" [(ngModel)]="model.location"><option value="">Select location</option>@for (value of locations; track value) {<option>{{ value }}</option>}</select></label>
+
+            <div class="relative">
+              <span class="form-label">Client services</span>
+              <button type="button" class="form-control flex items-center justify-between text-left" (click)="toggleServicesDropdown()"><span class="truncate">{{ selectedLabel(model.services, 'Select services') }}</span><span>⌄</span></button>
+              @if (servicesOpen()) { <div class="absolute z-30 mt-1 w-full rounded-control border border-border bg-surface p-1.5 shadow-lg">@for (value of serviceOptions; track value) {<label class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-[11px] hover:bg-surface-muted"><input type="checkbox" [checked]="model.services.includes(value)" (change)="toggleArray('services', value, $event)" />{{ value }}</label>}</div> }
+            </div>
+
+            <label><span class="form-label">Service change effective date</span><input class="form-control" type="date" [(ngModel)]="model.serviceChangeEffectiveDate" /><span class="mt-1 block text-[9px] text-text-muted">Required only when active services are changed.</span></label>
+            <label><span class="form-label">EVV authorized hours</span><input class="form-control" type="number" min="0" max="168" [(ngModel)]="model.evvHours" /></label>
+            <label><span class="form-label">Supervisor</span><input class="form-control bg-surface-muted" value="Managed by Employee Services" disabled /></label>
+            @if (model.status === 'Discharged') {
+              <label><span class="form-label">Discharge date *</span><input class="form-control" type="date" [(ngModel)]="model.dischargeDate" /></label>
+              <label><span class="form-label">Discharge reason</span><input class="form-control" [(ngModel)]="model.dischargeReason" /></label>
+            }
+          </div>
+        </section>
+
+        <section class="form-section">
+          <header><h2>Contact & address</h2><p>Primary contact channels and home address.</p></header>
+          <div class="form-grid">
+            <label><span class="form-label">Email</span><input class="form-control" type="email" [(ngModel)]="model.email" /></label>
+            <label><span class="form-label">Phone #01</span><input class="form-control" [(ngModel)]="model.phone1" /></label>
+            <label><span class="form-label">Phone #02</span><input class="form-control" [(ngModel)]="model.phone2" /></label>
+            <div class="relative">
+              <span class="form-label">Preferred languages</span>
+              <button type="button" class="form-control flex items-center justify-between text-left" (click)="toggleLanguagesDropdown()"><span class="truncate">{{ selectedLabel(model.languages, 'Select languages') }}</span><span>⌄</span></button>
+              @if (languagesOpen()) { <div class="absolute z-30 mt-1 w-full rounded-control border border-border bg-surface p-1.5 shadow-lg">@for (value of languageOptions; track value) {<label class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-[11px] hover:bg-surface-muted"><input type="checkbox" [checked]="model.languages.includes(value)" (change)="toggleArray('languages', value, $event)" />{{ value }}</label>}</div> }
+            </div>
+            <label class="xl:col-span-2"><span class="form-label">Street</span><input class="form-control" [(ngModel)]="model.street" /></label>
+            <label><span class="form-label">Apartment</span><input class="form-control" [(ngModel)]="model.apartment" /></label>
+            <label><span class="form-label">City</span><input class="form-control" [(ngModel)]="model.city" /></label>
+            <label><span class="form-label">County</span><input class="form-control" [(ngModel)]="model.county" /></label>
+            <label><span class="form-label">State</span><input class="form-control" [(ngModel)]="model.state" /></label>
+            <label><span class="form-label">ZIP</span><input class="form-control" [(ngModel)]="model.zip" /></label>
+          </div>
+        </section>
+
+        <section class="form-section">
+          <header><h2>Care & safety</h2><p>Important safety, equipment and allergy information.</p></header>
+          <div class="form-grid">
+            <label class="xl:col-span-2"><span class="form-label">Safety measure</span><input class="form-control" [(ngModel)]="model.safetyMeasure" /></label>
+            <label><span class="form-label">Special equipment</span><input class="form-control" [(ngModel)]="model.specialEquipment" /></label>
+            <label><span class="form-label">Allergies</span><input class="form-control" [(ngModel)]="model.allergies" /></label>
+            <label class="xl:col-span-2"><span class="form-label">Other services</span><input class="form-control" [(ngModel)]="model.otherServices" /></label>
+            <label class="flex items-center gap-2 pt-5 text-[11px] text-text-secondary"><input type="checkbox" [(ngModel)]="model.onboarding" />Client is in onboarding</label>
+          </div>
+        </section>
+      } @else {
+        <section class="form-section">
+          <header><h2>Program & demographics</h2><p>Additional program and client profile information.</p></header>
+          <div class="form-grid">
+            <label><span class="form-label">Program type</span><select class="form-control" [(ngModel)]="model.programType"><option value="">None</option><option>PCA Traditional</option><option>PCA Choice</option><option>245D</option><option>CFSS Agency</option><option>CFSS Budget</option></select></label>
+            <label><span class="form-label">Home care rating</span><input class="form-control" [(ngModel)]="model.homeCareRatingStatus" /></label>
+            <label><span class="form-label">Medical equipment</span><input class="form-control" [(ngModel)]="model.medicalEquipment" /></label>
+            <label><span class="form-label">PCA complexity</span><input class="form-control" [(ngModel)]="model.pcaComplexity" /></label>
+            <label><span class="form-label">Marital status</span><input class="form-control" [(ngModel)]="model.maritalStatus" /></label>
+            <label><span class="form-label">Ethnicity</span><input class="form-control" [(ngModel)]="model.ethnicity" /></label>
+            <label><span class="form-label">Race</span><input class="form-control" [(ngModel)]="model.race" /></label>
+            <label><span class="form-label">Smoking</span><select class="form-control" [(ngModel)]="model.smoking"><option value="">Unknown</option><option>No</option><option>Yes</option></select></label>
+            <label><span class="form-label">US Military Veteran</span><select class="form-control" [(ngModel)]="model.veteran"><option value="">Unknown</option><option>No</option><option>Yes</option></select></label>
+            <label><span class="form-label">Pets</span><select class="form-control" [(ngModel)]="model.pets"><option value="">Unknown</option><option>No</option><option>Yes</option></select></label>
+            <label><span class="form-label">Living arrangement</span><input class="form-control" [(ngModel)]="model.livingArrangement" /></label>
+            <label><span class="form-label">Caregiver preference</span><input class="form-control" [(ngModel)]="model.caregiverPreference" /></label>
+          </div>
+        </section>
+
+        <section class="form-section">
+          <header><h2>Provider references</h2><p>Core stores preferred provider names. Detailed provider contacts will be handled as related contacts.</p></header>
+          <div class="form-grid">
+            <label><span class="form-label">Clinic name</span><input class="form-control" [(ngModel)]="model.clinicName" /></label>
+            <label><span class="form-label">Preferred hospital</span><input class="form-control" [(ngModel)]="model.hospitalName" /></label>
+            <label><span class="form-label">Ambulance company</span><input class="form-control" [(ngModel)]="model.ambulanceName" /></label>
+          </div>
+        </section>
+
+        <section class="form-section">
+          <header><h2>Nutrition & notes</h2><p>Additional care preferences and contextual information.</p></header>
+          <div class="form-grid">
+            <label class="xl:col-span-2"><span class="form-label">Nutritional requirements</span><input class="form-control" [(ngModel)]="model.nutritionalRequirements" /></label>
+            <label class="xl:col-span-4"><span class="form-label">Notes</span><textarea class="form-control min-h-[90px] py-2" [(ngModel)]="model.notes"></textarea></label>
+            <label class="xl:col-span-4"><span class="form-label">Additional information</span><textarea class="form-control min-h-[90px] py-2" [(ngModel)]="model.additionalInformation"></textarea></label>
+          </div>
+        </section>
+      }
+    </main>
+
+    <div class="mt-4 flex items-center justify-end gap-2 border-t border-border pt-3">
+      <a [routerLink]="backLink" class="h-8 rounded-control border border-border-strong bg-surface px-3 text-[11px] font-medium leading-8 text-text-primary hover:bg-surface-muted">Cancel</a>
+      <button type="button" class="h-8 rounded-control bg-primary px-4 text-[11px] font-semibold text-on-primary hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60" [disabled]="saving()" (click)="save()">{{ saving() ? 'Saving…' : 'Save changes' }}</button>
+    </div>
+  }
 </div>
 
 <style>
   .edit-tab{position:relative;height:2.4rem;font-size:11px;font-weight:500;color:var(--color-text-muted,#64748b)}.edit-tab.active{color:var(--color-primary,#0f766e)}.edit-tab.active:after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--color-primary,#0f766e)}
-  .form-section{overflow:hidden;border:1px solid var(--color-border,#e2e8f0);border-radius:.5rem;background:var(--color-surface,#fff)}.form-section>header{border-bottom:1px solid var(--color-border,#e2e8f0);padding:.6rem 1rem}.form-section h2{font-size:12px;font-weight:600;color:var(--color-text-primary,#0f172a)}.form-section p{margin-top:1px;font-size:10px;color:var(--color-text-muted,#64748b)}
+  .form-section{overflow:visible;border:1px solid var(--color-border,#e2e8f0);border-radius:.5rem;background:var(--color-surface,#fff)}.form-section>header{border-bottom:1px solid var(--color-border,#e2e8f0);padding:.6rem 1rem}.form-section h2{font-size:12px;font-weight:600;color:var(--color-text-primary,#0f172a)}.form-section p{margin-top:1px;font-size:10px;color:var(--color-text-muted,#64748b)}
   .form-grid{display:grid;grid-template-columns:repeat(1,minmax(0,1fr));gap:.7rem;padding:.8rem 1rem}@media(min-width:768px){.form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(min-width:1280px){.form-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
   .form-label{display:block;margin-bottom:.22rem;font-size:10.5px;font-weight:500;color:var(--color-text-secondary,#475569)}.form-control{width:100%;min-height:2rem;border-radius:.375rem;border:1px solid var(--color-border-strong,#cbd5e1);background:var(--color-surface,#fff);padding:.35rem .6rem;font-size:11px;color:var(--color-text-primary,#0f172a);outline:none}.form-control:focus{border-color:var(--color-primary,#0f766e);box-shadow:0 0 0 1px var(--color-primary,#0f766e)}
 </style>

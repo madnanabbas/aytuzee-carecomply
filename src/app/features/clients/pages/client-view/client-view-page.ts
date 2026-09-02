@@ -1,8 +1,13 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 import { AuthorizationService } from '../../../../core/authorization/authorization.service';
 import { Permissions } from '../../../../core/authorization/permissions';
+import { ClientApiService } from '../../data-access/client-api.service';
+import { ClientDetails } from '../../models/client-api.models';
+import { clientGenderLabel, clientProgramLabel, clientStatusLabel, formatDateForDisplay } from '../../models/client-presentation';
 
 type ClientViewTab =
   | 'overview'
@@ -36,6 +41,39 @@ interface DialogDefinition {
   submitLabel: string;
 }
 
+interface ClientViewModel {
+  readonly id: string;
+  readonly firstName: string;
+  readonly middleName: string;
+  readonly lastName: string;
+  readonly goesBy: string;
+  readonly status: string;
+  readonly onboarding: boolean;
+  readonly pmi: string;
+  readonly dob: string;
+  readonly age: number | null;
+  readonly gender: string;
+  readonly phone: string;
+  readonly email: string;
+  readonly address: string;
+  readonly county: string;
+  readonly intakeDate: string;
+  readonly socDate: string;
+  readonly referralSource: string;
+  readonly program: string;
+  readonly services: readonly string[];
+  readonly location: string;
+  readonly supervisor: string;
+  readonly evvHours: string;
+  readonly preferredLanguage: string;
+  readonly safetyMeasure: string;
+  readonly specialEquipment: string;
+  readonly allergies: string;
+  readonly insurance: string;
+  readonly eligibility: string;
+  readonly eligibilityChecked: string;
+}
+
 @Component({
   selector: 'app-client-view-page',
   standalone: true,
@@ -50,38 +88,48 @@ export class ClientViewPageComponent {
   readonly activeTab = signal<ClientViewTab>('overview');
   readonly activeDialog = signal<ClientDialog>(null);
 
-  readonly client = {
-    id: '1',
-    firstName: 'Marcus',
-    middleName: 'James',
-    lastName: 'Lee',
-    goesBy: 'Marc',
-    status: 'Active',
-    onboarding: false,
-    pmi: '24591384',
-    dob: '02/14/1986',
-    age: 40,
-    gender: 'Male',
-    phone: '(612) 555-0142',
-    email: 'marcus.lee@example.test',
-    address: '1240 Portland Ave, Apt 3B, Minneapolis, MN 55404',
-    county: 'Hennepin',
-    intakeDate: '05/26/2026',
-    socDate: '06/01/2026',
-    referralSource: 'County referral',
-    program: '245D',
-    services: ['Individualized Home Supports'],
-    location: 'Minneapolis',
-    supervisor: 'Dana Morris',
-    evvHours: '32 hrs / week',
-    preferredLanguage: 'English',
-    safetyMeasure: 'Use side entrance during winter weather.',
-    specialEquipment: 'Walker, shower chair',
-    allergies: 'Penicillin',
-    insurance: 'Medical Assistance',
-    eligibility: 'Eligible',
-    eligibilityChecked: '08/29/2026',
-  } as const;
+  private readonly api = inject(ClientApiService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly route = inject(ActivatedRoute);
+  private readonly clientDetails = signal<ClientDetails | null>(null);
+
+  readonly loading = signal(true);
+  readonly loadFailed = signal(false);
+  readonly createdMessage = signal(history.state?.['clientCreated'] === true);
+
+  get client(): ClientViewModel {
+    const details = this.clientDetails();
+    return details ? toClientViewModel(details) : EMPTY_CLIENT_VIEW;
+  }
+
+  constructor() {
+    const clientId = this.route.snapshot.paramMap.get('clientId') ?? '';
+    if (!clientId) {
+      this.loading.set(false);
+      this.loadFailed.set(true);
+      return;
+    }
+    this.loadClient(clientId);
+  }
+
+  retry(): void {
+    const clientId = this.route.snapshot.paramMap.get('clientId') ?? '';
+    if (clientId) this.loadClient(clientId);
+  }
+
+  private loadClient(clientId: string): void {
+    this.loading.set(true);
+    this.loadFailed.set(false);
+    this.api.getClient(clientId)
+      .pipe(
+        finalize(() => this.loading.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (client) => this.clientDetails.set(client),
+        error: () => this.loadFailed.set(true),
+      });
+  }
 
   readonly tabs: readonly { id: ClientViewTab; label: string }[] = [
     { id: 'overview', label: 'Overview' },
@@ -210,4 +258,66 @@ export class ClientViewPageComponent {
     }
     return 'bg-surface-muted text-text-secondary ring-border';
   }
+}
+
+
+const EMPTY_CLIENT_VIEW: ClientViewModel = {
+  id: '', firstName: '', middleName: '', lastName: '', goesBy: '', status: '—', onboarding: false, pmi: '—', dob: '—', age: null, gender: '—',
+  phone: '—', email: '—', address: '—', county: '—', intakeDate: '—', socDate: '—', referralSource: '—', program: '—', services: [], location: '—',
+  supervisor: 'Managed through Employee Services', evvHours: '—', preferredLanguage: '—', safetyMeasure: '—', specialEquipment: '—', allergies: '—', insurance: '—',
+  eligibility: 'Not assessed', eligibilityChecked: '—',
+};
+
+function toClientViewModel(details: ClientDetails): ClientViewModel {
+  const address = [details.addressLine1, details.addressLine2, details.city, details.state, details.postalCode]
+    .map((value) => value?.trim() ?? '')
+    .filter(Boolean)
+    .join(', ') || '—';
+  const preferredLanguage = details.languages.find((language) => language.isPrimary)?.languageName
+    ?? details.languages[0]?.languageName
+    ?? '—';
+  const services = details.services.filter((service) => service.isActive).map((service) => service.name);
+  const program = details.additionalProfile ? clientProgramLabel(details.additionalProfile.programType) : '—';
+  return {
+    id: details.id,
+    firstName: details.firstName,
+    middleName: details.middleName ?? '',
+    lastName: details.lastName,
+    goesBy: details.preferredName ?? '',
+    status: clientStatusLabel(details.status),
+    onboarding: details.isOnboarding,
+    pmi: details.pmiNumber,
+    dob: formatDateForDisplay(details.dateOfBirth),
+    age: calculateAge(details.dateOfBirth),
+    gender: clientGenderLabel(details.gender),
+    phone: details.primaryPhone ?? '—',
+    email: details.email ?? '—',
+    address,
+    county: details.county ?? '—',
+    intakeDate: formatDateForDisplay(details.intakeDate),
+    socDate: formatDateForDisplay(details.socDate),
+    referralSource: details.referralSource ?? '—',
+    program,
+    services: services.length ? services : ['—'],
+    location: details.location ?? '—',
+    supervisor: 'Managed through Employee Services',
+    evvHours: details.evvAuthorizedHoursPerWeek === null ? '—' : `${details.evvAuthorizedHoursPerWeek} hrs / week`,
+    preferredLanguage,
+    safetyMeasure: details.safetyMeasures ?? '—',
+    specialEquipment: details.specialEquipment ?? '—',
+    allergies: details.allergies ?? '—',
+    insurance: details.insuranceProvider ?? '—',
+    eligibility: 'Not assessed',
+    eligibilityChecked: '—',
+  };
+}
+
+function calculateAge(dateOfBirth: string): number | null {
+  const dob = new Date(`${dateOfBirth}T00:00:00`);
+  if (Number.isNaN(dob.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const month = today.getMonth() - dob.getMonth();
+  if (month < 0 || (month === 0 && today.getDate() < dob.getDate())) age -= 1;
+  return Math.max(0, age);
 }

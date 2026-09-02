@@ -23,7 +23,7 @@
     <span class="font-medium text-text-primary">{{ totalCount() }} clients</span>
     <span class="text-text-secondary"><strong class="font-semibold text-success">{{ activeCount() }}</strong> active</span>
     <span class="text-text-secondary"><strong class="font-semibold text-info">{{ onboardingCount() }}</strong> onboarding</span>
-    <span class="text-text-secondary"><strong class="font-semibold text-warning">{{ attentionCount() }}</strong> need attention</span>
+    <span class="text-text-muted">Compliance indicators will appear after the compliance phase</span>
   </section>
 
   <section class="mt-3 overflow-hidden rounded-surface border border-border bg-surface" aria-labelledby="client-directory-title">
@@ -37,32 +37,33 @@
               type="search"
               class="h-9 w-full rounded-control border border-border-strong bg-surface pl-8 pr-3 text-small text-text-primary placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
               placeholder="Search name, PMI, phone or service"
-              [value]="filter().search"
+              [value]="searchDraft()"
               (input)="updateSearch($event)"
             />
           </label>
 
           <div class="flex flex-wrap gap-2">
-            <select class="h-9 min-w-32 rounded-control border border-border-strong bg-surface px-2.5 text-small text-text-primary focus:border-primary focus:outline-none" [value]="filter().status" (change)="updateSelect('status', $event)">
-              <option value="all">All statuses</option>
-              <option value="Active">Active</option>
-              <option value="Pending">Pending</option>
-              <option value="Inactive">Inactive</option>
-              <option value="Discharged">Discharged</option>
+            <select class="h-9 min-w-32 rounded-control border border-border-strong bg-surface px-2.5 text-small text-text-primary focus:border-primary focus:outline-none" [value]="query().status ?? ''" (change)="updateSelect('status', $event)">
+              <option value="">All statuses</option>
+              <option value="2">Active</option>
+              <option value="1">Pending</option>
+              <option value="3">On hold</option>
+              <option value="5">Inactive</option>
+              <option value="4">Discharged</option>
             </select>
 
-            <select class="h-9 min-w-36 rounded-control border border-border-strong bg-surface px-2.5 text-small text-text-primary focus:border-primary focus:outline-none" [value]="filter().program" (change)="updateSelect('program', $event)">
-              <option value="all">All programs</option>
-              @for (program of programs(); track program) { <option [value]="program">{{ program }}</option> }
+            <select class="h-9 min-w-36 rounded-control border border-border-strong bg-surface px-2.5 text-small text-text-primary focus:border-primary focus:outline-none" [value]="query().programType ?? ''" (change)="updateSelect('program', $event)">
+              <option value="">All programs</option>
+              @for (program of programOptions; track program.value) { <option [value]="program.value">{{ program.label }}</option> }
             </select>
 
-            <select class="h-9 min-w-36 rounded-control border border-border-strong bg-surface px-2.5 text-small text-text-primary focus:border-primary focus:outline-none" [value]="filter().location" (change)="updateSelect('location', $event)">
-              <option value="all">All locations</option>
+            <select class="h-9 min-w-36 rounded-control border border-border-strong bg-surface px-2.5 text-small text-text-primary focus:border-primary focus:outline-none" [value]="query().location" (change)="updateSelect('location', $event)">
+              <option value="">All locations</option>
               @for (location of locations(); track location) { <option [value]="location">{{ location }}</option> }
             </select>
 
-            <select class="h-9 min-w-40 rounded-control border border-border-strong bg-surface px-2.5 text-small text-text-primary focus:border-primary focus:outline-none" [value]="filter().onboarding" (change)="updateSelect('onboarding', $event)">
-              <option value="all">All onboarding</option>
+            <select class="h-9 min-w-40 rounded-control border border-border-strong bg-surface px-2.5 text-small text-text-primary focus:border-primary focus:outline-none" [value]="query().onboarding === null ? '' : query().onboarding ? 'yes' : 'no'" (change)="updateSelect('onboarding', $event)">
+              <option value="">All onboarding</option>
               <option value="yes">Onboarding only</option>
               <option value="no">Onboarding complete</option>
             </select>
@@ -73,7 +74,22 @@
       </div>
     </div>
 
-    @if (filteredClients().length === 0) {
+    @if (loading()) {
+      <div class="flex min-h-56 items-center justify-center p-6 text-center">
+        <div>
+          <div class="mx-auto size-7 animate-spin rounded-full border-2 border-border border-t-primary"></div>
+          <p class="mt-3 text-small text-text-secondary">Loading clients…</p>
+        </div>
+      </div>
+    } @else if (loadFailed()) {
+      <div class="flex min-h-56 items-center justify-center p-6 text-center">
+        <div>
+          <h2 class="text-body font-semibold text-text-primary">Clients could not be loaded</h2>
+          <p class="mt-1 text-small text-text-secondary">Check the API connection and try again.</p>
+          <button type="button" class="mt-3 h-8 rounded-control border border-border-strong px-3 text-small font-medium text-primary hover:bg-primary-subtle" (click)="retry()">Retry</button>
+        </div>
+      </div>
+    } @else if (clients().length === 0) {
       <div class="flex min-h-56 items-center justify-center p-6 text-center">
         <div>
           <h2 class="text-body font-semibold text-text-primary">No clients found</h2>
@@ -92,12 +108,12 @@
               <th class="px-3 py-2 font-semibold">SOC</th>
               <th class="px-3 py-2 font-semibold">Supervisor</th>
               <th class="px-3 py-2 font-semibold">Status</th>
-              <th class="px-3 py-2 font-semibold">Attention</th>
+              <th class="px-3 py-2 font-semibold">Compliance</th>
               <th class="w-12 px-3 py-2"><span class="sr-only">Open</span></th>
             </tr>
           </thead>
           <tbody class="divide-y divide-border">
-            @for (client of filteredClients(); track client.id) {
+            @for (client of clients(); track client.id) {
               <tr class="group hover:bg-primary-subtle/30">
                 <td class="px-4 py-2.5">
                   <div class="flex items-center gap-2.5">
@@ -125,11 +141,7 @@
                   </div>
                 </td>
                 <td class="px-3 py-2.5">
-                  @if (client.attentionCount > 0) {
-                    <span class="inline-flex items-center gap-1.5 text-small font-medium text-warning"><span class="size-1.5 rounded-full bg-amber-500"></span>{{ client.attentionCount }} item{{ client.attentionCount === 1 ? '' : 's' }}</span>
-                  } @else {
-                    <span class="inline-flex items-center gap-1 text-small font-medium text-success"><svg aria-hidden="true" class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m5 12 4 4L19 6"/></svg>Up to date</span>
-                  }
+                  <span class="inline-flex rounded-status bg-surface-muted px-2 py-0.5 text-[0.68rem] font-medium text-text-muted ring-1 ring-inset ring-border">Not calculated</span>
                 </td>
                 <td class="px-3 py-2.5 text-right">
                   <a [routerLink]="['/clients', client.id]" class="inline-flex size-7 items-center justify-center rounded-control text-text-muted hover:bg-surface-muted hover:text-primary" [attr.aria-label]="'Open ' + fullName(client)">
@@ -143,8 +155,15 @@
       </div>
 
       <footer class="flex flex-col gap-1 border-t border-border px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between">
-        <p class="text-helper text-text-secondary">Showing {{ filteredClients().length }} of {{ totalCount() }} clients</p>
-        <p class="text-[0.68rem] text-text-muted">Design preview · server paging will replace fixture data</p>
+        <p class="text-helper text-text-secondary">Showing {{ clients().length }} of {{ totalCount() }} clients</p>
+        <div class="flex flex-wrap items-center gap-2 text-[0.68rem] text-text-muted">
+          <span>Page {{ response()?.pageNumber ?? 1 }} of {{ totalPages() }}</span>
+          <select class="h-7 rounded-control border border-border bg-surface px-1.5" [value]="response()?.pageSize ?? 25" (change)="changePageSize($event)" aria-label="Rows per page">
+            <option [value]="10">10</option><option [value]="25">25</option><option [value]="50">50</option><option [value]="100">100</option>
+          </select>
+          <button type="button" class="size-7 rounded-control border border-border disabled:opacity-40" [disabled]="(response()?.pageNumber ?? 1) <= 1" (click)="changePage((response()?.pageNumber ?? 1) - 1)" aria-label="Previous page">‹</button>
+          <button type="button" class="size-7 rounded-control border border-border disabled:opacity-40" [disabled]="(response()?.pageNumber ?? 1) >= totalPages()" (click)="changePage((response()?.pageNumber ?? 1) + 1)" aria-label="Next page">›</button>
+        </div>
       </footer>
     }
   </section>
