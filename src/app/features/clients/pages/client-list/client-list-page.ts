@@ -32,8 +32,7 @@ import {
 
 interface ClientListViewItem {
   readonly id: string;
-  readonly firstName: string;
-  readonly lastName: string;
+  readonly name: string;
   readonly goesBy: string;
   readonly pmi: string;
   readonly phone: string;
@@ -185,11 +184,12 @@ export class ClientListPageComponent {
   }
 
   fullName(client: ClientListViewItem): string {
-    return `${client.firstName} ${client.lastName}`;
+    return client.name;
   }
 
   initials(client: ClientListViewItem): string {
-    return `${client.firstName.charAt(0)}${client.lastName.charAt(0)}`.toUpperCase();
+    const names = client.name.trim().split(/\s+/).filter(Boolean);
+    return `${names[0]?.charAt(0) ?? ''}${names.at(-1)?.charAt(0) ?? ''}`.toUpperCase();
   }
 
   statusClasses(status: string): string {
@@ -205,13 +205,12 @@ export class ClientListPageComponent {
   private toViewItem(item: ClientListApiItem): ClientListViewItem {
     return {
       id: item.id,
-      firstName: item.firstName,
-      lastName: item.lastName,
+      name: item.displayName,
       goesBy: item.preferredName ?? '',
       pmi: item.pmiNumber,
-      phone: item.primaryPhone ?? '—',
+      phone: '—',
       program: clientProgramLabel(item.programType),
-      services: item.services,
+      services: item.services.filter((service) => service.isActive).map((service) => service.name),
       location: item.location ?? '—',
       socDate: formatDateForDisplay(item.socDate),
       supervisor: '—',

@@ -109,9 +109,9 @@ export function formatDateForDisplay(value: string | null | undefined): string {
 }
 
 function normalizeEnumText(value: string): string {
-  return addWordBreaks(value.replace(/^Two45D$/i, '245D'));
+  return addWordBreaks(value?.replace(/^Two45D$/i, '245D'));
 }
 
 function addWordBreaks(value: string): string {
-  return value.replace(/([a-z])([A-Z])/g, '$1 $2').trim();
+  return value?.replace(/([a-z])([A-Z])/g, '$1 $2').trim();
 }

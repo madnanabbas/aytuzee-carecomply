@@ -27,9 +27,9 @@ export class ClientApiService {
     if (query.search) params = params.set('search', query.search);
     if (query.status !== null) params = params.set('status', query.status);
     if (query.programType !== null) params = params.set('programType', query.programType);
-    if (query.service) params = params.set('service', query.service);
+    if (query.service) params = params.set('serviceCode', query.service);
     if (query.location) params = params.set('location', query.location);
-    if (query.onboarding !== null) params = params.set('onboarding', query.onboarding);
+    if (query.onboarding !== null) params = params.set('isOnboarding', query.onboarding);
 
     return this.http.get<ClientListResponse>(this.clientsUrl(), { params });
   }

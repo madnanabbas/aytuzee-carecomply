@@ -1,9 +1,13 @@
 import {
   ClientAdditionalProfileRequest,
   ClientDetails,
+  ClientGenderCode,
   ClientLanguageInput,
+  ClientProgramTypeCode,
   ClientServiceInput,
+  ClientStatusCode,
   CreateClientRequest,
+  LegacyClientWriteRequest,
   UpdateClientRequest,
 } from './client-api.models';
 import {
@@ -184,11 +188,63 @@ export function clientDetailsToForm(details: ClientDetails): ClientFormModel {
 
 export function clientFormToCreateRequest(form: ClientFormModel): CreateClientRequest {
   return {
-    ...baseWriteRequest(form),
-    status: clientStatusCode(form.status),
+    identity: {
+      firstName: form.firstName.trim(),
+      middleName: nullableTrimmed(form.middleName),
+      lastName: form.lastName.trim(),
+      preferredName: nullableTrimmed(form.goesBy),
+      dateOfBirth: form.dob,
+      gender: clientGenderWireValue(form.gender),
+      pmiNumber: form.pmi.trim(),
+    },
+    contact: {
+      insuranceProvider: nullableTrimmed(form.insurance),
+      email: nullableTrimmed(form.email),
+      primaryPhone: nullableTrimmed(form.phone1),
+      secondaryPhone: nullableTrimmed(form.phone2),
+      addressLine1: nullableTrimmed(form.street),
+      addressLine2: nullableTrimmed(form.apartment),
+      city: nullableTrimmed(form.city),
+      state: nullableTrimmed(form.state),
+      postalCode: nullableTrimmed(form.zip),
+      county: nullableTrimmed(form.county),
+    },
+    careSetup: {
+      intakeDate: nullableTrimmed(form.intakeDate),
+      socDate: form.socDate,
+      referralSource: nullableTrimmed(form.referralSource),
+      location: nullableTrimmed(form.location),
+      isOnboarding: form.onboarding,
+      evvAuthorizedHoursPerWeek: parseNullableNumber(form.evvHours),
+    },
+    safety: {
+      safetyMeasures: nullableTrimmed(form.safetyMeasure),
+      specialEquipment: nullableTrimmed(form.specialEquipment),
+      allergies: nullableTrimmed(form.allergies),
+      otherServices: nullableTrimmed(form.otherServices),
+    },
+    additionalProfile: {
+      ...additionalProfile(form),
+      programType: clientProgramWireValue(form.programType),
+    },
+    initialStatus: clientStatusWireValue(form.status),
     dischargeDate: form.status === 'Discharged' ? nullableTrimmed(form.dischargeDate) : null,
     dischargeReason: form.status === 'Discharged' ? nullableTrimmed(form.dischargeReason) : null,
+    services: serviceInputs(form).map(({ code, name }) => ({ code, name })),
+    languages: languageInputs(form),
   };
+}
+
+function clientStatusWireValue(value: string): string {
+  return ClientStatusCode[clientStatusCode(value)];
+}
+
+function clientGenderWireValue(value: string): string {
+  return ClientGenderCode[clientGenderCode(value)];
+}
+
+function clientProgramWireValue(value: string): string {
+  return ClientProgramTypeCode[clientProgramCode(value)];
 }
 
 export function clientFormToUpdateRequest(form: ClientFormModel, editorVersion: string): UpdateClientRequest {
@@ -203,7 +259,7 @@ export function clientFormToUpdateRequest(form: ClientFormModel, editorVersion: 
   };
 }
 
-function baseWriteRequest(form: ClientFormModel): Omit<CreateClientRequest, 'status' | 'dischargeDate' | 'dischargeReason'> {
+function baseWriteRequest(form: ClientFormModel): Omit<LegacyClientWriteRequest, 'status' | 'dischargeDate' | 'dischargeReason'> {
   return {
     firstName: form.firstName.trim(),
     middleName: nullableTrimmed(form.middleName),

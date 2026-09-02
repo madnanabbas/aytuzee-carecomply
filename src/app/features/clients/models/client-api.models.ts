@@ -61,6 +61,52 @@ export interface ClientAdditionalProfileRequest {
 }
 
 export interface CreateClientRequest {
+  readonly identity: {
+    readonly firstName: string;
+    readonly middleName: string | null;
+    readonly lastName: string;
+    readonly preferredName: string | null;
+    readonly dateOfBirth: string;
+    readonly gender: string;
+    readonly pmiNumber: string;
+  };
+  readonly contact: {
+    readonly insuranceProvider: string | null;
+    readonly email: string | null;
+    readonly primaryPhone: string | null;
+    readonly secondaryPhone: string | null;
+    readonly addressLine1: string | null;
+    readonly addressLine2: string | null;
+    readonly city: string | null;
+    readonly state: string | null;
+    readonly postalCode: string | null;
+    readonly county: string | null;
+  };
+  readonly careSetup: {
+    readonly intakeDate: string | null;
+    readonly socDate: string;
+    readonly referralSource: string | null;
+    readonly location: string | null;
+    readonly isOnboarding: boolean;
+    readonly evvAuthorizedHoursPerWeek: number | null;
+  };
+  readonly safety: {
+    readonly safetyMeasures: string | null;
+    readonly specialEquipment: string | null;
+    readonly allergies: string | null;
+    readonly otherServices: string | null;
+  };
+  readonly additionalProfile: Omit<ClientAdditionalProfileRequest, 'programType'> & {
+    readonly programType: string;
+  };
+  readonly initialStatus: string;
+  readonly dischargeDate: string | null;
+  readonly dischargeReason: string | null;
+  readonly services: readonly Pick<ClientServiceInput, 'code' | 'name'>[];
+  readonly languages: readonly ClientLanguageInput[];
+}
+
+export interface LegacyClientWriteRequest {
   readonly firstName: string;
   readonly middleName: string | null;
   readonly lastName: string;
@@ -101,7 +147,7 @@ export interface CreateClientResponse {
   readonly editorVersion?: string;
 }
 
-export interface UpdateClientRequest extends Omit<CreateClientRequest, 'status' | 'dischargeDate' | 'dischargeReason'> {
+export interface UpdateClientRequest extends Omit<LegacyClientWriteRequest, 'status' | 'dischargeDate' | 'dischargeReason'> {
   readonly editorVersion: string;
   readonly serviceChangeEffectiveDate: string | null;
 }
@@ -189,19 +235,18 @@ export interface ClientDetails {
 
 export interface ClientListApiItem {
   readonly id: string;
-  readonly firstName: string;
-  readonly lastName: string;
+  readonly displayName: string;
   readonly preferredName: string | null;
   readonly pmiNumber: string;
-  readonly dateOfBirth?: string;
-  readonly primaryPhone?: string | null;
-  readonly email?: string | null;
+  readonly dateOfBirth: string;
+  readonly gender: ClientGenderCode | string;
   readonly programType: ClientProgramTypeCode | string;
-  readonly services: readonly string[];
+  readonly services: readonly ClientServiceDetails[];
   readonly location: string | null;
   readonly socDate: string;
   readonly status: ClientStatusCode | string;
   readonly isOnboarding: boolean;
+  readonly updatedAtUtc: string;
 }
 
 export interface ClientListResponse {
@@ -209,6 +254,7 @@ export interface ClientListResponse {
   readonly pageNumber: number;
   readonly pageSize: number;
   readonly totalCount: number;
+  readonly totalPages: number;
   readonly activeCount?: number;
   readonly onboardingCount?: number;
   readonly availableLocations?: readonly string[];
