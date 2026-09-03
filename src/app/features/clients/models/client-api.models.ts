@@ -58,6 +58,7 @@ export interface ClientAdditionalProfileRequest {
   readonly diet: string | null;
   readonly mealSchedule: string | null;
   readonly notes: string | null;
+  readonly additionalInformation: string | null;
 }
 
 export interface CreateClientRequest {
@@ -69,6 +70,7 @@ export interface CreateClientRequest {
     readonly dateOfBirth: string;
     readonly gender: string;
     readonly pmiNumber: string;
+    readonly ssn?: string | null;
   };
   readonly contact: {
     readonly insuranceProvider: string | null;
@@ -81,6 +83,7 @@ export interface CreateClientRequest {
     readonly state: string | null;
     readonly postalCode: string | null;
     readonly county: string | null;
+    readonly country: string | null;
   };
   readonly careSetup: {
     readonly intakeDate: string | null;
@@ -132,6 +135,7 @@ export interface LegacyClientWriteRequest {
   readonly state: string | null;
   readonly postalCode: string | null;
   readonly county: string | null;
+  readonly country: string | null;
   readonly evvAuthorizedHoursPerWeek: number | null;
   readonly safetyMeasures: string | null;
   readonly specialEquipment: string | null;
@@ -193,6 +197,7 @@ export interface ClientAdditionalProfileDetails {
   readonly diet: string | null;
   readonly mealSchedule: string | null;
   readonly notes: string | null;
+  readonly additionalInformation: string | null;
 }
 
 export interface ClientDetails {
@@ -204,6 +209,7 @@ export interface ClientDetails {
   readonly dateOfBirth: string;
   readonly gender: ClientGenderCode | string;
   readonly pmiNumber: string;
+  readonly hasSsn: boolean;
   readonly insuranceProvider: string | null;
   readonly email: string | null;
   readonly primaryPhone: string | null;
@@ -222,6 +228,7 @@ export interface ClientDetails {
   readonly state: string | null;
   readonly postalCode: string | null;
   readonly county: string | null;
+  readonly country: string | null;
   readonly evvAuthorizedHoursPerWeek: number | null;
   readonly safetyMeasures: string | null;
   readonly specialEquipment: string | null;
@@ -247,6 +254,54 @@ export interface ClientListApiItem {
   readonly status: ClientStatusCode | string;
   readonly isOnboarding: boolean;
   readonly updatedAtUtc: string;
+}
+
+export interface ClientDetailsApiResponse {
+  readonly id: string;
+  readonly identity: {
+    readonly firstName: string;
+    readonly middleName: string;
+    readonly lastName: string;
+    readonly preferredName: string;
+    readonly dateOfBirth: string;
+    readonly gender: string;
+    readonly pmiNumber: string;
+    readonly hasSsn: boolean;
+  };
+  readonly contact: {
+    readonly insuranceProvider: string;
+    readonly email: string;
+    readonly primaryPhone: string;
+    readonly secondaryPhone: string;
+    readonly addressLine1: string;
+    readonly addressLine2: string;
+    readonly city: string;
+    readonly state: string;
+    readonly postalCode: string;
+    readonly county: string;
+    readonly country: string;
+  };
+  readonly careSetup: {
+    readonly intakeDate: string | null;
+    readonly socDate: string;
+    readonly referralSource: string;
+    readonly status: string;
+    readonly location: string;
+    readonly isOnboarding: boolean;
+    readonly evvAuthorizedHoursPerWeek: number | null;
+    readonly dischargeDate: string | null;
+    readonly dischargeReason: string;
+  };
+  readonly safety: {
+    readonly safetyMeasures: string;
+    readonly specialEquipment: string;
+    readonly allergies: string;
+    readonly otherServices: string;
+  };
+  readonly additionalProfile: ClientAdditionalProfileDetails;
+  readonly services: readonly ClientServiceDetails[];
+  readonly languages: readonly ClientLanguageDetails[];
+  readonly editorVersion: string;
 }
 
 export interface ClientListResponse {

@@ -7,12 +7,18 @@ describe('app configuration loader', () => {
     { value: 'http://localhost:5000/api', expected: 'http://localhost:5000/api' },
     { value: 'http://127.0.0.1:5000/api', expected: 'http://127.0.0.1:5000/api' },
   ])('should accept $value', ({ value, expected }) => {
-    expect(parseAppConfig({ apiBaseUrl: value })).toEqual({ apiBaseUrl: expected });
+    expect(parseAppConfig({ apiBaseUrl: value, postalLookupBaseUrl: 'https://api.zippopotam.us', geographyBaseUrl: 'https://countriesnow.space/api/v0.1' })).toEqual({
+      apiBaseUrl: expected,
+      postalLookupBaseUrl: 'https://api.zippopotam.us',
+      geographyBaseUrl: 'https://countriesnow.space/api/v0.1',
+    });
   });
 
   it('should normalize trailing slashes', () => {
-    expect(parseAppConfig({ apiBaseUrl: 'https://api.carecomply.example/api/' })).toEqual({
+    expect(parseAppConfig({ apiBaseUrl: 'https://api.carecomply.example/api/', postalLookupBaseUrl: 'https://api.zippopotam.us/', geographyBaseUrl: 'https://countriesnow.space/api/v0.1/' })).toEqual({
       apiBaseUrl: 'https://api.carecomply.example/api',
+      postalLookupBaseUrl: 'https://api.zippopotam.us',
+      geographyBaseUrl: 'https://countriesnow.space/api/v0.1',
     });
   });
 
@@ -25,7 +31,7 @@ describe('app configuration loader', () => {
     { name: 'a query string', value: 'https://api.carecomply.example/api?source=frontend' },
     { name: 'a fragment', value: 'https://api.carecomply.example/api#clients' },
   ])('should reject $name', ({ value }) => {
-    expect(() => parseAppConfig({ apiBaseUrl: value })).toThrow(
+    expect(() => parseAppConfig({ apiBaseUrl: value, postalLookupBaseUrl: 'https://api.zippopotam.us', geographyBaseUrl: 'https://countriesnow.space/api/v0.1' })).toThrow(
       'Application configuration is unavailable.',
     );
   });
@@ -57,10 +63,12 @@ describe('app configuration loader', () => {
   });
 
   it('should load configuration without using the browser cache', async () => {
-    const fetchConfig = vi.fn(async () => createResponse({ apiBaseUrl: '/api' }));
+    const fetchConfig = vi.fn(async () => createResponse({ apiBaseUrl: '/api', postalLookupBaseUrl: 'https://api.zippopotam.us', geographyBaseUrl: 'https://countriesnow.space/api/v0.1' }));
 
     await expect(loadAppConfig(fetchConfig as typeof fetch)).resolves.toEqual({
       apiBaseUrl: '/api',
+      postalLookupBaseUrl: 'https://api.zippopotam.us',
+      geographyBaseUrl: 'https://countriesnow.space/api/v0.1',
     });
     expect(fetchConfig).toHaveBeenCalledWith(expect.stringMatching(/\/config\/app-config\.json$/), {
       cache: 'no-store',

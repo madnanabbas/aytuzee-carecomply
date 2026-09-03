@@ -51,11 +51,12 @@ export interface ClientFormModel {
   city: string;
   county: string;
   state: string;
+  country: string;
   safetyMeasure: string;
   specialEquipment: string;
   allergies: string;
   otherServices: string;
-  evvHours: string;
+  evvHours: string | number;
   supervisor: string;
   onboarding: boolean;
   programType: string;
@@ -102,7 +103,7 @@ export function createEmptyClientForm(): ClientFormModel {
   return {
     intakeDate: '', socDate: '', referralSource: '', status: 'Active', location: '', pmi: '', insurance: '', services: [], serviceChangeEffectiveDate: '',
     email: '', firstName: '', middleName: '', lastName: '', goesBy: '', dob: '', gender: '', dischargeDate: '', dischargeReason: '',
-    phone1: '', phone2: '', ssn: '', languages: [], street: '', apartment: '', zip: '', city: '', county: '', state: 'MN',
+    phone1: '', phone2: '', ssn: '', languages: [], street: '', apartment: '', zip: '', city: '', county: '', state: 'Minnesota', country: 'United States',
     safetyMeasure: '', specialEquipment: '', allergies: '', otherServices: '', evvHours: '', supervisor: '', onboarding: true,
     programType: '', notes: '', referringClient: false, referringClientName: '', companyName: '', companyPhone: '', homeCareRatingStatus: '',
     medicalEquipment: '', pcaComplexity: '', maritalStatus: '', ethnicity: '', race: '', smoking: '', veteran: '', veteranDetails: '',
@@ -147,6 +148,7 @@ export function clientDetailsToForm(details: ClientDetails): ClientFormModel {
     city: details.city ?? '',
     county: details.county ?? '',
     state: details.state ?? '',
+    country: details.country ?? '',
     safetyMeasure: details.safetyMeasures ?? '',
     specialEquipment: details.specialEquipment ?? '',
     allergies: details.allergies ?? '',
@@ -181,6 +183,7 @@ export function clientDetailsToForm(details: ClientDetails): ClientFormModel {
     breakfastTime: mealSchedule['breakfast'] ?? '',
     lunchTime: mealSchedule['lunch'] ?? '',
     dinnerTime: mealSchedule['dinner'] ?? '',
+    additionalInformation: profile?.additionalInformation ?? '',
   });
 
   return form;
@@ -196,6 +199,7 @@ export function clientFormToCreateRequest(form: ClientFormModel): CreateClientRe
       dateOfBirth: form.dob,
       gender: clientGenderWireValue(form.gender),
       pmiNumber: form.pmi.trim(),
+      ssn: nullableTrimmed(form.ssn),
     },
     contact: {
       insuranceProvider: nullableTrimmed(form.insurance),
@@ -208,6 +212,7 @@ export function clientFormToCreateRequest(form: ClientFormModel): CreateClientRe
       state: nullableTrimmed(form.state),
       postalCode: nullableTrimmed(form.zip),
       county: nullableTrimmed(form.county),
+      country: nullableTrimmed(form.country),
     },
     careSetup: {
       intakeDate: nullableTrimmed(form.intakeDate),
@@ -283,6 +288,7 @@ function baseWriteRequest(form: ClientFormModel): Omit<LegacyClientWriteRequest,
     state: nullableTrimmed(form.state),
     postalCode: nullableTrimmed(form.zip),
     county: nullableTrimmed(form.county),
+    country: nullableTrimmed(form.country),
     evvAuthorizedHoursPerWeek: parseNullableNumber(form.evvHours),
     safetyMeasures: nullableTrimmed(form.safetyMeasure),
     specialEquipment: nullableTrimmed(form.specialEquipment),
@@ -324,7 +330,8 @@ function additionalProfile(form: ClientFormModel): ClientAdditionalProfileReques
     nutritionalRequirements: nullableTrimmed(form.nutritionalRequirements),
     diet: nullableTrimmed(form.diet.join(', ')),
     mealSchedule: nullableTrimmed(toKeyValueText({ breakfast: form.breakfastTime, lunch: form.lunchTime, dinner: form.dinnerTime })),
-    notes: nullableTrimmed([form.notes.trim(), form.additionalInformation.trim()].filter(Boolean).join('\n\n')),
+    notes: nullableTrimmed(form.notes),
+    additionalInformation: nullableTrimmed(form.additionalInformation),
   };
 }
 
@@ -375,8 +382,8 @@ function languageCode(language: string): string {
   }
 }
 
-function parseNullableNumber(value: string): number | null {
-  if (!value.trim()) return null;
+function parseNullableNumber(value: string | number): number | null {
+  if (typeof value === 'string' && !value.trim()) return null;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
 }

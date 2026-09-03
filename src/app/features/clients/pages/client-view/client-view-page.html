@@ -25,8 +25,7 @@
         <div class="record-avatar">{{ client.firstName.charAt(0) }}{{ client.lastName.charAt(0) }}</div>
         <div class="min-w-0">
           <div class="flex min-w-0 flex-wrap items-center gap-2">
-            <h1 class="truncate text-[20px] font-semibold leading-6 text-text-primary">{{ client.firstName }} {{
-              client.middleName }} {{ client.lastName }}</h1>
+            <h1 class="truncate text-[20px] font-semibold leading-6 text-text-primary">{{ client.fullName }}</h1>
             <span
               class="rounded-status px-2 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide ring-1 ring-inset"
               [class]="statusClass(client.status)">{{ client.status }}</span>
@@ -34,7 +33,9 @@
           <div class="record-meta mt-1.5">
             <span><em>PMI</em><strong>{{ client.pmi }}</strong></span>
             <span><em>DOB</em><strong>{{ client.dob }}</strong></span>
+            <span><em>Age</em><strong>{{ client.age }}</strong></span>
             <span><em>Gender</em><strong>{{ client.gender }}</strong></span>
+            <span><em>Preferred name</em><strong>{{ client.goesBy }}</strong></span>
           </div>
         </div>
       </div>
@@ -48,20 +49,6 @@
             <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
           </svg>Edit client
         </a>
-        }
-        <button type="button" class="command-button" (click)="openDialog('note')">Add note</button>
-        <button type="button" class="command-button" (click)="openDialog('hospitalization')">Add
-          hospitalization</button>
-        <button type="button" class="command-button" (click)="openDialog('employee-service')">Assign employee</button>
-        @if (canUploadDocuments()) {
-        <button type="button" class="primary-action inline-flex items-center gap-1.5" (click)="openDialog('document')">
-          <svg aria-hidden="true" class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            stroke-width="1.8">
-            <path d="M12 16V4" />
-            <path d="m7 9 5-5 5 5" />
-            <path d="M5 20h14" />
-          </svg>Upload document
-        </button>
         }
       </div>
     </div>
@@ -86,18 +73,22 @@
             <dt>SOC date</dt>
             <dd>{{ client.socDate }}</dd>
           </div>
+          <div>
+            <dt>Onboarding</dt>
+            <dd>{{ client.onboarding ? 'Yes' : 'No' }}</dd>
+          </div>
         </dl>
       </section>
 
       <section class="summary-section summary-section-bordered">
         <div class="flex items-center justify-between gap-3">
           <div class="summary-heading">Compliance at a glance</div>
-          <button type="button" class="panel-link" (click)="setTab('documents')">View details</button>
+          <span class="text-[10px] text-text-muted">Not available</span>
         </div>
         <div class="compliance-grid">
-          <button type="button" class="metric-tile" (click)="setTab('documents')"><strong>—</strong><span>Documents</span></button>
-          <button type="button" class="metric-tile metric-warning" (click)="setTab('documents')"><strong>—</strong><span>Expiring</span></button>
-          <button type="button" class="metric-tile metric-danger" (click)="setTab('todos')"><strong>—</strong><span>Open todos</span></button>
+          <div class="metric-tile"><strong>—</strong><span>Documents</span></div>
+          <div class="metric-tile metric-warning"><strong>—</strong><span>Expiring</span></div>
+          <div class="metric-tile metric-danger"><strong>—</strong><span>Open todos</span></div>
           <div class="metric-tile"><strong>—</strong><span>Compliance</span></div>
         </div>
       </section>
@@ -131,9 +122,6 @@
 
   <div class="pt-3">
     @if (activeTab() === 'overview') {
-    <div class="mb-3 rounded-control border border-blue-200 bg-blue-50 px-3 py-2 text-[10.5px] text-blue-800">
-      Client identity, care setup and safety information are loaded from the Client Core API. Compliance, document and activity widgets remain UI previews until their dedicated APIs are implemented.
-    </div>
     <div class="overview-grid">
       <section class="panel-card overview-card">
         <header class="panel-header">
@@ -144,6 +132,10 @@
           <div>
             <dt>Phone</dt>
             <dd>{{ client.phone }}</dd>
+          </div>
+          <div>
+            <dt>Secondary phone</dt>
+            <dd>{{ client.secondaryPhone }}</dd>
           </div>
           <div>
             <dt>Email</dt>
@@ -164,6 +156,16 @@
           <div>
             <dt>Insurance</dt>
             <dd>{{ client.insurance }}</dd>
+          </div>
+          <div>
+            <dt>SSN</dt>
+            <dd class="flex flex-wrap items-center gap-2"><span [class.font-mono]="hasSsn()">{{ hasSsn() ? ssn() : 'Not provided' }}</span>
+              @if (hasSsn() && canRevealSsn()) {
+                @if (ssn() === '***-**-****') {<button type="button" class="panel-link" [disabled]="ssnRevealing()" (click)="revealSsn()">{{ ssnRevealing() ? 'Revealing…' : 'Reveal' }}</button>}
+                @else {<button type="button" class="panel-link" (click)="hideSsn()">Hide</button>}
+              }
+              @if (ssnError()) {<small class="text-danger">{{ ssnError() }}</small>}
+            </dd>
           </div>
         </dl>
       </section>
@@ -202,8 +204,7 @@
 
       <section class="panel-card overview-card overview-documents">
         <header class="panel-header">
-          <h2>Recent documents</h2><button class="panel-link" type="button" (click)="setTab('documents')">View
-            all</button>
+          <h2>Recent documents</h2><span class="text-[10px] text-text-muted">API not available</span>
         </header>
         <table class="compact-table overview-doc-table">
           <thead>
@@ -223,6 +224,8 @@
               <td><span class="status-pill" [class]="statusClass(doc.status)">{{ doc.status }}</span></td>
               <td class="whitespace-nowrap">{{ doc.expiry }}</td>
             </tr>
+            } @empty {
+            <tr><td colspan="3" class="py-6 text-center text-text-muted">No document data is available.</td></tr>
             }
           </tbody>
         </table>
@@ -234,7 +237,7 @@
         <header class="panel-header">
           <h2>Safety information</h2><span class="text-[10px] text-text-muted">Health & safety summary</span>
         </header>
-        <dl class="safety-grid">
+        <dl class="safety-grid safety-grid-four">
           <div>
             <dt>Safety measure</dt>
             <dd>{{ client.safetyMeasure }}</dd>
@@ -247,33 +250,63 @@
             <dt>Allergies</dt>
             <dd class="text-danger">{{ client.allergies }}</dd>
           </div>
+          <div>
+            <dt>Other services</dt>
+            <dd>{{ client.otherServices }}</dd>
+          </div>
         </dl>
       </section>
 
       <section class="panel-card">
         <header class="panel-header">
-          <h2>Recent activity</h2><button class="panel-link" type="button" (click)="setTab('quick-notes')">View
-            notes</button>
+          <h2>Recent activity</h2><span class="text-[10px] text-text-muted">API not available</span>
         </header>
         <div class="divide-y divide-border">
-          <div class="activity-row"><span class="activity-dot"></span>
-            <div>
-              <p>Annual review note added</p><small>Dana Morris · Aug 30, 2026</small>
-            </div>
-          </div>
-          <div class="activity-row"><span class="activity-dot"></span>
-            <div>
-              <p>Service agreement uploaded</p><small>System Administrator · Aug 28, 2026</small>
-            </div>
-          </div>
-          <div class="activity-row"><span class="activity-dot"></span>
-            <div>
-              <p>Eligibility checked</p><small>Aug 29, 2026</small>
-            </div>
-          </div>
+          <p class="px-4 py-6 text-center text-[11px] text-text-muted">No activity data is available.</p>
         </div>
       </section>
     </div>
+
+    <section class="panel-card mt-3">
+      <header class="panel-header"><div><h2>Preferences & additional profile</h2><p>Personal preferences, home setting and care coordination details.</p></div></header>
+      <div class="profile-sections">
+        <section class="profile-section">
+          <h3>Personal</h3>
+          <dl class="profile-detail-list">
+            <div><dt>Marital status</dt><dd>{{ client.maritalStatus }}</dd></div>
+            <div><dt>Ethnicity</dt><dd>{{ client.ethnicity }}</dd></div>
+            <div><dt>Race</dt><dd>{{ client.race }}</dd></div>
+            <div><dt>Caregiver preference</dt><dd>{{ client.caregiverPreference }}</dd></div>
+          </dl>
+        </section>
+        <section class="profile-section">
+          <h3>Home & care</h3>
+          <dl class="profile-detail-list">
+            <div><dt>Living arrangement</dt><dd>{{ client.livingArrangement }}</dd></div>
+            <div><dt>Home details</dt><dd>{{ client.livingArrangementDetails }}</dd></div>
+            <div><dt>Veteran details</dt><dd>{{ client.veteranDetails }}</dd></div>
+            <div><dt>Pet details</dt><dd>{{ client.petDetails }}</dd></div>
+            <div><dt>Nutrition</dt><dd>{{ client.nutritionalRequirements }}</dd></div>
+            <div><dt>Diet</dt><dd>{{ client.diet }}</dd></div>
+          </dl>
+        </section>
+        <section class="profile-section">
+          <h3>Providers & schedule</h3>
+          <dl class="profile-detail-list">
+            <div><dt>Clinic</dt><dd>{{ client.preferredClinic }}</dd></div>
+            <div><dt>Hospital</dt><dd>{{ client.preferredHospital }}</dd></div>
+            <div><dt>Ambulance</dt><dd>{{ client.preferredAmbulance }}</dd></div>
+            <div><dt>Breakfast</dt><dd>{{ client.breakfastTime }}</dd></div>
+            <div><dt>Lunch</dt><dd>{{ client.lunchTime }}</dd></div>
+            <div><dt>Dinner</dt><dd>{{ client.dinnerTime }}</dd></div>
+          </dl>
+        </section>
+        <section class="profile-notes">
+          <div><h3>Notes</h3><p>{{ client.notes }}</p></div>
+          <div><h3>Additional information</h3><p>{{ client.additionalInformation }}</p></div>
+        </section>
+      </div>
+    </section>
     } @else {
     <div class="mb-3 rounded-control border border-blue-200 bg-blue-50 px-3 py-2 text-[10.5px] text-blue-800">
       Related-record screen preview. Client Core APIs are live; Notes, Todos, Agreements, Hospitalizations, Documents, Visits and Employee Services APIs will be connected in their dedicated backend phases.
@@ -1092,6 +1125,77 @@
     color: var(--color-text-primary, #0f172a);
   }
 
+  .safety-grid-four {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .profile-sections {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    padding: .8rem 1rem 1rem;
+  }
+
+  .profile-section {
+    min-width: 0;
+    padding: 0 1rem;
+    border-left: 1px solid var(--color-border, #e2e8f0);
+  }
+
+  .profile-section:first-child {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .profile-section h3,
+  .profile-notes h3 {
+    margin-bottom: .35rem;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .045em;
+    text-transform: uppercase;
+    color: var(--color-text-muted, #64748b);
+  }
+
+  .profile-detail-list>div {
+    display: grid;
+    grid-template-columns: minmax(7rem, 38%) minmax(0, 1fr);
+    gap: .65rem;
+    padding: .36rem 0;
+    border-top: 1px solid color-mix(in srgb, var(--color-border, #e2e8f0) 65%, transparent);
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  .profile-detail-list>div:first-child {
+    border-top: 0;
+  }
+
+  .profile-detail-list dt {
+    color: var(--color-text-muted, #64748b);
+  }
+
+  .profile-detail-list dd {
+    min-width: 0;
+    font-weight: 500;
+    color: var(--color-text-primary, #0f172a);
+  }
+
+  .profile-notes {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    margin-top: .75rem;
+    padding-top: .75rem;
+    border-top: 1px solid var(--color-border, #e2e8f0);
+  }
+
+  .profile-notes p {
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--color-text-primary, #0f172a);
+  }
+
   .activity-row {
     display: flex;
     gap: .65rem;
@@ -1336,6 +1440,22 @@
 
     .safety-grid {
       grid-template-columns: 1fr;
+    }
+
+    .profile-sections {
+      grid-template-columns: 1fr;
+    }
+
+    .profile-section,
+    .profile-section:first-child {
+      padding: .75rem 0 0;
+      border-left: 0;
+      border-top: 1px solid var(--color-border, #e2e8f0);
+    }
+
+    .profile-section:first-child {
+      padding-top: 0;
+      border-top: 0;
     }
 
     .safety-grid>div+div {

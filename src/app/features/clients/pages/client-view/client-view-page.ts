@@ -41,8 +41,26 @@ interface DialogDefinition {
   submitLabel: string;
 }
 
+interface RelatedRecordPreviewRow {
+  readonly assignedTo: string; readonly attachment: string; readonly category: string;
+  readonly created: string; readonly createdBy: string; readonly date: string;
+  readonly document: string; readonly due: string; readonly duration: string;
+  readonly email: string; readonly employee: string; readonly end: string;
+  readonly expiry: string; readonly file: string; readonly form: string;
+  readonly hospital: string; readonly hours: string; readonly inTime: string;
+  readonly lastWorked: string; readonly livingWithClient: string; readonly name: string;
+  readonly outTime: string; readonly phone: string; readonly preference: string;
+  readonly priority: string; readonly reason: string; readonly recipient: string;
+  readonly relationship: string; readonly sentAt: string; readonly sentBy: string;
+  readonly service: string; readonly size: string; readonly start: string;
+  readonly status: string; readonly subject: string; readonly tagged: string;
+  readonly task: string; readonly title: string; readonly type: string;
+  readonly updated: string;
+}
+
 interface ClientViewModel {
   readonly id: string;
+  readonly fullName: string;
   readonly firstName: string;
   readonly middleName: string;
   readonly lastName: string;
@@ -51,9 +69,10 @@ interface ClientViewModel {
   readonly onboarding: boolean;
   readonly pmi: string;
   readonly dob: string;
-  readonly age: number | null;
+  readonly age: string;
   readonly gender: string;
   readonly phone: string;
+  readonly secondaryPhone: string;
   readonly email: string;
   readonly address: string;
   readonly county: string;
@@ -69,7 +88,26 @@ interface ClientViewModel {
   readonly safetyMeasure: string;
   readonly specialEquipment: string;
   readonly allergies: string;
+  readonly otherServices: string;
   readonly insurance: string;
+  readonly maritalStatus: string;
+  readonly ethnicity: string;
+  readonly race: string;
+  readonly veteranDetails: string;
+  readonly petDetails: string;
+  readonly livingArrangement: string;
+  readonly livingArrangementDetails: string;
+  readonly caregiverPreference: string;
+  readonly preferredClinic: string;
+  readonly preferredHospital: string;
+  readonly preferredAmbulance: string;
+  readonly nutritionalRequirements: string;
+  readonly diet: string;
+  readonly breakfastTime: string;
+  readonly lunchTime: string;
+  readonly dinnerTime: string;
+  readonly notes: string;
+  readonly additionalInformation: string;
   readonly eligibility: string;
   readonly eligibilityChecked: string;
 }
@@ -84,6 +122,8 @@ export class ClientViewPageComponent {
   private readonly authorization = inject(AuthorizationService);
 
   readonly canEditClient = computed(() => this.authorization.hasPermission(Permissions.Client.Edit));
+  readonly hasSsn = computed(() => this.clientDetails()?.hasSsn === true);
+  readonly canRevealSsn = computed(() => this.hasSsn() && this.authorization.hasPermission(Permissions.Client.RevealSsn));
   readonly canUploadDocuments = computed(() => this.authorization.hasPermission(Permissions.ClientDocument.Upload));
   readonly activeTab = signal<ClientViewTab>('overview');
   readonly activeDialog = signal<ClientDialog>(null);
@@ -96,6 +136,10 @@ export class ClientViewPageComponent {
   readonly loading = signal(true);
   readonly loadFailed = signal(false);
   readonly createdMessage = signal(history.state?.['clientCreated'] === true);
+  readonly ssn = signal('***-**-****');
+  readonly ssnRevealing = signal(false);
+  readonly ssnError = signal<string | null>(null);
+  private ssnHideTimer: number | null = null;
 
   get client(): ClientViewModel {
     const details = this.clientDetails();
@@ -117,6 +161,36 @@ export class ClientViewPageComponent {
     if (clientId) this.loadClient(clientId);
   }
 
+  revealSsn(): void {
+    if (!this.canRevealSsn() || this.ssnRevealing()) return;
+    this.ssnRevealing.set(true);
+    this.ssnError.set(null);
+    this.api.revealClientSsn(this.client.id).pipe(
+      finalize(() => this.ssnRevealing.set(false)),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe({
+      next: ({ ssn }) => {
+        this.ssn.set(ssn);
+        if (this.ssnHideTimer !== null) window.clearTimeout(this.ssnHideTimer);
+        this.ssnHideTimer = window.setTimeout(() => this.hideSsn(), 30_000);
+      },
+      error: (error: { status?: number }) => {
+        if (error.status === 404) {
+          this.ssn.set('Not provided');
+          this.ssnError.set(null);
+          return;
+        }
+        this.ssnError.set('SSN could not be revealed.');
+      },
+    });
+  }
+
+  hideSsn(): void {
+    this.ssn.set('***-**-****');
+    if (this.ssnHideTimer !== null) window.clearTimeout(this.ssnHideTimer);
+    this.ssnHideTimer = null;
+  }
+
   private loadClient(clientId: string): void {
     this.loading.set(true);
     this.loadFailed.set(false);
@@ -133,71 +207,32 @@ export class ClientViewPageComponent {
 
   readonly tabs: readonly { id: ClientViewTab; label: string }[] = [
     { id: 'overview', label: 'Overview' },
-    { id: 'quick-notes', label: 'Quick Notes' },
-    { id: 'todos', label: 'Todos' },
-    { id: 'service-agreements', label: 'Service Agreements' },
-    { id: 'pcg', label: 'PCG' },
-    { id: 'responsible-party', label: 'Responsible Party' },
-    { id: 'hospitalization', label: 'Hospitalization' },
+    { id: 'quick-notes', label: 'Quick notes' },
+    { id: 'todos', label: 'To-dos' },
+    { id: 'service-agreements', label: 'Service agreements' },
+    { id: 'pcg', label: 'Primary caregivers' },
+    { id: 'responsible-party', label: 'Responsible parties' },
+    { id: 'hospitalization', label: 'Hospitalizations' },
     { id: 'visits', label: 'Visits' },
     { id: 'forms', label: 'Forms' },
     { id: 'documents', label: 'Documents' },
-    { id: 'email-logs', label: 'Email Logs' },
-    { id: 'employee-services', label: 'Employee Services' },
+    { id: 'email-logs', label: 'Email logs' },
+    { id: 'employee-services', label: 'Employee services' },
   ];
 
-  readonly quickNotes = [
-    { subject: 'Annual review follow-up', type: 'Case Manager', tagged: 'Dana Morris', createdBy: 'System Administrator', created: '08/30/2026', attachment: '—' },
-    { subject: 'Transportation preference updated', type: 'Client Update', tagged: 'Jane Doe', createdBy: 'Dana Morris', created: '08/24/2026', attachment: 'note.pdf' },
-  ] as const;
-
-  readonly todos = [
-    { task: 'Collect updated annual assessment', assignedTo: 'Dana Morris', due: '09/20/2026', priority: 'High', status: 'Open' },
-    { task: 'Confirm service authorization renewal', assignedTo: 'System Administrator', due: '10/02/2026', priority: 'Normal', status: 'In progress' },
-  ] as const;
-
-  readonly serviceAgreements = [
-    { service: 'Individualized Home Supports', start: '06/01/2026', end: '05/31/2027', hours: '32 / week', status: 'Active', document: 'service-agreement-2026.pdf' },
-    { service: 'Respite', start: '07/15/2026', end: '12/31/2026', hours: '8 / month', status: 'Active', document: 'respite-addendum.pdf' },
-  ] as const;
-
-  readonly hospitalizations = [
-    { hospital: 'Hennepin Healthcare', start: '07/12/2026', inTime: '09:30 AM', end: '07/14/2026', outTime: '02:10 PM', reason: 'Observation' },
-  ] as const;
-
-  readonly documents = [
-    { name: 'Service Agreement', type: 'Agreement', file: 'service-agreement-2026.pdf', size: '1.4 MB', status: 'Current', expiry: '05/31/2027', createdBy: 'System Administrator', created: '08/28/2026', updated: '08/28/2026' },
-    { name: 'Emergency Plan', type: 'Plan', file: 'emergency-plan.pdf', size: '860 KB', status: 'Expiring soon', expiry: '09/15/2026', createdBy: 'Dana Morris', created: '06/15/2026', updated: '06/15/2026' },
-    { name: 'Authorization', type: 'Authorization', file: 'authorization.pdf', size: '640 KB', status: 'Current', expiry: '02/06/2027', createdBy: 'System Administrator', created: '06/01/2026', updated: '06/01/2026' },
-  ] as const;
-
-  readonly employeeServices = [
-    { employee: 'Jane Doe', title: 'PCA', service: 'Individualized Home Supports', start: '06/01/2026', lastWorked: '08/31/2026', status: 'Active' },
-    { employee: 'Michael Brown', title: 'Supervisor', service: 'Case Oversight', start: '06/01/2026', lastWorked: '08/29/2026', status: 'Active' },
-  ] as const;
-
-  readonly visits = [
-    { date: '08/31/2026', employee: 'Jane Doe', service: 'Individualized Home Supports', start: '08:00 AM', end: '12:00 PM', duration: '4h 00m', status: 'Completed' },
-    { date: '08/29/2026', employee: 'Jane Doe', service: 'Individualized Home Supports', start: '09:00 AM', end: '01:00 PM', duration: '4h 00m', status: 'Completed' },
-  ] as const;
-
-  readonly forms = [
-    { form: 'Annual Assessment', category: 'Assessment', status: 'Pending', due: '09/20/2026', updated: '08/30/2026' },
-    { form: 'Emergency Contact Verification', category: 'Client', status: 'Complete', due: '—', updated: '08/12/2026' },
-  ] as const;
-
-  readonly emailLogs = [
-    { subject: 'Upcoming annual review', recipient: 'marcus.lee@example.test', type: 'Reminder', sentBy: 'System', sentAt: '08/30/2026 09:15 AM', status: 'Delivered' },
-    { subject: 'Service agreement available', recipient: 'marcus.lee@example.test', type: 'Notification', sentBy: 'System Administrator', sentAt: '08/28/2026 02:42 PM', status: 'Delivered' },
-  ] as const;
-
-  readonly responsibleParties = [
-    { name: 'Patricia Lee', relationship: 'Mother', phone: '(612) 555-0196', email: 'patricia.lee@example.test', livingWithClient: 'No', status: 'Active' },
-  ] as const;
-
-  readonly primaryCaregivers = [
-    { name: 'Jane Doe', title: 'PCA', phone: '(612) 555-0133', email: 'jane.doe@example.test', preference: 'Preferred', status: 'Active' },
-  ] as const;
+  // Related-record APIs are not available yet. Keep these collections empty so
+  // the client screen never represents demonstration data as persisted data.
+  readonly quickNotes: readonly RelatedRecordPreviewRow[] = [];
+  readonly todos: readonly RelatedRecordPreviewRow[] = [];
+  readonly serviceAgreements: readonly RelatedRecordPreviewRow[] = [];
+  readonly hospitalizations: readonly RelatedRecordPreviewRow[] = [];
+  readonly documents: readonly RelatedRecordPreviewRow[] = [];
+  readonly employeeServices: readonly RelatedRecordPreviewRow[] = [];
+  readonly visits: readonly RelatedRecordPreviewRow[] = [];
+  readonly forms: readonly RelatedRecordPreviewRow[] = [];
+  readonly emailLogs: readonly RelatedRecordPreviewRow[] = [];
+  readonly responsibleParties: readonly RelatedRecordPreviewRow[] = [];
+  readonly primaryCaregivers: readonly RelatedRecordPreviewRow[] = [];
 
   readonly dialogDefinitions: Record<Exclude<ClientDialog, null>, DialogDefinition> = {
     note: { title: 'Add quick note', description: 'Record an internal client note and optionally tag a staff member.', submitLabel: 'Add note' },
@@ -262,14 +297,20 @@ export class ClientViewPageComponent {
 
 
 const EMPTY_CLIENT_VIEW: ClientViewModel = {
-  id: '', firstName: '', middleName: '', lastName: '', goesBy: '', status: '—', onboarding: false, pmi: '—', dob: '—', age: null, gender: '—',
-  phone: '—', email: '—', address: '—', county: '—', intakeDate: '—', socDate: '—', referralSource: '—', program: '—', services: [], location: '—',
+  id: '', fullName: '', firstName: '', middleName: '', lastName: '', goesBy: '—', status: '—', onboarding: false, pmi: '—', dob: '—', age: '—', gender: '—',
+  phone: '—', secondaryPhone: '—', email: '—', address: '—', county: '—', intakeDate: '—', socDate: '—', referralSource: '—', program: '—', services: [], location: '—',
   supervisor: 'Managed through Employee Services', evvHours: '—', preferredLanguage: '—', safetyMeasure: '—', specialEquipment: '—', allergies: '—', insurance: '—',
+  otherServices: '—', maritalStatus: '—', ethnicity: '—', race: '—', veteranDetails: '—', petDetails: '—', livingArrangement: '—', livingArrangementDetails: '—', caregiverPreference: '—', preferredClinic: '—', preferredHospital: '—', preferredAmbulance: '—',
+  nutritionalRequirements: '—', diet: '—', breakfastTime: '—', lunchTime: '—', dinnerTime: '—', notes: '—', additionalInformation: '—',
   eligibility: 'Not assessed', eligibilityChecked: '—',
 };
 
 function toClientViewModel(details: ClientDetails): ClientViewModel {
-  const address = [details.addressLine1, details.addressLine2, details.city, details.state, details.postalCode]
+  const profile = details.additionalProfile;
+  const demographics = parseStoredFields(profile?.demographics);
+  const living = parseStoredFields(profile?.livingArrangement);
+  const meals = parseStoredFields(profile?.mealSchedule);
+  const address = [details.addressLine1, details.addressLine2, details.city, details.state, details.postalCode, details.country]
     .map((value) => value?.trim() ?? '')
     .filter(Boolean)
     .join(', ') || '—';
@@ -280,36 +321,72 @@ function toClientViewModel(details: ClientDetails): ClientViewModel {
   const program = details.additionalProfile ? clientProgramLabel(details.additionalProfile.programType) : '—';
   return {
     id: details.id,
+    fullName: [details.firstName, details.middleName, details.lastName].map((part) => part?.trim()).filter(Boolean).join(' '),
     firstName: details.firstName,
     middleName: details.middleName ?? '',
     lastName: details.lastName,
-    goesBy: details.preferredName ?? '',
+    goesBy: displayValue(details.preferredName),
     status: clientStatusLabel(details.status),
     onboarding: details.isOnboarding,
     pmi: details.pmiNumber,
     dob: formatDateForDisplay(details.dateOfBirth),
-    age: calculateAge(details.dateOfBirth),
+    age: calculateAge(details.dateOfBirth)?.toString() ?? '—',
     gender: clientGenderLabel(details.gender),
-    phone: details.primaryPhone ?? '—',
-    email: details.email ?? '—',
+    phone: displayValue(details.primaryPhone),
+    secondaryPhone: displayValue(details.secondaryPhone),
+    email: displayValue(details.email),
     address,
-    county: details.county ?? '—',
+    county: displayValue(details.county),
     intakeDate: formatDateForDisplay(details.intakeDate),
     socDate: formatDateForDisplay(details.socDate),
-    referralSource: details.referralSource ?? '—',
+    referralSource: displayValue(details.referralSource),
     program,
     services: services.length ? services : ['—'],
-    location: details.location ?? '—',
+    location: displayValue(details.location),
     supervisor: 'Managed through Employee Services',
     evvHours: details.evvAuthorizedHoursPerWeek === null ? '—' : `${details.evvAuthorizedHoursPerWeek} hrs / week`,
     preferredLanguage,
-    safetyMeasure: details.safetyMeasures ?? '—',
-    specialEquipment: details.specialEquipment ?? '—',
-    allergies: details.allergies ?? '—',
-    insurance: details.insuranceProvider ?? '—',
+    safetyMeasure: displayValue(details.safetyMeasures),
+    specialEquipment: displayValue(details.specialEquipment),
+    allergies: displayValue(details.allergies),
+    otherServices: displayValue(details.otherServices),
+    insurance: displayValue(details.insuranceProvider),
+    maritalStatus: displayValue(demographics['maritalStatus']),
+    ethnicity: displayValue(demographics['ethnicity']),
+    race: displayValue(demographics['race']),
+    veteranDetails: displayValue(demographics['veteranDetails']),
+    petDetails: displayValue(demographics['petsDetails']),
+    livingArrangement: displayValue(living['type']),
+    livingArrangementDetails: displayValue(living['details']),
+    caregiverPreference: displayValue(profile?.caregiverPreference),
+    preferredClinic: displayValue(profile?.preferredClinic),
+    preferredHospital: displayValue(profile?.preferredHospital),
+    preferredAmbulance: displayValue(profile?.preferredAmbulance),
+    nutritionalRequirements: displayValue(profile?.nutritionalRequirements),
+    diet: displayValue(profile?.diet),
+    breakfastTime: displayValue(meals['breakfast']),
+    lunchTime: displayValue(meals['lunch']),
+    dinnerTime: displayValue(meals['dinner']),
+    notes: displayValue(profile?.notes),
+    additionalInformation: displayValue(profile?.additionalInformation),
     eligibility: 'Not assessed',
     eligibilityChecked: '—',
   };
+}
+
+function displayValue(value: string | null | undefined): string {
+  const normalized = value?.trim();
+  return normalized ? normalized : '—';
+}
+
+function parseStoredFields(value: string | null | undefined): Readonly<Record<string, string>> {
+  const fields: Record<string, string> = {};
+  for (const line of value?.split(/\r?\n/) ?? []) {
+    const separator = line.indexOf('=');
+    if (separator <= 0) continue;
+    fields[line.slice(0, separator).trim()] = line.slice(separator + 1).trim();
+  }
+  return fields;
 }
 
 function calculateAge(dateOfBirth: string): number | null {

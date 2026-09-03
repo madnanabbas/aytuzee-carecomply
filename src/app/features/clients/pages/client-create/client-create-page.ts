@@ -3,25 +3,46 @@ import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, finalize, map, of, Subject, switchMap, tap, timeout, TimeoutError } from 'rxjs';
 import { ClientApiService } from '../../data-access/client-api.service';
+import { CountryOption, GeographyDirectoryService, StateOption } from '../../data-access/geography-directory.service';
+import { PostalLookupService } from '../../data-access/postal-lookup.service';
+import { ThemedComboboxComponent } from '../../../../shared/components/themed-combobox/themed-combobox';
 import { ClientCreateStep } from '../../models/client-design.models';
 import {
   ClientFormModel,
   clientFormToCreateRequest,
   createEmptyClientForm,
 } from '../../models/client-form.models';
+import {
+  formatPmi,
+  formatUsPhone,
+  formatUsPostalCode,
+  formatUsSsn,
+  isValidPmi,
+  isValidUsPhone,
+  isValidUsPostalCode,
+  isValidUsSsn,
+} from '../../models/client-field-validation';
 
 @Component({
   selector: 'app-client-create-page',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, ThemedComboboxComponent],
   templateUrl: './client-create-page.html',
 })
 export class ClientCreatePageComponent {
   private readonly api = inject(ClientApiService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly postalLookup = inject(PostalLookupService);
+  private readonly geography = inject(GeographyDirectoryService);
   private readonly router = inject(Router);
+  private readonly postalCodeChanges = new Subject<string>();
+  private lastAutofilledCity: string | null = null;
+  private lastAutofilledState: string | null = null;
+  private lastPostalCode = '';
+  private postalLookupCountryCode = 'US';
+  private postalLookupCountryName = 'United States';
 
   readonly steps: readonly ClientCreateStep[] = [
     { id: 'basic', title: 'Basic information' },
@@ -35,6 +56,16 @@ export class ClientCreatePageComponent {
   readonly saving = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly validationErrors = signal<readonly string[]>([]);
+  readonly fieldErrors = signal<Readonly<Record<string, string>>>({});
+  readonly postalLookupLoading = signal(false);
+  readonly postalLookupMessage = signal<string | null>(null);
+  readonly postalCountry = signal('United States');
+  readonly selectedCountryCode = signal('US');
+  readonly countryOptions = signal<readonly CountryOption[]>([{ name: 'United States', code: 'US' }]);
+  readonly stateOptions = signal<readonly StateOption[]>([]);
+  readonly cityOptions = signal<readonly string[]>([]);
+  readonly stateNames = computed(() => this.stateOptions().map((state) => state.name));
+  readonly geographyLoading = signal(false);
 
   readonly locationOptions = ['Minneapolis', 'St. Paul', 'Brooklyn Park', 'Bloomington'] as const;
   readonly serviceOptions = ['PCA', 'CFSS', '245D', 'Respite'] as const;
@@ -47,8 +78,100 @@ export class ClientCreatePageComponent {
 
   readonly draft: ClientFormModel = createEmptyClientForm();
 
+  constructor() {
+    this.lastAutofilledState = this.draft.state || null;
+    this.postalCodeChanges.pipe(
+      debounceTime(350),
+      distinctUntilChanged(),
+      tap(() => {
+        this.postalLookupLoading.set(true);
+        this.postalLookupMessage.set(null);
+      }),
+      switchMap((lookup) => {
+        const separator = lookup.indexOf('|');
+        return this.postalLookup.lookupPostalCode(lookup.slice(0, separator), lookup.slice(separator + 1)).pipe(
+          map((match) => ({ match, failure: null as 'not-found' | 'unavailable' | null })),
+          catchError((error: HttpErrorResponse) => of({
+            match: null,
+            failure: error.status === 404 ? 'not-found' as const : 'unavailable' as const,
+          })),
+          finalize(() => this.postalLookupLoading.set(false)),
+        );
+      }),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(({ match, failure }) => {
+      if (!match) {
+        this.postalLookupMessage.set(failure === 'not-found'
+          ? `No postal match was found in ${this.postalLookupCountryName}. Select or enter the country, state, city, and area manually.`
+          : 'Postal lookup is temporarily unavailable. Select or enter the state, city, and area manually.');
+        return;
+      }
+
+      this.draft.city = match.city;
+      this.lastAutofilledCity = match.city;
+      this.draft.state = match.state;
+      this.lastAutofilledState = match.state;
+      if (match.area) this.draft.county = match.area;
+      this.selectedCountryCode.set(match.countryCode);
+      this.postalCountry.set(match.country);
+      this.draft.country = match.country;
+      this.postalLookupCountryCode = match.countryCode;
+      this.postalLookupCountryName = match.country;
+      this.loadStates(match.country);
+      this.postalLookupMessage.set('City and state were suggested from the ZIP code. Please verify the address.');
+    });
+
+    this.loadCountries();
+  }
+
+  onCountryChange(countryCode: string): void {
+    if (!countryCode) {
+      this.selectedCountryCode.set('');
+      this.postalCountry.set('');
+      this.draft.country = '';
+      return;
+    }
+    const country = this.countryOptions().find((option) => option.code === countryCode);
+    if (!country) return;
+    this.selectedCountryCode.set(country.code);
+    this.postalCountry.set(country.name);
+    this.draft.country = country.name;
+    this.postalLookupCountryCode = country.code;
+    this.postalLookupCountryName = country.name;
+    this.draft.state = '';
+    this.draft.city = '';
+    this.stateOptions.set([]);
+    this.cityOptions.set([]);
+    this.postalLookupMessage.set(null);
+    this.loadStates(country.name);
+    if (this.draft.zip.trim().length >= 2) this.queuePostalLookup();
+  }
+
+  onStateChange(stateName: string): void {
+    this.draft.state = stateName;
+    this.draft.city = '';
+    this.cityOptions.set([]);
+    if (!stateName) return;
+    this.geography.cities(this.postalCountry(), stateName).pipe(
+      catchError(() => of([])),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe((cities) => this.cityOptions.set(cities));
+  }
+
+  onCityChange(cityName: string): void {
+    this.draft.city = cityName;
+  }
+
   goToStep(index: number): void {
     if (index < 0 || index >= this.steps.length || this.saving()) return;
+    if (index > this.stepIndex()) {
+      const errors = this.validateStep(this.stepIndex());
+      if (errors.length) {
+        this.validationErrors.set(errors);
+        this.errorMessage.set('Complete the required fields before continuing.');
+        return;
+      }
+    }
     this.stepIndex.set(index);
     this.clearMessages();
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -87,6 +210,7 @@ export class ClientCreatePageComponent {
     this.draft[field] = event.target.checked
       ? [...current, value]
       : current.filter((item) => item !== value);
+    if (field === 'languages' && this.draft.languages.length > 0) this.clearFieldError('languages');
   }
 
   toggleServicesDropdown(): void {
@@ -105,6 +229,73 @@ export class ClientCreatePageComponent {
     return `${values.slice(0, 2).join(', ')} +${values.length - 2}`;
   }
 
+  normalizePmi(value: string): void {
+    this.draft.pmi = formatPmi(value);
+    this.clearFieldError('pmi');
+  }
+
+  normalizePhone(field: 'phone1' | 'phone2' | 'companyPhone', value: string): void {
+    this.draft[field] = formatUsPhone(value);
+    this.clearFieldError(field);
+  }
+
+  normalizeSsn(value: string): void {
+    this.draft.ssn = formatUsSsn(value);
+    this.clearFieldError('ssn');
+  }
+
+  normalizePostalCode(value: string): void {
+    const lookupCountryCode = this.selectedCountryCode() || this.postalLookupCountryCode;
+    const formattedPostalCode = lookupCountryCode === 'US'
+      ? formatUsPostalCode(value)
+      : value.toUpperCase().replace(/[^A-Z0-9 -]/g, '').slice(0, 20);
+    this.draft.zip = formattedPostalCode;
+    this.clearFieldError('zip');
+
+    if (formattedPostalCode !== this.lastPostalCode) {
+      this.lastPostalCode = formattedPostalCode;
+      this.selectedCountryCode.set('');
+      this.postalCountry.set('');
+      this.draft.country = '';
+      this.draft.state = '';
+      this.draft.city = '';
+      this.draft.county = '';
+      this.stateOptions.set([]);
+      this.cityOptions.set([]);
+    }
+
+    if (this.draft.zip.trim().length >= (lookupCountryCode === 'US' ? 5 : 2)) {
+      this.queuePostalLookup(lookupCountryCode);
+    } else {
+      this.postalLookupMessage.set(null);
+    }
+  }
+
+  private queuePostalLookup(countryCode = this.selectedCountryCode() || this.postalLookupCountryCode): void {
+    this.postalLookupCountryName = this.countryOptions().find((country) => country.code === countryCode)?.name
+      ?? this.postalLookupCountryName;
+    this.postalCodeChanges.next(`${countryCode}|${this.draft.zip.trim()}`);
+  }
+
+  private loadCountries(): void {
+    this.geographyLoading.set(true);
+    this.geography.countries().pipe(
+      catchError(() => of([{ name: 'United States', code: 'US' }])),
+      finalize(() => this.geographyLoading.set(false)),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe((countries) => {
+      this.countryOptions.set(countries);
+      this.loadStates('United States');
+    });
+  }
+
+  private loadStates(country: string): void {
+    this.geography.states(country).pipe(
+      catchError(() => of([])),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe((states) => this.stateOptions.set(states));
+  }
+
   createClient(): void {
     if (this.saving()) return;
 
@@ -120,6 +311,7 @@ export class ClientCreatePageComponent {
 
     this.api.createClient(clientFormToCreateRequest(this.draft))
       .pipe(
+        timeout(30_000),
         finalize(() => this.saving.set(false)),
         takeUntilDestroyed(this.destroyRef),
       )
@@ -129,7 +321,13 @@ export class ClientCreatePageComponent {
             state: { clientCreated: true },
           });
         },
-        error: (error: HttpErrorResponse) => this.handleApiError(error),
+        error: (error: unknown) => {
+          if (error instanceof TimeoutError) {
+            this.errorMessage.set('The API did not finish creating the client within 30 seconds. No success was confirmed; check the API logs before trying again.');
+            return;
+          }
+          this.handleApiError(error as HttpErrorResponse);
+        },
       });
   }
 
@@ -142,31 +340,55 @@ export class ClientCreatePageComponent {
   }
 
   private validateBasic(): readonly string[] {
-    const errors: string[] = [];
-    if (!this.draft.firstName.trim()) errors.push('First name is required.');
-    if (!this.draft.lastName.trim()) errors.push('Last name is required.');
-    if (!this.draft.dob) errors.push('Date of birth is required.');
-    if (!this.draft.gender) errors.push('Gender is required.');
-    if (!this.draft.pmi.trim()) errors.push('PMI number is required.');
-    if (!this.draft.socDate) errors.push('SOC date is required.');
+    const fields: Record<string, string> = {};
+    const add = (field: string, message: string): void => { fields[field] = message; };
+    if (!this.draft.firstName.trim()) add('firstName', 'First name is required.');
+    if (!this.draft.lastName.trim()) add('lastName', 'Last name is required.');
+    if (!this.draft.dob) add('dob', 'Date of birth is required.');
+    if (!this.draft.gender) add('gender', 'Gender is required.');
+    if (!this.draft.pmi.trim()) add('pmi', 'PMI number is required.');
+    else if (!isValidPmi(this.draft.pmi)) add('pmi', 'PMI number must contain exactly 8 digits.');
+    if (!this.draft.socDate) add('socDate', 'SOC date is required.');
+    if (!this.draft.phone1.trim()) add('phone1', 'Primary phone is required.');
+    else if (!isValidUsPhone(this.draft.phone1)) add('phone1', 'Enter a 10-digit US phone number.');
+    if (this.draft.phone2 && !isValidUsPhone(this.draft.phone2)) add('phone2', 'Enter a 10-digit US phone number.');
+    if (this.draft.ssn && !isValidUsSsn(this.draft.ssn)) add('ssn', 'Enter a valid 9-digit US Social Security number.');
+    if (!this.draft.street.trim()) add('street', 'Street address is required.');
+    if (this.draft.zip && this.selectedCountryCode() === 'US' && !isValidUsPostalCode(this.draft.zip)) {
+      add('zip', 'Use ZIP format 12345 or 12345-6789.');
+    }
     if (this.draft.intakeDate && this.draft.socDate && this.draft.intakeDate > this.draft.socDate) {
-      errors.push('Intake date cannot be after the SOC date.');
+      add('intakeDate', 'Intake date cannot be after the SOC date.');
     }
     if (this.draft.status === 'Discharged' && !this.draft.dischargeDate) {
-      errors.push('Discharge date is required for a discharged client.');
+      add('dischargeDate', 'Discharge date is required for a discharged client.');
     }
     if (this.draft.dischargeDate && this.draft.socDate && this.draft.dischargeDate < this.draft.socDate) {
-      errors.push('Discharge date cannot be before the SOC date.');
+      add('dischargeDate', 'Discharge date cannot be before the SOC date.');
     }
     if (this.draft.evvHours) {
       const hours = Number(this.draft.evvHours);
       if (!Number.isFinite(hours) || hours < 0 || hours > 168) {
-        errors.push('EVV authorized hours must be between 0 and 168 hours per week.');
+        add('evvHours', 'EVV hours must be between 0 and 168 per week.');
       }
     }
-    if (this.draft.languages.length > 10) errors.push('A maximum of 10 preferred languages can be selected.');
-    if (this.draft.services.length > 20) errors.push('A maximum of 20 services can be selected.');
-    return errors;
+    if (this.draft.languages.length === 0) add('languages', 'Select at least one preferred language.');
+    else if (this.draft.languages.length > 10) add('languages', 'Select no more than 10 preferred languages.');
+    if (this.draft.services.length > 20) add('services', 'Select no more than 20 services.');
+    this.fieldErrors.set(fields);
+    return Object.values(fields);
+  }
+
+  fieldError(field: string): string | null {
+    return this.fieldErrors()[field] ?? null;
+  }
+
+  clearFieldError(field: string): void {
+    if (!this.fieldErrors()[field]) return;
+    const next = { ...this.fieldErrors() };
+    delete next[field];
+    this.fieldErrors.set(next);
+    if (Object.keys(next).length === 0) this.errorMessage.set(null);
   }
 
   private handleApiError(error: HttpErrorResponse): void {
@@ -189,5 +411,6 @@ export class ClientCreatePageComponent {
   private clearMessages(): void {
     this.errorMessage.set(null);
     this.validationErrors.set([]);
+    this.fieldErrors.set({});
   }
 }

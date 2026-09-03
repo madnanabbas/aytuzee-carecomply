@@ -71,10 +71,19 @@ describe('ClientApiService', () => {
   });
 
   it('uses encoded client detail and focused write endpoints', () => {
-    api.getClient('client/one').subscribe();
+    let clientName: string | undefined;
+    api.getClient('client/one').subscribe((client) => { clientName = client.firstName; });
     const detail = http.expectOne('/api/clients/client%2Fone');
     expect(detail.request.method).toBe('GET');
-    detail.flush({});
+    detail.flush(clientDetailsResponse());
+    expect(clientName).toBe('Marcus');
+
+    let revealedSsn: string | undefined;
+    api.revealClientSsn('client/one').subscribe((response) => { revealedSsn = response.ssn; });
+    const reveal = http.expectOne('/api/clients/client%2Fone/ssn');
+    expect(reveal.request.method).toBe('GET');
+    reveal.flush({ ssn: '123-45-6789' });
+    expect(revealedSsn).toBe('123-45-6789');
 
     api.changeStatus('client-1', {
       status: ClientStatusCode.Discharged,
@@ -122,7 +131,7 @@ function createRequest(): CreateClientRequest {
     },
     contact: {
       insuranceProvider: 'Medical Assistance', email: 'marcus@example.test', primaryPhone: '6125550142', secondaryPhone: null,
-      addressLine1: '1240 Portland Ave', addressLine2: null, city: 'Minneapolis', state: 'MN', postalCode: '55404', county: 'Hennepin',
+      addressLine1: '1240 Portland Ave', addressLine2: null, city: 'Minneapolis', state: 'MN', postalCode: '55404', county: 'Hennepin', country: 'United States',
     },
     careSetup: {
       intakeDate: '2026-05-26', socDate: '2026-06-01', referralSource: 'County', location: 'Minneapolis',
@@ -133,11 +142,23 @@ function createRequest(): CreateClientRequest {
       programType: 'Two45D', referralDetails: null, homeCareRating: null, medicalEquipment: null,
       pcaComplexity: null, demographics: null, smokes: null, isVeteran: null, hasPets: null, livingArrangement: null,
       preferredClinic: null, preferredHospital: null, preferredAmbulance: null, caregiverPreference: null,
-      nutritionalRequirements: null, diet: null, mealSchedule: null, notes: null,
+      nutritionalRequirements: null, diet: null, mealSchedule: null, notes: null, additionalInformation: null,
     },
     initialStatus: 'Active', dischargeDate: null, dischargeReason: null,
     services: [{ code: '245D', name: '245D' }],
     languages: [{ languageCode: 'en', languageName: 'English', isPrimary: true }],
+  };
+}
+
+function clientDetailsResponse() {
+  return {
+    id: 'client-1',
+    identity: { firstName: 'Marcus', middleName: '', lastName: 'Lee', preferredName: 'Marc', dateOfBirth: '1986-02-14', gender: 'Male', pmiNumber: '24591384' },
+    contact: { insuranceProvider: '', email: 'marcus@example.test', primaryPhone: '(612) 555-0142', secondaryPhone: '', addressLine1: '1240 Portland Ave', addressLine2: '', city: 'Minneapolis', state: 'MN', postalCode: '55404', county: 'Hennepin', country: 'United States' },
+    careSetup: { intakeDate: '2026-05-26', socDate: '2026-06-01', referralSource: 'County', status: 'Active', location: 'Minneapolis', isOnboarding: false, evvAuthorizedHoursPerWeek: 32, dischargeDate: null, dischargeReason: '' },
+    safety: { safetyMeasures: '', specialEquipment: '', allergies: '', otherServices: '' },
+    additionalProfile: { programType: 'Two45D', referralDetails: '', homeCareRating: '', medicalEquipment: '', pcaComplexity: '', demographics: '', smokes: null, isVeteran: null, hasPets: null, livingArrangement: '', preferredClinic: '', preferredHospital: '', preferredAmbulance: '', caregiverPreference: '', nutritionalRequirements: '', diet: '', mealSchedule: '', notes: '', additionalInformation: '' },
+    services: [], languages: [], editorVersion: 'version-1',
   };
 }
 
@@ -148,13 +169,13 @@ function legacyWriteRequest(): Omit<UpdateClientRequest, 'editorVersion' | 'serv
     insuranceProvider: 'Medical Assistance', email: 'marcus@example.test', primaryPhone: '6125550142', secondaryPhone: null,
     intakeDate: '2026-05-26', socDate: '2026-06-01', referralSource: 'County',
     location: 'Minneapolis', isOnboarding: false,
-    addressLine1: '1240 Portland Ave', addressLine2: null, city: 'Minneapolis', state: 'MN', postalCode: '55404', county: 'Hennepin',
+    addressLine1: '1240 Portland Ave', addressLine2: null, city: 'Minneapolis', state: 'MN', postalCode: '55404', county: 'Hennepin', country: 'United States',
     evvAuthorizedHoursPerWeek: 32, safetyMeasures: null, specialEquipment: null, allergies: null, otherServices: null,
     additionalProfile: {
       programType: ClientProgramTypeCode.Two45D, referralDetails: null, homeCareRating: null, medicalEquipment: null,
       pcaComplexity: null, demographics: null, smokes: null, isVeteran: null, hasPets: null, livingArrangement: null,
       preferredClinic: null, preferredHospital: null, preferredAmbulance: null, caregiverPreference: null,
-      nutritionalRequirements: null, diet: null, mealSchedule: null, notes: null,
+      nutritionalRequirements: null, diet: null, mealSchedule: null, notes: null, additionalInformation: null,
     },
     services: [{ code: '245D', name: '245D', startDate: '2026-06-01' }],
     languages: [{ languageCode: 'en', languageName: 'English', isPrimary: true }],

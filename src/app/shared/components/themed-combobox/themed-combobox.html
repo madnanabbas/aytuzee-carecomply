@@ -1,0 +1,23 @@
+<div class="relative">
+  <input
+    [ngModel]="value"
+    (ngModelChange)="update($event)"
+    (focus)="open.set(true)"
+    (blur)="closeAfterSelection()"
+    (keydown.escape)="open.set(false)"
+    class="h-8 w-full rounded-control border border-border-strong bg-surface-muted px-2.5 pr-8 text-[12px] text-text-primary outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+    [placeholder]="placeholder"
+    [attr.autocomplete]="autocomplete"
+    role="combobox"
+    aria-autocomplete="list"
+    [attr.aria-expanded]="open()"
+  />
+  <button type="button" tabindex="-1" class="absolute right-0 top-0 flex h-full w-8 items-center justify-center text-text-secondary" (mousedown)="$event.preventDefault()" (click)="open.update(value => !value)" aria-label="Show options">▾</button>
+  @if (open() && filteredOptions.length) {
+    <div class="absolute z-50 mt-1 max-h-56 w-full overflow-y-auto rounded-control border border-border bg-surface p-1 shadow-lg" role="listbox">
+      @for (option of filteredOptions; track option) {
+        <button type="button" class="block w-full rounded px-2.5 py-2 text-left text-[11px] text-text-primary hover:bg-surface-muted focus:bg-surface-muted focus:outline-none" (mousedown)="$event.preventDefault()" (click)="select(option)" role="option" [attr.aria-selected]="option === value">{{ option }}</button>
+      }
+    </div>
+  }
+</div>

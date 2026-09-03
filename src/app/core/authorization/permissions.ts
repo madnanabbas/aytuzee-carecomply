@@ -7,6 +7,7 @@ export const Permissions = {
     Create: 'Client.Create',
     Edit: 'Client.Edit',
     Archive: 'Client.Archive',
+    RevealSsn: 'Client.RevealSsn',
   },
   ClientDocument: {
     View: 'ClientDocument.View',

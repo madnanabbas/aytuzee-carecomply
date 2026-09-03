@@ -31,17 +31,20 @@ export async function loadAppConfig(
 }
 
 export function parseAppConfig(value: unknown): Readonly<AppConfig> {
-  if (!isRecord(value) || Object.keys(value).some((key) => key !== 'apiBaseUrl')) {
+  const allowedKeys = new Set(['apiBaseUrl', 'postalLookupBaseUrl', 'geographyBaseUrl']);
+  if (!isRecord(value) || Object.keys(value).some((key) => !allowedKeys.has(key))) {
     throw configurationError();
   }
 
-  if (typeof value['apiBaseUrl'] !== 'string') {
+  if (typeof value['apiBaseUrl'] !== 'string' || typeof value['postalLookupBaseUrl'] !== 'string' || typeof value['geographyBaseUrl'] !== 'string') {
     throw configurationError();
   }
 
   const apiBaseUrl = normalizeApiBaseUrl(value['apiBaseUrl']);
+  const postalLookupBaseUrl = normalizeApiBaseUrl(value['postalLookupBaseUrl']);
+  const geographyBaseUrl = normalizeApiBaseUrl(value['geographyBaseUrl']);
 
-  return Object.freeze({ apiBaseUrl });
+  return Object.freeze({ apiBaseUrl, postalLookupBaseUrl, geographyBaseUrl });
 }
 
 function normalizeApiBaseUrl(value: string): string {

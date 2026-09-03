@@ -14,6 +14,10 @@ describe('clientFormToCreateRequest', () => {
       programType: '245D',
       services: ['245D'],
       languages: ['English'],
+      evvHours: 35,
+      country: 'United States',
+      notes: 'Care-team note',
+      additionalInformation: 'Call before arrival',
     });
 
     const request = clientFormToCreateRequest(form);
@@ -25,8 +29,12 @@ describe('clientFormToCreateRequest', () => {
       pmiNumber: '24591384',
     });
     expect(request.careSetup.socDate).toBe('2026-09-02');
+    expect(request.careSetup.evvAuthorizedHoursPerWeek).toBe(35);
     expect(request.initialStatus).toBe('Active');
     expect(request.additionalProfile.programType).toBe('Two45D');
+    expect(request.contact.country).toBe('United States');
+    expect(request.additionalProfile.notes).toBe('Care-team note');
+    expect(request.additionalProfile.additionalInformation).toBe('Call before arrival');
     expect(request.services).toEqual([{ code: '245D', name: '245D' }]);
     expect(request.languages).toEqual([
       { languageCode: 'en', languageName: 'English', isPrimary: true },
