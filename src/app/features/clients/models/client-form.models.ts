@@ -7,7 +7,6 @@ import {
   ClientServiceInput,
   ClientStatusCode,
   CreateClientRequest,
-  LegacyClientWriteRequest,
   UpdateClientRequest,
 } from './client-api.models';
 import {
@@ -253,50 +252,12 @@ function clientProgramWireValue(value: string): string {
 }
 
 export function clientFormToUpdateRequest(form: ClientFormModel, editorVersion: string): UpdateClientRequest {
-  const core = baseWriteRequest(form);
+  const { initialStatus: _initialStatus, dischargeDate: _dischargeDate, dischargeReason: _dischargeReason, ...core } = clientFormToCreateRequest(form);
   const serviceChangeEffectiveDate = nullableTrimmed(form.serviceChangeEffectiveDate);
-  const serviceStartDate = serviceChangeEffectiveDate ?? form.socDate;
   return {
     ...core,
-    services: core.services.map((service) => ({ ...service, startDate: serviceStartDate })),
     editorVersion,
     serviceChangeEffectiveDate,
-  };
-}
-
-function baseWriteRequest(form: ClientFormModel): Omit<LegacyClientWriteRequest, 'status' | 'dischargeDate' | 'dischargeReason'> {
-  return {
-    firstName: form.firstName.trim(),
-    middleName: nullableTrimmed(form.middleName),
-    lastName: form.lastName.trim(),
-    preferredName: nullableTrimmed(form.goesBy),
-    dateOfBirth: form.dob,
-    gender: clientGenderCode(form.gender),
-    pmiNumber: form.pmi.trim(),
-    insuranceProvider: nullableTrimmed(form.insurance),
-    email: nullableTrimmed(form.email),
-    primaryPhone: nullableTrimmed(form.phone1),
-    secondaryPhone: nullableTrimmed(form.phone2),
-    intakeDate: nullableTrimmed(form.intakeDate),
-    socDate: form.socDate,
-    referralSource: nullableTrimmed(form.referralSource),
-    location: nullableTrimmed(form.location),
-    isOnboarding: form.onboarding,
-    addressLine1: nullableTrimmed(form.street),
-    addressLine2: nullableTrimmed(form.apartment),
-    city: nullableTrimmed(form.city),
-    state: nullableTrimmed(form.state),
-    postalCode: nullableTrimmed(form.zip),
-    county: nullableTrimmed(form.county),
-    country: nullableTrimmed(form.country),
-    evvAuthorizedHoursPerWeek: parseNullableNumber(form.evvHours),
-    safetyMeasures: nullableTrimmed(form.safetyMeasure),
-    specialEquipment: nullableTrimmed(form.specialEquipment),
-    allergies: nullableTrimmed(form.allergies),
-    otherServices: nullableTrimmed(form.otherServices),
-    additionalProfile: additionalProfile(form),
-    services: serviceInputs(form),
-    languages: languageInputs(form),
   };
 }
 

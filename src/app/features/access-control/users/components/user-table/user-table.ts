@@ -7,6 +7,7 @@ import { UserListItem } from '../../models/user-management.models';
   standalone: true,
   imports: [RouterLink],
   templateUrl: './user-table.html',
+  styleUrls: ['../../user-density.css'],
 })
 export class UserTableComponent {
   readonly users = input.required<readonly UserListItem[]>();

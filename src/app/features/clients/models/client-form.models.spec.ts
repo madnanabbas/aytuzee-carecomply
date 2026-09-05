@@ -1,4 +1,4 @@
-import { clientFormToCreateRequest, createEmptyClientForm } from './client-form.models';
+import { clientFormToCreateRequest, clientFormToUpdateRequest, createEmptyClientForm } from './client-form.models';
 
 describe('clientFormToCreateRequest', () => {
   it('maps the Angular form to the nested API create contract', () => {
@@ -39,6 +39,23 @@ describe('clientFormToCreateRequest', () => {
     expect(request.languages).toEqual([
       { languageCode: 'en', languageName: 'English', isPrimary: true },
     ]);
+    expect(request).not.toHaveProperty('firstName');
+    expect(request).not.toHaveProperty('status');
+  });
+
+  it('maps edits to the nested API update contract with string enums', () => {
+    const form = createEmptyClientForm();
+    Object.assign(form, {
+      firstName: 'Marcus', lastName: 'Lee', dob: '1986-02-14', gender: 'Male',
+      pmi: '24591384', socDate: '2026-09-02', phone1: '(612) 555-0100',
+      street: '100 Main Street', programType: 'PCA Traditional', languages: ['English'],
+    });
+
+    const request = clientFormToUpdateRequest(form, 'a'.repeat(64));
+
+    expect(request.identity.firstName).toBe('Marcus');
+    expect(request.identity.gender).toBe('Male');
+    expect(request.additionalProfile.programType).toBe('PcaTraditional');
     expect(request).not.toHaveProperty('firstName');
     expect(request).not.toHaveProperty('status');
   });

@@ -12,6 +12,7 @@ import { RoleListItem } from '../../models/role-management.models';
   standalone: true,
   imports: [RouterLink],
   templateUrl: './role-list-page.html',
+  styleUrls: ['../../../users/user-density.css'],
 })
 export class RoleListPage {
   private readonly roleService = inject(RoleManagementService);

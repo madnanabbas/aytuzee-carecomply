@@ -42,8 +42,16 @@ export function clientGenderLabel(value: ClientGenderCode | string): string {
 
 export function clientProgramLabel(value: ClientProgramTypeCode | string): string {
   if (typeof value === 'number') return PROGRAM_LABELS[value] ?? '—';
-  const normalized = value.replace(/^Two45D$/i, '245D').replace(/^Pca/i, 'PCA').replace(/^Cfss/i, 'CFSS');
-  return addWordBreaks(normalized);
+  switch (value.trim().replace(/[\s_-]/g, '').toLowerCase()) {
+    case 'pcatraditional': return 'PCA Traditional';
+    case 'pcachoice': return 'PCA Choice';
+    case 'two45d':
+    case '245d': return '245D';
+    case 'cfssagency': return 'CFSS Agency';
+    case 'cfssbudget': return 'CFSS Budget';
+    case 'none': return '—';
+    default: return addWordBreaks(value);
+  }
 }
 
 export function clientStatusCode(value: string): ClientStatusCode {

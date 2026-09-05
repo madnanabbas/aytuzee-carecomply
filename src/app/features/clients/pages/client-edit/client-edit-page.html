@@ -9,7 +9,6 @@
         <h1 class="text-[20px] font-semibold text-text-primary">Edit client</h1>
         <p class="mt-0.5 text-[11px] text-text-secondary">Update the core client record. Related records remain managed from the client profile.</p>
       </div>
-      @if (saved()) { <span class="rounded-status bg-green-50 px-2.5 py-1 text-[10px] font-semibold text-success ring-1 ring-inset ring-green-200">Changes saved</span> }
     </div>
   </header>
 
@@ -47,7 +46,8 @@
             <label><span class="form-label">Goes by</span><input class="form-control" [(ngModel)]="model.goesBy" /></label>
             <label><span class="form-label">Date of birth *</span><input class="form-control" type="date" [(ngModel)]="model.dob" /></label>
             <label><span class="form-label">Gender *</span><select class="form-control" [(ngModel)]="model.gender"><option value="">Select</option><option>Female</option><option>Male</option><option>Non-binary</option><option>Other</option><option>Prefer not to say</option></select></label>
-            <label><span class="form-label">PMI # *</span><input class="form-control" [(ngModel)]="model.pmi" /></label>
+            <label><span class="form-label">PMI number <span class="required-mark">*</span></span><input class="form-control" [ngModel]="model.pmi" (ngModelChange)="normalizePmi($event)" maxlength="8" inputmode="numeric" /></label>
+            <label><span class="form-label">SSN</span><input class="form-control" [ngModel]="model.ssn" (ngModelChange)="normalizeSsn($event)" maxlength="11" inputmode="numeric" placeholder="Leave blank to keep the stored SSN" /><span class="field-help">Enter a value only to add or replace the protected SSN.</span></label>
             <label><span class="form-label">Insurance</span><input class="form-control" [(ngModel)]="model.insurance" /></label>
           </div>
         </section>
@@ -57,7 +57,7 @@
           <div class="form-grid">
             <label><span class="form-label">Intake date</span><input class="form-control" type="date" [(ngModel)]="model.intakeDate" /></label>
             <label><span class="form-label">SOC date *</span><input class="form-control" type="date" [(ngModel)]="model.socDate" /></label>
-            <label><span class="form-label">Referral source</span><input class="form-control" [(ngModel)]="model.referralSource" /></label>
+            <label><span class="form-label">Referral source</span><select class="form-control" [(ngModel)]="model.referralSource"><option value="">Select source</option><option>Self</option><option>County</option><option>Hospital</option><option>Clinic</option><option>Family / Friend</option><option>Other</option></select></label>
             <label><span class="form-label">Status</span><select class="form-control" [(ngModel)]="model.status"><option>Pending</option><option>Active</option><option>On hold</option><option>Discharged</option><option>Inactive</option></select></label>
             <label><span class="form-label">Location</span><select class="form-control" [(ngModel)]="model.location"><option value="">Select location</option>@for (value of locations; track value) {<option>{{ value }}</option>}</select></label>
 
@@ -81,20 +81,20 @@
           <header><h2>Contact & address</h2><p>Primary contact channels and home address.</p></header>
           <div class="form-grid">
             <label><span class="form-label">Email</span><input class="form-control" type="email" [(ngModel)]="model.email" /></label>
-            <label><span class="form-label">Phone #01</span><input class="form-control" [(ngModel)]="model.phone1" /></label>
-            <label><span class="form-label">Phone #02</span><input class="form-control" [(ngModel)]="model.phone2" /></label>
+            <label><span class="form-label">Primary phone <span class="required-mark">*</span></span><input class="form-control" [ngModel]="model.phone1" (ngModelChange)="normalizePhone('phone1', $event)" maxlength="14" inputmode="tel" /></label>
+            <label><span class="form-label">Secondary phone</span><input class="form-control" [ngModel]="model.phone2" (ngModelChange)="normalizePhone('phone2', $event)" maxlength="14" inputmode="tel" /></label>
             <div class="relative">
-              <span class="form-label">Preferred languages</span>
+              <span class="form-label">Preferred languages <span class="required-mark">*</span></span>
               <button type="button" class="form-control flex items-center justify-between text-left" (click)="toggleLanguagesDropdown()"><span class="truncate">{{ selectedLabel(model.languages, 'Select languages') }}</span><span>⌄</span></button>
               @if (languagesOpen()) { <div class="absolute z-30 mt-1 w-full rounded-control border border-border bg-surface p-1.5 shadow-lg">@for (value of languageOptions; track value) {<label class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-[11px] hover:bg-surface-muted"><input type="checkbox" [checked]="model.languages.includes(value)" (change)="toggleArray('languages', value, $event)" />{{ value }}</label>}</div> }
             </div>
-            <label class="xl:col-span-2"><span class="form-label">Street</span><input class="form-control" [(ngModel)]="model.street" /></label>
+            <label class="xl:col-span-2"><span class="form-label">Street <span class="required-mark">*</span></span><input class="form-control" [(ngModel)]="model.street" /></label>
             <label><span class="form-label">Apartment</span><input class="form-control" [(ngModel)]="model.apartment" /></label>
             <label><span class="form-label">City</span><input class="form-control" [(ngModel)]="model.city" /></label>
             <label><span class="form-label">County</span><input class="form-control" [(ngModel)]="model.county" /></label>
             <label><span class="form-label">Country</span><input class="form-control" [(ngModel)]="model.country" maxlength="100" autocomplete="country-name" /></label>
             <label><span class="form-label">State</span><input class="form-control" [(ngModel)]="model.state" /></label>
-            <label><span class="form-label">ZIP</span><input class="form-control" [(ngModel)]="model.zip" /></label>
+            <label><span class="form-label">ZIP</span><input class="form-control" [ngModel]="model.zip" (ngModelChange)="normalizePostalCode($event)" maxlength="10" /></label>
           </div>
         </section>
 
@@ -121,9 +121,22 @@
             <label><span class="form-label">Race</span><input class="form-control" [(ngModel)]="model.race" /></label>
             <label><span class="form-label">Smoking</span><select class="form-control" [(ngModel)]="model.smoking"><option value="">Unknown</option><option>No</option><option>Yes</option></select></label>
             <label><span class="form-label">US Military Veteran</span><select class="form-control" [(ngModel)]="model.veteran"><option value="">Unknown</option><option>No</option><option>Yes</option></select></label>
+            @if (model.veteran === 'Yes') {<label class="xl:col-span-2"><span class="form-label">Veteran details</span><input class="form-control" [(ngModel)]="model.veteranDetails" /></label>}
             <label><span class="form-label">Pets</span><select class="form-control" [(ngModel)]="model.pets"><option value="">Unknown</option><option>No</option><option>Yes</option></select></label>
+            @if (model.pets === 'Yes') {<label class="xl:col-span-2"><span class="form-label">Pet details</span><input class="form-control" [(ngModel)]="model.petsDetails" /></label>}
             <label><span class="form-label">Living arrangement</span><input class="form-control" [(ngModel)]="model.livingArrangement" /></label>
+            <label class="xl:col-span-2"><span class="form-label">Living arrangement details</span><input class="form-control" [(ngModel)]="model.livingArrangementDetails" /></label>
             <label><span class="form-label">Caregiver preference</span><input class="form-control" [(ngModel)]="model.caregiverPreference" /></label>
+          </div>
+        </section>
+
+        <section class="form-section">
+          <header><h2>Referral information</h2><p>Original referral context and referring organization.</p></header>
+          <div class="form-grid">
+            <label class="flex items-center gap-2 pt-5 text-[11px] text-text-secondary"><input type="checkbox" [(ngModel)]="model.referringClient" />Referred by another client</label>
+            @if (model.referringClient) {<label><span class="form-label">Referring client</span><input class="form-control" [(ngModel)]="model.referringClientName" /></label>}
+            <label><span class="form-label">Company name</span><input class="form-control" [(ngModel)]="model.companyName" /></label>
+            <label><span class="form-label">Company phone</span><input class="form-control" [ngModel]="model.companyPhone" (ngModelChange)="normalizePhone('companyPhone', $event)" maxlength="14" inputmode="tel" /></label>
           </div>
         </section>
 
@@ -140,6 +153,10 @@
           <header><h2>Nutrition & notes</h2><p>Additional care preferences and contextual information.</p></header>
           <div class="form-grid">
             <label class="xl:col-span-2"><span class="form-label">Nutritional requirements</span><input class="form-control" [(ngModel)]="model.nutritionalRequirements" /></label>
+            <div class="xl:col-span-4"><span class="form-label">Current diet</span><div class="choice-row">@for (value of dietOptions; track value) {<label><input type="checkbox" [checked]="model.diet.includes(value)" (change)="toggleArray('diet', value, $event)" />{{ value }}</label>}</div></div>
+            <label><span class="form-label">Breakfast time</span><input class="form-control" type="time" [(ngModel)]="model.breakfastTime" /></label>
+            <label><span class="form-label">Lunch time</span><input class="form-control" type="time" [(ngModel)]="model.lunchTime" /></label>
+            <label><span class="form-label">Dinner time</span><input class="form-control" type="time" [(ngModel)]="model.dinnerTime" /></label>
             <label class="xl:col-span-4"><span class="form-label">Notes</span><textarea class="form-control min-h-[90px] py-2" [(ngModel)]="model.notes"></textarea></label>
             <label class="xl:col-span-4"><span class="form-label">Additional information</span><textarea class="form-control min-h-[90px] py-2" [(ngModel)]="model.additionalInformation"></textarea></label>
           </div>
@@ -154,9 +171,21 @@
   }
 </div>
 
+@if (completionDialog(); as dialog) {
+  <app-success-dialog
+    [open]="true"
+    [title]="dialog.title"
+    [message]="dialog.message"
+    confirmLabel="View client"
+    (confirmed)="confirmCompletion()"
+  />
+}
+
 <style>
   .edit-tab{position:relative;height:2.4rem;font-size:11px;font-weight:500;color:var(--color-text-muted,#64748b)}.edit-tab.active{color:var(--color-primary,#0f766e)}.edit-tab.active:after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--color-primary,#0f766e)}
   .form-section{overflow:visible;border:1px solid var(--color-border,#e2e8f0);border-radius:.5rem;background:var(--color-surface,#fff)}.form-section>header{border-bottom:1px solid var(--color-border,#e2e8f0);padding:.6rem 1rem}.form-section h2{font-size:12px;font-weight:600;color:var(--color-text-primary,#0f172a)}.form-section p{margin-top:1px;font-size:10px;color:var(--color-text-muted,#64748b)}
   .form-grid{display:grid;grid-template-columns:repeat(1,minmax(0,1fr));gap:.7rem;padding:.8rem 1rem}@media(min-width:768px){.form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(min-width:1280px){.form-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
   .form-label{display:block;margin-bottom:.22rem;font-size:10.5px;font-weight:500;color:var(--color-text-secondary,#475569)}.form-control{width:100%;min-height:2rem;border-radius:.375rem;border:1px solid var(--color-border-strong,#cbd5e1);background:var(--color-surface,#fff);padding:.35rem .6rem;font-size:11px;color:var(--color-text-primary,#0f172a);outline:none}.form-control:focus{border-color:var(--color-primary,#0f766e);box-shadow:0 0 0 1px var(--color-primary,#0f766e)}
+  .required-mark{color:#dc2626}.field-help{display:block;margin-top:.2rem;font-size:9px;color:var(--color-text-muted,#64748b)}
+  .choice-row{display:flex;flex-wrap:wrap;gap:.45rem 1rem;border:1px solid var(--color-border,#e2e8f0);border-radius:.375rem;padding:.5rem .65rem}.choice-row label{display:flex;align-items:center;gap:.35rem;font-size:11px;color:var(--color-text-secondary,#475569)}
 </style>

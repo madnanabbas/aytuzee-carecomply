@@ -4,9 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthorizationService } from '../../../../core/authorization/authorization.service';
-import { Permissions } from '../../../../core/authorization/permissions';
+import { Permission, Permissions } from '../../../../core/authorization/permissions';
 import { ClientApiService } from '../../data-access/client-api.service';
+import { ClientTodoApiService } from '../../data-access/client-todo-api.service';
 import { ClientDetails } from '../../models/client-api.models';
+import { ClientTodosComponent } from '../../components/client-todos/client-todos';
+import { ClientCaregiversComponent } from '../../components/client-caregivers/client-caregivers';
+import { ClientHospitalizationsComponent } from '../../components/client-hospitalizations/client-hospitalizations';
 import { clientGenderLabel, clientProgramLabel, clientStatusLabel, formatDateForDisplay } from '../../models/client-presentation';
 
 type ClientViewTab =
@@ -23,9 +27,14 @@ type ClientViewTab =
   | 'email-logs'
   | 'employee-services';
 
+interface ClientTabDefinition {
+  readonly id: ClientViewTab;
+  readonly label: string;
+  readonly viewPermission: Permission;
+}
+
 type ClientDialog =
   | 'note'
-  | 'todo'
   | 'service-agreement'
   | 'hospitalization'
   | 'document'
@@ -115,7 +124,7 @@ interface ClientViewModel {
 @Component({
   selector: 'app-client-view-page',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, ClientTodosComponent, ClientCaregiversComponent, ClientHospitalizationsComponent],
   templateUrl: './client-view-page.html',
 })
 export class ClientViewPageComponent {
@@ -129,6 +138,7 @@ export class ClientViewPageComponent {
   readonly activeDialog = signal<ClientDialog>(null);
 
   private readonly api = inject(ClientApiService);
+  private readonly todoApi = inject(ClientTodoApiService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute);
   private readonly clientDetails = signal<ClientDetails | null>(null);
@@ -139,6 +149,7 @@ export class ClientViewPageComponent {
   readonly ssn = signal('***-**-****');
   readonly ssnRevealing = signal(false);
   readonly ssnError = signal<string | null>(null);
+  readonly openTodoCount = signal<number | null>(null);
   private ssnHideTimer: number | null = null;
 
   get client(): ClientViewModel {
@@ -200,30 +211,33 @@ export class ClientViewPageComponent {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        next: (client) => this.clientDetails.set(client),
+        next: (client) => {
+          this.clientDetails.set(client);
+          this.loadOpenTodoCount(clientId);
+        },
         error: () => this.loadFailed.set(true),
       });
   }
 
-  readonly tabs: readonly { id: ClientViewTab; label: string }[] = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'quick-notes', label: 'Quick notes' },
-    { id: 'todos', label: 'To-dos' },
-    { id: 'service-agreements', label: 'Service agreements' },
-    { id: 'pcg', label: 'Primary caregivers' },
-    { id: 'responsible-party', label: 'Responsible parties' },
-    { id: 'hospitalization', label: 'Hospitalizations' },
-    { id: 'visits', label: 'Visits' },
-    { id: 'forms', label: 'Forms' },
-    { id: 'documents', label: 'Documents' },
-    { id: 'email-logs', label: 'Email logs' },
-    { id: 'employee-services', label: 'Employee services' },
+  readonly tabs: readonly ClientTabDefinition[] = [
+    { id: 'overview', label: 'Overview', viewPermission: Permissions.Client.View },
+    { id: 'quick-notes', label: 'Quick notes', viewPermission: Permissions.ClientQuickNote.View },
+    { id: 'todos', label: 'To-dos', viewPermission: Permissions.ClientTodo.View },
+    { id: 'service-agreements', label: 'Service agreements', viewPermission: Permissions.ClientServiceAgreement.View },
+    { id: 'pcg', label: 'Primary caregivers', viewPermission: Permissions.ClientCaregiver.View },
+    { id: 'responsible-party', label: 'Responsible parties', viewPermission: Permissions.ClientResponsibleParty.View },
+    { id: 'hospitalization', label: 'Hospitalizations', viewPermission: Permissions.ClientHospitalization.View },
+    { id: 'visits', label: 'Visits', viewPermission: Permissions.ClientVisit.View },
+    { id: 'forms', label: 'Forms', viewPermission: Permissions.ClientForm.View },
+    { id: 'documents', label: 'Documents', viewPermission: Permissions.ClientDocument.View },
+    { id: 'email-logs', label: 'Email logs', viewPermission: Permissions.ClientEmailLog.View },
+    { id: 'employee-services', label: 'Employee services', viewPermission: Permissions.ClientEmployeeService.View },
   ];
+  readonly visibleTabs = computed(() => this.tabs.filter(tab => this.authorization.hasPermission(tab.viewPermission)));
 
   // Related-record APIs are not available yet. Keep these collections empty so
   // the client screen never represents demonstration data as persisted data.
   readonly quickNotes: readonly RelatedRecordPreviewRow[] = [];
-  readonly todos: readonly RelatedRecordPreviewRow[] = [];
   readonly serviceAgreements: readonly RelatedRecordPreviewRow[] = [];
   readonly hospitalizations: readonly RelatedRecordPreviewRow[] = [];
   readonly documents: readonly RelatedRecordPreviewRow[] = [];
@@ -236,7 +250,6 @@ export class ClientViewPageComponent {
 
   readonly dialogDefinitions: Record<Exclude<ClientDialog, null>, DialogDefinition> = {
     note: { title: 'Add quick note', description: 'Record an internal client note and optionally tag a staff member.', submitLabel: 'Add note' },
-    todo: { title: 'Add todo', description: 'Create a client-related action item with an owner and due date.', submitLabel: 'Add todo' },
     'service-agreement': { title: 'Add service agreement', description: 'Record the approved service, effective dates and supporting agreement.', submitLabel: 'Add agreement' },
     hospitalization: { title: 'Add hospitalization', description: 'Record an admission and discharge period for the client.', submitLabel: 'Add hospitalization' },
     document: { title: 'Upload client document', description: 'Add document metadata and select a file for secure upload.', submitLabel: 'Upload document' },
@@ -248,7 +261,6 @@ export class ClientViewPageComponent {
 
   readonly draft = {
     subject: '', noteType: '', note: '', taggedEmployee: '', attachment: '',
-    task: '', assignedTo: '', dueDate: '', priority: 'Normal',
     service: '', agreementStart: '', agreementEnd: '', authorizedHours: '', agreementFile: '',
     hospital: '', hospitalizedIn: '', inTime: '', hospitalizedOut: '', outTime: '', reason: '',
     documentName: '', documentType: '', documentFile: '', issueDate: '', expiryDate: '', reviewDate: '',
@@ -259,8 +271,27 @@ export class ClientViewPageComponent {
   };
 
   setTab(tab: ClientViewTab): void {
-    this.activeTab.set(tab);
+    if (this.visibleTabs().some(({ id }) => id === tab)) this.activeTab.set(tab);
   }
+
+  private loadOpenTodoCount(clientId: string): void {
+    if (!this.authorization.hasPermission(Permissions.ClientTodo.View)) {
+      this.openTodoCount.set(null);
+      return;
+    }
+    this.todoApi.list(clientId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: todos => this.openTodoCount.set(
+          todos.filter(todo => todo.status === 'Open' || todo.status === 'InProgress').length,
+        ),
+        error: () => this.openTodoCount.set(null),
+      });
+  }
+
+  hasPermission(permission: Permission): boolean { return this.authorization.hasPermission(permission); }
+
+  readonly permissions = Permissions;
 
   openDialog(dialog: Exclude<ClientDialog, null>): void {
     this.activeDialog.set(dialog);

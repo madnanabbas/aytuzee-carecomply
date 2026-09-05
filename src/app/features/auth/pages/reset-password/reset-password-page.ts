@@ -53,6 +53,7 @@ const passwordsMatchValidator: ValidatorFn = (
     LucideLockKeyhole,
   ],
   templateUrl: './reset-password-page.html',
+  styleUrl: '../../auth-density.css',
 })
 export class ResetPasswordPageComponent {
   private readonly route = inject(ActivatedRoute);

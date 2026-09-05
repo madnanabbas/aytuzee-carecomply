@@ -151,7 +151,7 @@ export interface CreateClientResponse {
   readonly editorVersion?: string;
 }
 
-export interface UpdateClientRequest extends Omit<LegacyClientWriteRequest, 'status' | 'dischargeDate' | 'dischargeReason'> {
+export interface UpdateClientRequest extends Omit<CreateClientRequest, 'initialStatus' | 'dischargeDate' | 'dischargeReason'> {
   readonly editorVersion: string;
   readonly serviceChangeEffectiveDate: string | null;
 }

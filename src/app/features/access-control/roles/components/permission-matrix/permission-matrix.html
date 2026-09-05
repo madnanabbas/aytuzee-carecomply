@@ -141,14 +141,14 @@
               let last = $last
             ) {
               <div
-                class="grid gap-3 px-4 py-3 md:grid-cols-[minmax(11rem,1.15fr)_minmax(0,3fr)] md:items-start"
+                class="px-4 py-3"
                 [class.border-b]="!last"
                 [class.border-border]="!last"
               >
                 <!-- =======================================
                      FEATURE
                      ======================================= -->
-                <div>
+                <div class="mb-3">
                   <label
                     class="inline-flex cursor-pointer items-center gap-2.5"
                   >
@@ -171,41 +171,35 @@
                 <!-- =======================================
                      PERMISSIONS
                      ======================================= -->
-                <div
-                  class="grid gap-x-6 gap-y-2 sm:grid-cols-2 xl:grid-cols-3"
-                >
-                  @for (
-                    permission of feature.permissions;
-                    track permission.id
-                  ) {
-                    <label
-                      class="flex min-w-0 cursor-pointer items-start gap-2.5"
-                    >
-                      <input
-                        type="checkbox"
-                        class="mt-0.5 size-4 shrink-0 accent-primary"
-                        [checked]="
-                          selectedPermissionIds().has(
-                            permission.id
-                          )
-                        "
-                        [disabled]="disabled()"
-                        (change)="
-                          togglePermission(permission.id)
-                        "
-                      />
-
-                      <span class="min-w-0">
-                        <span
-                          class="block text-small font-medium text-text-primary"
-                        >
-                          {{ permission.action }}
-                        </span>
-
-                       
-                      </span>
-                    </label>
-                  }
+                <div class="overflow-hidden rounded-control border border-border bg-surface">
+                  <div class="hidden grid-cols-[minmax(12rem,16rem)_minmax(0,1fr)] border-b border-border bg-surface-muted/70 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-text-secondary md:grid">
+                    <span>Resource</span><span>Allowed actions</span>
+                  </div>
+                  <div class="divide-y divide-border">
+                    @for (group of permissionGroups(feature); track group.key) {
+                      <div class="grid gap-3 px-3 py-2.5 transition-colors hover:bg-surface-muted/35 md:grid-cols-[minmax(12rem,16rem)_minmax(0,1fr)] md:items-center">
+                        <label class="flex cursor-pointer items-center gap-2.5">
+                          <input type="checkbox" class="size-4 shrink-0 accent-primary"
+                            [checked]="groupSelected(group)" [disabled]="disabled()" (change)="toggleGroup(group)" />
+                          <span class="text-small font-semibold text-text-primary">{{ group.name }}</span>
+                        </label>
+                        <div class="flex flex-wrap items-center gap-x-7 gap-y-2">
+                          @for (permission of group.permissions; track permission.id) {
+                            <label class="flex min-w-[7rem] cursor-pointer items-center gap-2">
+                              <input type="checkbox" class="size-4 shrink-0 accent-primary"
+                                [checked]="selectedPermissionIds().has(permission.id)"
+                                [disabled]="disabled()" (change)="togglePermission(permission.id)" />
+                              <span class="text-small font-medium text-text-primary">{{ permission.action }}</span>
+                            </label>
+                          }
+                        </div>
+                      </div>
+                    } @empty {
+                      <div class="px-3 py-3 text-small text-text-muted">
+                        No permissions are linked to this feature yet.
+                      </div>
+                    }
+                  </div>
                 </div>
               </div>
             }

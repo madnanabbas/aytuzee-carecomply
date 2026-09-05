@@ -1,4 +1,4 @@
-<div class="mx-auto w-full max-w-[100rem] pb-8">
+<div class="mx-auto min-w-0 w-full max-w-[100rem] pb-8">
   <div class="mb-2 flex items-center gap-2 text-[11px] font-medium text-text-muted">
     <a routerLink="/clients" class="hover:text-primary">Clients</a><span>/</span><span class="text-text-primary">{{
       client.firstName }} {{ client.lastName }}</span>
@@ -88,7 +88,7 @@
         <div class="compliance-grid">
           <div class="metric-tile"><strong>—</strong><span>Documents</span></div>
           <div class="metric-tile metric-warning"><strong>—</strong><span>Expiring</span></div>
-          <div class="metric-tile metric-danger"><strong>—</strong><span>Open todos</span></div>
+          <div class="metric-tile metric-danger"><strong>{{ openTodoCount() ?? '—' }}</strong><span>Open todos</span></div>
           <div class="metric-tile"><strong>—</strong><span>Compliance</span></div>
         </div>
       </section>
@@ -111,7 +111,7 @@
 
   <nav class="mt-3 overflow-x-auto border-b border-border bg-surface" aria-label="Client record sections">
     <div class="flex min-w-max items-center">
-      @for (tab of tabs; track tab.id) {
+      @for (tab of visibleTabs(); track tab.id) {
       <button type="button" class="border-b-2 px-3 py-2 text-[11px] font-medium transition-colors"
         [class.border-primary]="activeTab() === tab.id" [class.text-primary]="activeTab() === tab.id"
         [class.border-transparent]="activeTab() !== tab.id" [class.text-text-secondary]="activeTab() !== tab.id"
@@ -125,8 +125,8 @@
     <div class="overview-grid">
       <section class="panel-card overview-card">
         <header class="panel-header">
-          <h2>Client information</h2><a [routerLink]="['/clients', client.id, 'edit']" class="panel-link">View full
-            profile</a>
+          <h2>Client information</h2>@if (canEditClient()) {<a [routerLink]="['/clients', client.id, 'edit']" class="panel-link">Edit full
+            profile</a>}
         </header>
         <dl class="detail-list detail-list-compact">
           <div>
@@ -232,8 +232,8 @@
       </section>
     </div>
 
-    <div class="mt-3 grid gap-3 xl:grid-cols-[minmax(0,1.45fr)_minmax(22rem,0.75fr)]">
-      <section class="panel-card">
+    <div class="overview-secondary-grid mt-3">
+      <section class="panel-card overview-secondary-safety">
         <header class="panel-header">
           <h2>Safety information</h2><span class="text-[10px] text-text-muted">Health & safety summary</span>
         </header>
@@ -315,7 +315,7 @@
         <div>
           <h2>Quick Notes</h2>
           <p>Internal notes, case updates and client communication history.</p>
-        </div><button class="primary-action" type="button" (click)="openDialog('note')">Add note</button>
+        </div>@if (hasPermission(permissions.ClientQuickNote.Create)) {<button class="primary-action" type="button" (click)="openDialog('note')">Add note</button>}
       </header>
       <div class="overflow-x-auto">
         <table class="compact-table min-w-[70rem]">
@@ -341,44 +341,15 @@
       </div>
     </section>
     } @else if (activeTab() === 'todos') {
-    <section class="panel-card">
-      <header class="panel-header">
-        <div>
-          <h2>Todos</h2>
-          <p>Client-related tasks and follow-up actions.</p>
-        </div><button class="primary-action" type="button" (click)="openDialog('todo')">Add todo</button>
-      </header>
-      <div class="overflow-x-auto">
-        <table class="compact-table min-w-[58rem]">
-          <thead>
-            <tr>
-              <th>Task</th>
-              <th>Assigned to</th>
-              <th>Due date</th>
-              <th>Priority</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>@for (row of todos; track row.task) {<tr>
-              <td class="font-medium text-text-primary">{{ row.task }}</td>
-              <td>{{ row.assignedTo }}</td>
-              <td>{{ row.due }}</td>
-              <td>{{ row.priority }}</td>
-              <td><span class="status-pill" [class]="statusClass(row.status)">{{ row.status }}</span></td>
-              <td><button class="table-link">Edit</button></td>
-            </tr>}</tbody>
-        </table>
-      </div>
-    </section>
+    <app-client-todos [clientId]="client.id" (openCountChange)="openTodoCount.set($event)" />
     } @else if (activeTab() === 'service-agreements') {
     <section class="panel-card">
       <header class="panel-header">
         <div>
           <h2>Service Agreements</h2>
           <p>Service authorizations, effective periods and signed agreement files.</p>
-        </div><button class="primary-action" type="button" (click)="openDialog('service-agreement')">Add service
-          agreement</button>
+        </div>@if (hasPermission(permissions.ClientServiceAgreement.Create)) {<button class="primary-action" type="button" (click)="openDialog('service-agreement')">Add service
+          agreement</button>}
       </header>
       <div class="overflow-x-auto">
         <table class="compact-table min-w-[68rem]">
@@ -400,51 +371,21 @@
               <td>{{ row.hours }}</td>
               <td><span class="status-pill" [class]="statusClass(row.status)">{{ row.status }}</span></td>
               <td class="text-primary">{{ row.document }}</td>
-              <td><button class="table-link">Edit</button></td>
+              <td>@if (hasPermission(permissions.ClientServiceAgreement.Edit)) {<button class="table-link">Edit</button>}</td>
             </tr>}</tbody>
         </table>
       </div>
     </section>
     } @else if (activeTab() === 'pcg') {
-    <section class="panel-card">
-      <header class="panel-header">
-        <div>
-          <h2>Primary Caregiver</h2>
-          <p>Preferred or primary caregivers associated with this client.</p>
-        </div><button class="primary-action" type="button" (click)="openDialog('employee-service')">Assign
-          caregiver</button>
-      </header>
-      <div class="overflow-x-auto">
-        <table class="compact-table min-w-[56rem]">
-          <thead>
-            <tr>
-              <th>Caregiver</th>
-              <th>Title</th>
-              <th>Phone</th>
-              <th>Email</th>
-              <th>Preference</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>@for (row of primaryCaregivers; track row.email) {<tr>
-              <td class="font-medium text-text-primary">{{ row.name }}</td>
-              <td>{{ row.title }}</td>
-              <td>{{ row.phone }}</td>
-              <td>{{ row.email }}</td>
-              <td>{{ row.preference }}</td>
-              <td><span class="status-pill" [class]="statusClass(row.status)">{{ row.status }}</span></td>
-            </tr>}</tbody>
-        </table>
-      </div>
-    </section>
+    <app-client-caregivers [clientId]="client.id" />
     } @else if (activeTab() === 'responsible-party') {
     <section class="panel-card">
       <header class="panel-header">
         <div>
           <h2>Responsible Party</h2>
           <p>Authorized representatives and responsible-party contact details.</p>
-        </div><button class="primary-action" type="button" (click)="openDialog('responsible-party')">Add responsible
-          party</button>
+        </div>@if (hasPermission(permissions.ClientResponsibleParty.Create)) {<button class="primary-action" type="button" (click)="openDialog('responsible-party')">Add responsible
+          party</button>}
       </header>
       <div class="overflow-x-auto">
         <table class="compact-table min-w-[64rem]">
@@ -466,19 +407,20 @@
               <td>{{ row.email }}</td>
               <td>{{ row.livingWithClient }}</td>
               <td><span class="status-pill" [class]="statusClass(row.status)">{{ row.status }}</span></td>
-              <td><button class="table-link">Edit</button></td>
+              <td>@if (hasPermission(permissions.ClientResponsibleParty.Edit)) {<button class="table-link">Edit</button>}</td>
             </tr>}</tbody>
         </table>
       </div>
     </section>
     } @else if (activeTab() === 'hospitalization') {
-    <section class="panel-card">
+    <app-client-hospitalizations [clientId]="client.id" />
+    @if (false) {<section class="panel-card">
       <header class="panel-header">
         <div>
           <h2>Hospitalization History</h2>
           <p>Hospital admission and discharge periods recorded for the client.</p>
-        </div><button class="primary-action" type="button" (click)="openDialog('hospitalization')">Add
-          hospitalization</button>
+        </div>@if (hasPermission(permissions.ClientHospitalization.Create)) {<button class="primary-action" type="button" (click)="openDialog('hospitalization')">Add
+          hospitalization</button>}
       </header>
       <div class="overflow-x-auto">
         <table class="compact-table min-w-[70rem]">
@@ -500,18 +442,18 @@
               <td>{{ row.end }}</td>
               <td>{{ row.outTime }}</td>
               <td>{{ row.reason }}</td>
-              <td><button class="table-link">Edit</button></td>
+              <td>@if (hasPermission(permissions.ClientHospitalization.Edit)) {<button class="table-link">Edit</button>}</td>
             </tr>}</tbody>
         </table>
       </div>
-    </section>
+    </section>}
     } @else if (activeTab() === 'visits') {
     <section class="panel-card">
       <header class="panel-header">
         <div>
           <h2>Visits</h2>
           <p>Client service visit history for operational reference.</p>
-        </div><button class="primary-action" type="button" (click)="openDialog('visit')">Add visit</button>
+        </div>@if (hasPermission(permissions.ClientVisit.Create)) {<button class="primary-action" type="button" (click)="openDialog('visit')">Add visit</button>}
       </header>
       <div class="overflow-x-auto">
         <table class="compact-table min-w-[64rem]">
@@ -544,7 +486,7 @@
         <div>
           <h2>Forms</h2>
           <p>Client-related forms and completion status.</p>
-        </div><button class="primary-action" type="button" (click)="openDialog('form')">Add form</button>
+        </div>@if (hasPermission(permissions.ClientForm.Create)) {<button class="primary-action" type="button" (click)="openDialog('form')">Add form</button>}
       </header>
       <div class="overflow-x-auto">
         <table class="compact-table min-w-[54rem]">
@@ -564,7 +506,7 @@
               <td><span class="status-pill" [class]="statusClass(row.status)">{{ row.status }}</span></td>
               <td>{{ row.due }}</td>
               <td>{{ row.updated }}</td>
-              <td><button class="table-link">Open</button></td>
+              <td>@if (hasPermission(permissions.ClientForm.Edit)) {<button class="table-link">Open</button>}</td>
             </tr>}</tbody>
         </table>
       </div>
@@ -604,7 +546,7 @@
               <td>{{ row.createdBy }}</td>
               <td>{{ row.created }}</td>
               <td>{{ row.updated }}</td>
-              <td><button class="table-link">View</button></td>
+              <td>@if (hasPermission(permissions.ClientDocument.View)) {<button class="table-link">View</button>}</td>
             </tr>}</tbody>
         </table>
       </div>
@@ -646,8 +588,8 @@
         <div>
           <h2>Employee Services / Care Team</h2>
           <p>Employees and caregivers assigned to this client's services.</p>
-        </div><button class="primary-action" type="button" (click)="openDialog('employee-service')">Assign
-          employee</button>
+        </div>@if (hasPermission(permissions.ClientEmployeeService.Create)) {<button class="primary-action" type="button" (click)="openDialog('employee-service')">Assign
+          employee</button>}
       </header>
       <div class="overflow-x-auto">
         <table class="compact-table min-w-[68rem]">
@@ -669,7 +611,7 @@
               <td>{{ row.start }}</td>
               <td>{{ row.lastWorked }}</td>
               <td><span class="status-pill" [class]="statusClass(row.status)">{{ row.status }}</span></td>
-              <td><button class="table-link">Edit</button></td>
+              <td>@if (hasPermission(permissions.ClientEmployeeService.Edit)) {<button class="table-link">Edit</button>}</td>
             </tr>}</tbody>
         </table>
       </div>
@@ -717,20 +659,6 @@
             class="form-control min-h-[130px] py-2" [(ngModel)]="draft.note"
             placeholder="Enter note"></textarea></label><label class="col-span-2"><span
             class="form-label">Attachment</span><input class="form-control py-1" type="file" /></label></div>}
-      @case ('todo') {<div class="form-grid"><label class="col-span-2"><span class="form-label">Task *</span><input
-            class="form-control" [(ngModel)]="draft.task" placeholder="What needs to be done?" /></label><label><span
-            class="form-label">Assigned to *</span><select class="form-control" [(ngModel)]="draft.assignedTo">
-            <option value="">Select employee</option>
-            <option>Dana Morris</option>
-            <option>Jane Doe</option>
-            <option>System Administrator</option>
-          </select></label><label><span class="form-label">Due date</span><input class="form-control" type="date"
-            [(ngModel)]="draft.dueDate" /></label><label><span class="form-label">Priority</span><select
-            class="form-control" [(ngModel)]="draft.priority">
-            <option>Normal</option>
-            <option>High</option>
-            <option>Low</option>
-          </select></label></div>}
       @case ('service-agreement') {<div class="form-grid"><label class="col-span-2"><span class="form-label">Service
             *</span><select class="form-control" [(ngModel)]="draft.service">
             <option value="">Select service</option>
@@ -934,10 +862,11 @@
 
   .record-summary-grid {
     display: grid;
-    grid-template-columns: minmax(22rem, 1.05fr) minmax(30rem, 1.35fr) minmax(15rem, .72fr);
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.35fr) minmax(0, .72fr);
   }
 
   .summary-section {
+    min-width: 0;
     min-height: 7.55rem;
     padding: .8rem 1rem;
   }
@@ -1055,9 +984,20 @@
 
   .overview-grid {
     display: grid;
-    grid-template-columns: minmax(38rem, .85fr) minmax(26rem, .92fr) minmax(30rem, 1.55fr);
+    grid-template-columns: minmax(0, 13fr) minmax(0, 13fr) minmax(0, 14fr);
     gap: .75rem;
     align-items: stretch;
+  }
+
+  .overview-secondary-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 13fr) minmax(0, 13fr) minmax(0, 14fr);
+    gap: .75rem;
+    align-items: stretch;
+  }
+
+  .overview-secondary-safety {
+    grid-column: span 2;
   }
 
   .overview-card {
@@ -1430,6 +1370,14 @@
 
     .overview-grid {
       grid-template-columns: 1fr;
+    }
+
+    .overview-secondary-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .overview-secondary-safety {
+      grid-column: auto;
     }
 
     .overview-documents {

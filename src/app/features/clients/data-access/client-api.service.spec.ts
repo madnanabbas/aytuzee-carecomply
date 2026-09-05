@@ -85,16 +85,18 @@ describe('ClientApiService', () => {
     reveal.flush({ ssn: '123-45-6789' });
     expect(revealedSsn).toBe('123-45-6789');
 
+    let changedClientName: string | undefined;
     api.changeStatus('client-1', {
       status: ClientStatusCode.Discharged,
       dischargeDate: '2026-09-01',
       dischargeReason: 'Transferred',
       editorVersion: 'v2',
-    }).subscribe();
+    }).subscribe((client) => { changedClientName = client.firstName; });
     const status = http.expectOne('/api/clients/client-1/status');
     expect(status.request.method).toBe('PUT');
     expect(status.request.body.editorVersion).toBe('v2');
-    status.flush({});
+    status.flush(clientDetailsResponse());
+    expect(changedClientName).toBe('Marcus');
   });
 
   it('posts and updates only the Client Core contract', () => {
@@ -115,11 +117,13 @@ describe('ClientApiService', () => {
       serviceChangeEffectiveDate: null,
     };
 
-    api.updateClient('client-1', update).subscribe();
+    let updatedClientName: string | undefined;
+    api.updateClient('client-1', update).subscribe((client) => { updatedClientName = client.firstName; });
     const updateHttp = http.expectOne('/api/clients/client-1');
     expect(updateHttp.request.method).toBe('PUT');
     expect(updateHttp.request.body.editorVersion).toBe('version-1');
-    updateHttp.flush({});
+    updateHttp.flush(clientDetailsResponse());
+    expect(updatedClientName).toBe('Marcus');
   });
 });
 
@@ -153,7 +157,7 @@ function createRequest(): CreateClientRequest {
 function clientDetailsResponse() {
   return {
     id: 'client-1',
-    identity: { firstName: 'Marcus', middleName: '', lastName: 'Lee', preferredName: 'Marc', dateOfBirth: '1986-02-14', gender: 'Male', pmiNumber: '24591384' },
+    identity: { firstName: 'Marcus', middleName: '', lastName: 'Lee', preferredName: 'Marc', dateOfBirth: '1986-02-14', gender: 'Male', pmiNumber: '24591384', hasSsn: false },
     contact: { insuranceProvider: '', email: 'marcus@example.test', primaryPhone: '(612) 555-0142', secondaryPhone: '', addressLine1: '1240 Portland Ave', addressLine2: '', city: 'Minneapolis', state: 'MN', postalCode: '55404', county: 'Hennepin', country: 'United States' },
     careSetup: { intakeDate: '2026-05-26', socDate: '2026-06-01', referralSource: 'County', status: 'Active', location: 'Minneapolis', isOnboarding: false, evvAuthorizedHoursPerWeek: 32, dischargeDate: null, dischargeReason: '' },
     safety: { safetyMeasures: '', specialEquipment: '', allergies: '', otherServices: '' },
@@ -164,20 +168,17 @@ function clientDetailsResponse() {
 
 function legacyWriteRequest(): Omit<UpdateClientRequest, 'editorVersion' | 'serviceChangeEffectiveDate'> {
   return {
-    firstName: 'Marcus', middleName: null, lastName: 'Lee', preferredName: 'Marc',
-    dateOfBirth: '1986-02-14', gender: ClientGenderCode.Male, pmiNumber: '24591384',
-    insuranceProvider: 'Medical Assistance', email: 'marcus@example.test', primaryPhone: '6125550142', secondaryPhone: null,
-    intakeDate: '2026-05-26', socDate: '2026-06-01', referralSource: 'County',
-    location: 'Minneapolis', isOnboarding: false,
-    addressLine1: '1240 Portland Ave', addressLine2: null, city: 'Minneapolis', state: 'MN', postalCode: '55404', county: 'Hennepin', country: 'United States',
-    evvAuthorizedHoursPerWeek: 32, safetyMeasures: null, specialEquipment: null, allergies: null, otherServices: null,
+    identity: { firstName: 'Marcus', middleName: null, lastName: 'Lee', preferredName: 'Marc', dateOfBirth: '1986-02-14', gender: 'Male', pmiNumber: '24591384', ssn: null },
+    contact: { insuranceProvider: 'Medical Assistance', email: 'marcus@example.test', primaryPhone: '(612) 555-0142', secondaryPhone: null, addressLine1: '1240 Portland Ave', addressLine2: null, city: 'Minneapolis', state: 'MN', postalCode: '55404', county: 'Hennepin', country: 'United States' },
+    careSetup: { intakeDate: '2026-05-26', socDate: '2026-06-01', referralSource: 'County', location: 'Minneapolis', isOnboarding: false, evvAuthorizedHoursPerWeek: 32 },
+    safety: { safetyMeasures: null, specialEquipment: null, allergies: null, otherServices: null },
     additionalProfile: {
-      programType: ClientProgramTypeCode.Two45D, referralDetails: null, homeCareRating: null, medicalEquipment: null,
+      programType: 'Two45D', referralDetails: null, homeCareRating: null, medicalEquipment: null,
       pcaComplexity: null, demographics: null, smokes: null, isVeteran: null, hasPets: null, livingArrangement: null,
       preferredClinic: null, preferredHospital: null, preferredAmbulance: null, caregiverPreference: null,
       nutritionalRequirements: null, diet: null, mealSchedule: null, notes: null, additionalInformation: null,
     },
-    services: [{ code: '245D', name: '245D', startDate: '2026-06-01' }],
+    services: [{ code: '245D', name: '245D' }],
     languages: [{ languageCode: 'en', languageName: 'English', isPrimary: true }],
   };
 }

@@ -8,6 +8,7 @@ import { UserEditorStore } from '../../data-access/user-editor.store';
   standalone: true,
   imports: [RouterLink, RouterOutlet, SuccessDialogComponent],
   templateUrl: './user-editor-page.html',
+  styleUrls: ['../../user-density.css'],
 })
 export class UserEditorPageComponent {
   readonly store = inject(UserEditorStore);

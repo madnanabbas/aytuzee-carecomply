@@ -11,6 +11,7 @@ import {
   standalone: true,
   imports: [ReactiveFormsModule],
   templateUrl: './user-filters.html',
+  styleUrls: ['../../user-density.css'],
 })
 export class UserFiltersComponent {
   readonly query = input.required<UserListQuery>();

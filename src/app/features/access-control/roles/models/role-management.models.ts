@@ -13,6 +13,12 @@ export interface PermissionOption {
   readonly action: string;
 }
 
+export interface ResourcePermissionGroup {
+  readonly key: string;
+  readonly name: string;
+  readonly permissions: readonly PermissionOption[];
+}
+
 export interface FeaturePermissionGroup {
   readonly id: number;
   readonly key: string;

@@ -1,0 +1,44 @@
+:host {
+  display: block;
+  font-size: 0.75rem;
+}
+
+:host .text-page-title {
+  font-size: 1.25rem;
+  line-height: 1.6rem;
+}
+
+:host .text-body,
+:host .text-button,
+:host .text-label {
+  font-size: 0.75rem;
+  line-height: 1.1rem;
+}
+
+:host .text-small {
+  font-size: 0.7rem;
+  line-height: 1rem;
+}
+
+:host .text-helper {
+  font-size: 0.64rem;
+  line-height: 0.9rem;
+}
+
+:host .leading-6 {
+  line-height: 1.25rem;
+}
+
+:host .h-touch {
+  height: 2.35rem;
+}
+
+:host input,
+:host button,
+:host a {
+  font-size: inherit;
+}
+
+:host input[autocomplete='one-time-code'] {
+  font-size: 0.875rem;
+}

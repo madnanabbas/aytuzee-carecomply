@@ -11,6 +11,7 @@ import { UserMfaMethod } from '../../models/user-management.models';
   standalone: true,
   imports: [ReactiveFormsModule],
   templateUrl: './user-general-page.html',
+  styleUrls: ['../../user-density.css'],
 })
 export class UserGeneralPageComponent {
   readonly store = inject(UserEditorStore);

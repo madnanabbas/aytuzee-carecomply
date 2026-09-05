@@ -8,6 +8,7 @@ import { ClientApiService } from '../../data-access/client-api.service';
 import { CountryOption, GeographyDirectoryService, StateOption } from '../../data-access/geography-directory.service';
 import { PostalLookupService } from '../../data-access/postal-lookup.service';
 import { ThemedComboboxComponent } from '../../../../shared/components/themed-combobox/themed-combobox';
+import { SuccessDialogComponent } from '../../../../shared/components/success-dialog/success-dialog';
 import { ClientCreateStep } from '../../models/client-design.models';
 import {
   ClientFormModel,
@@ -24,11 +25,12 @@ import {
   isValidUsPostalCode,
   isValidUsSsn,
 } from '../../models/client-field-validation';
+import { CLIENT_SERVICE_OPTIONS } from '../../models/client-service-catalog';
 
 @Component({
   selector: 'app-client-create-page',
   standalone: true,
-  imports: [FormsModule, RouterLink, ThemedComboboxComponent],
+  imports: [FormsModule, RouterLink, ThemedComboboxComponent, SuccessDialogComponent],
   templateUrl: './client-create-page.html',
 })
 export class ClientCreatePageComponent {
@@ -54,6 +56,8 @@ export class ClientCreatePageComponent {
   readonly servicesOpen = signal(false);
   readonly languagesOpen = signal(false);
   readonly saving = signal(false);
+  readonly completionDialog = signal<{ readonly title: string; readonly message: string } | null>(null);
+  private createdClientId: string | null = null;
   readonly errorMessage = signal<string | null>(null);
   readonly validationErrors = signal<readonly string[]>([]);
   readonly fieldErrors = signal<Readonly<Record<string, string>>>({});
@@ -68,7 +72,7 @@ export class ClientCreatePageComponent {
   readonly geographyLoading = signal(false);
 
   readonly locationOptions = ['Minneapolis', 'St. Paul', 'Brooklyn Park', 'Bloomington'] as const;
-  readonly serviceOptions = ['PCA', 'CFSS', '245D', 'Respite'] as const;
+  readonly serviceOptions = CLIENT_SERVICE_OPTIONS;
   readonly languageOptions = ['English', 'Spanish', 'Somali', 'Hmong'] as const;
   readonly dietOptions = ['Diabetic', 'Low Fat', 'Low Salt', 'High Fiber', 'Vegetarian', 'Regular', 'Uses Supplements'] as const;
 
@@ -317,8 +321,10 @@ export class ClientCreatePageComponent {
       )
       .subscribe({
         next: (created) => {
-          void this.router.navigate(['/clients', created.id], {
-            state: { clientCreated: true },
+          this.createdClientId = created.id;
+          this.completionDialog.set({
+            title: 'Client created successfully',
+            message: `${this.draft.firstName.trim()} ${this.draft.lastName.trim()} was created successfully.`,
           });
         },
         error: (error: unknown) => {
@@ -329,6 +335,13 @@ export class ClientCreatePageComponent {
           this.handleApiError(error as HttpErrorResponse);
         },
       });
+  }
+
+  confirmCompletion(): void {
+    const clientId = this.createdClientId;
+    if (!clientId) return;
+    this.completionDialog.set(null);
+    void this.router.navigate(['/clients', clientId], { state: { clientCreated: true } });
   }
 
   private validateStep(index: number): readonly string[] {

@@ -1,8 +1,8 @@
 import { ALL_PERMISSIONS, isPermission, Permissions } from './permissions';
 
 describe('Permissions', () => {
-  it('should contain exactly 49 permission values', () => {
-    expect(ALL_PERMISSIONS).toHaveLength(49);
+  it('contains the complete canonical permission catalog', () => {
+    expect(ALL_PERMISSIONS).toHaveLength(80);
   });
 
   it('should contain only unique values', () => {

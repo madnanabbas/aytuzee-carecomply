@@ -10,6 +10,7 @@ import { BrandLogoComponent } from '../../../../shared/components/brand-logo/bra
   standalone: true,
   imports: [ReactiveFormsModule, BrandLogoComponent],
   templateUrl: './mfa-challenge-page.html',
+  styleUrl: '../../auth-density.css',
 })
 export class MfaChallengePageComponent {
   private readonly session = inject(AuthSessionService);

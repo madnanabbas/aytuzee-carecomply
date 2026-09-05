@@ -25,7 +25,6 @@ import {
   DEFAULT_CLIENT_LIST_QUERY,
 } from '../../models/client-api.models';
 import {
-  clientProgramLabel,
   clientStatusLabel,
   formatDateForDisplay,
 } from '../../models/client-presentation';
@@ -35,15 +34,10 @@ interface ClientListViewItem {
   readonly name: string;
   readonly goesBy: string;
   readonly pmi: string;
-  readonly phone: string;
-  readonly program: string;
-  readonly services: readonly string[];
+  readonly dateOfBirth: string;
   readonly location: string;
-  readonly socDate: string;
   readonly supervisor: string;
   readonly status: string;
-  readonly onboarding: boolean;
-  readonly attentionCount: number;
 }
 
 @Component({
@@ -74,15 +68,6 @@ export class ClientListPageComponent {
     (this.response()?.items ?? []).map((item) => this.toViewItem(item)),
   );
   readonly totalCount = computed(() => this.response()?.totalCount ?? 0);
-  readonly activeCount = computed(() =>
-    this.response()?.activeCount ?? this.clients().filter((client) => client.status === 'Active').length,
-  );
-  readonly onboardingCount = computed(() =>
-    this.response()?.onboardingCount ?? this.clients().filter((client) => client.onboarding).length,
-  );
-  readonly attentionCount = computed(() =>
-    this.clients().filter((client) => client.attentionCount > 0).length,
-  );
   readonly totalPages = computed(() => {
     const response = this.response();
     return response ? Math.max(1, Math.ceil(response.totalCount / response.pageSize)) : 1;
@@ -208,16 +193,10 @@ export class ClientListPageComponent {
       name: item.displayName,
       goesBy: item.preferredName ?? '',
       pmi: item.pmiNumber,
-      phone: '—',
-      program: clientProgramLabel(item.programType),
-      services: item.services.filter((service) => service.isActive).map((service) => service.name),
+      dateOfBirth: formatDateForDisplay(item.dateOfBirth),
       location: item.location ?? '—',
-      socDate: formatDateForDisplay(item.socDate),
       supervisor: '—',
       status: clientStatusLabel(item.status),
-      onboarding: item.isOnboarding,
-      // Compliance/attention counts belong to the later compliance milestone.
-      attentionCount: 0,
     };
   }
 

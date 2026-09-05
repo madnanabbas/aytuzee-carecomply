@@ -4,7 +4,7 @@
     role="presentation"
   >
     <section
-      class="relative w-full max-w-[30rem] overflow-hidden rounded-surface border border-border bg-surface shadow-elevated"
+      class="relative w-full max-w-[24rem] overflow-hidden rounded-surface border border-border bg-surface shadow-elevated"
       role="alertdialog"
       aria-modal="true"
       aria-labelledby="success-dialog-title"
@@ -13,31 +13,31 @@
       <!-- CareComply accent -->
       <div class="h-1 w-full bg-primary"></div>
 
-      <div class="px-6 pb-5 pt-6 sm:px-7">
-        <div class="flex items-start gap-4">
+      <div class="px-4 py-4">
+        <div class="flex items-start gap-3">
           <div
-            class="flex size-12 shrink-0 items-center justify-center rounded-full bg-success/10 text-success ring-8 ring-success/5"
+            class="flex size-8 shrink-0 items-center justify-center rounded-full bg-success/10 text-success ring-4 ring-success/5"
           >
-            <svg lucideCheck class="size-6" aria-hidden="true"></svg>
+            <svg lucideCheck class="size-4" aria-hidden="true"></svg>
           </div>
 
           <div class="min-w-0 pt-0.5">
             <p
-              class="text-helper font-semibold uppercase tracking-[0.08em] text-success"
+              class="text-[9px] font-semibold uppercase tracking-[0.08em] text-success"
             >
               Completed
             </p>
 
             <h2
               id="success-dialog-title"
-              class="mt-1 text-section-title font-semibold text-text-primary"
+              class="mt-0.5 text-[14px] font-semibold leading-5 text-text-primary"
             >
               {{ title() }}
             </h2>
 
             <p
               id="success-dialog-message"
-              class="mt-2 max-w-prose text-body leading-6 text-text-secondary"
+              class="mt-1.5 max-w-prose text-[11px] leading-4 text-text-secondary"
             >
               {{ message() }}
             </p>
@@ -46,14 +46,14 @@
       </div>
 
       <footer
-        class="flex items-center justify-between gap-4 border-t border-border bg-surface-muted/45 px-6 py-4 sm:px-7"
+        class="flex items-center justify-between gap-3 border-t border-border bg-surface-muted/45 px-4 py-2.5"
       >
         
 
         <button
           #confirmButton
           type="button"
-          class="ml-auto h-control min-w-28 rounded-control bg-primary px-5 text-button font-semibold text-on-primary shadow-sm transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus-visible:ring-offset-2"
+          class="ml-auto h-8 min-w-20 rounded-control bg-primary px-3.5 text-[11px] font-semibold text-on-primary shadow-sm transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus-visible:ring-offset-2"
           (click)="confirmed.emit()"
         >
           {{ confirmLabel() }}

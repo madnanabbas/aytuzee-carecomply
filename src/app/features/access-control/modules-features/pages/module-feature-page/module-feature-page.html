@@ -110,6 +110,14 @@
             <div class="flex gap-2">
               <button
                 type="button"
+                class="h-control-compact rounded-control border border-danger/40 bg-surface px-3 text-small font-medium text-danger hover:bg-danger/5 disabled:opacity-50"
+                [disabled]="saving()"
+                (click)="deleteModule()"
+              >
+                Delete module
+              </button>
+              <button
+                type="button"
                 class="h-control-compact rounded-control border border-border-strong bg-surface px-3 text-small font-medium text-text-secondary"
                 (click)="editModule()"
               >
@@ -177,6 +185,15 @@
                   </td>
                   @if (canManage) {
                     <td class="px-5 py-3 text-right">
+                      <div class="inline-flex items-center gap-2">
+                      <button
+                        type="button"
+                        class="h-control-compact rounded-control border border-danger/40 bg-surface px-3 text-small font-medium text-danger hover:bg-danger/5 disabled:opacity-50"
+                        [disabled]="saving()"
+                        (click)="deleteFeature(feature)"
+                      >
+                        Delete
+                      </button>
                       <button
                         type="button"
                         class="h-control-compact rounded-control border border-border bg-surface px-3 text-small font-medium text-text-secondary"
@@ -184,6 +201,7 @@
                       >
                         Edit
                       </button>
+                      </div>
                     </td>
                   }
                 </tr>
@@ -277,6 +295,19 @@
         } @else {
           <form class="space-y-4" [formGroup]="featureForm">
             <div>
+              <label class="block text-label font-medium text-text-primary">Module *</label>
+              <select
+                formControlName="moduleId"
+                class="mt-1.5 h-control w-full rounded-control border border-border-strong bg-surface px-3 text-body"
+                (change)="featureForm.controls.parentFeatureId.setValue(null)"
+              >
+                @for (module of modules(); track module.id) {
+                  <option [ngValue]="module.id">{{ module.name }}</option>
+                }
+              </select>
+              <p class="mt-1 text-helper text-text-muted">Changing the module moves this feature and its permission groups together.</p>
+            </div>
+            <div>
               <label class="block text-label font-medium text-text-primary">Feature name *</label
               ><input
                 formControlName="name"
@@ -305,7 +336,7 @@
                 class="mt-1.5 h-control w-full rounded-control border border-border-strong px-3 text-body"
               >
                 <option [ngValue]="null">None</option>
-                @for (parent of selectedModule()?.features ?? []; track parent.id) {
+                @for (parent of featureEditorModule()?.features ?? []; track parent.id) {
                   @if (parent.id !== state.feature?.id) {
                     <option [ngValue]="parent.id">{{ parent.name }}</option>
                   }

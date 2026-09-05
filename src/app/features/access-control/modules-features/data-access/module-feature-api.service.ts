@@ -27,11 +27,19 @@ export class ModuleFeatureApiService {
     return this.http.put<NavigationMutationResponse>(`${this.apiBaseUrl}/${this.basePath}/modules/${moduleId}`, request);
   }
 
+  deleteModule(moduleId: number): Observable<NavigationMutationResponse> {
+    return this.http.delete<NavigationMutationResponse>(`${this.apiBaseUrl}/${this.basePath}/modules/${moduleId}`);
+  }
+
   createFeature(request: NavigationFeatureRequest): Observable<NavigationMutationResponse> {
     return this.http.post<NavigationMutationResponse>(`${this.apiBaseUrl}/${this.basePath}/features`, request);
   }
 
   updateFeature(featureId: number, request: NavigationFeatureRequest): Observable<NavigationMutationResponse> {
     return this.http.put<NavigationMutationResponse>(`${this.apiBaseUrl}/${this.basePath}/features/${featureId}`, request);
+  }
+
+  deleteFeature(featureId: number): Observable<NavigationMutationResponse> {
+    return this.http.delete<NavigationMutationResponse>(`${this.apiBaseUrl}/${this.basePath}/features/${featureId}`);
   }
 }

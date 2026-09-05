@@ -16,6 +16,7 @@ type EditorState =
   standalone: true,
   imports: [ReactiveFormsModule],
   templateUrl: './module-feature-page.html',
+  styleUrls: ['../../../users/user-density.css'],
 })
 export class ModuleFeaturePage implements OnInit {
   private readonly api = inject(ModuleFeatureApiService);
@@ -41,6 +42,7 @@ export class ModuleFeaturePage implements OnInit {
   });
 
   readonly featureForm = this.fb.nonNullable.group({
+    moduleId: [0, [Validators.required, Validators.min(1)]],
     name: ['', [Validators.required, Validators.maxLength(100)]],
     key: ['', [Validators.required, Validators.maxLength(100)]],
     route: ['', [Validators.required, Validators.maxLength(256)]],
@@ -96,16 +98,29 @@ export class ModuleFeaturePage implements OnInit {
     this.saveError.set(null); this.editor.set({ kind: 'module', mode: 'edit', module });
   }
 
+  deleteModule(): void {
+    const module = this.selectedModule();
+    if (!this.canManage || !module || this.saving()) return;
+    if (!window.confirm(`Permanently delete the "${module.name}" module? This cannot be undone.`)) return;
+    this.executeDelete(this.api.deleteModule(module.id), null);
+  }
+
   addFeature(): void {
     if (!this.canManage || !this.selectedModule()) return;
-    this.featureForm.reset({ name: '', key: '', route: '', iconKey: '', parentFeatureId: null, sortOrder: 10, isActive: true });
+    this.featureForm.reset({ moduleId: this.selectedModuleId()!, name: '', key: '', route: '', iconKey: '', parentFeatureId: null, sortOrder: 10, isActive: true });
     this.saveError.set(null); this.editor.set({ kind: 'feature', mode: 'create', feature: null });
   }
 
   editFeature(feature: ModuleFeatureItem): void {
     if (!this.canManage) return;
-    this.featureForm.reset({ name: feature.name, key: feature.key, route: feature.route, iconKey: feature.iconKey, parentFeatureId: feature.parentFeatureId, sortOrder: feature.sortOrder, isActive: feature.isActive });
+    this.featureForm.reset({ moduleId: feature.moduleId, name: feature.name, key: feature.key, route: feature.route, iconKey: feature.iconKey, parentFeatureId: feature.parentFeatureId, sortOrder: feature.sortOrder, isActive: feature.isActive });
     this.saveError.set(null); this.editor.set({ kind: 'feature', mode: 'edit', feature });
+  }
+
+  deleteFeature(feature: ModuleFeatureItem): void {
+    if (!this.canManage || this.saving()) return;
+    if (!window.confirm(`Permanently delete the "${feature.name}" feature? This cannot be undone.`)) return;
+    this.executeDelete(this.api.deleteFeature(feature.id), feature.moduleId);
   }
 
   closeEditor(): void { if (!this.saving()) this.editor.set(null); }
@@ -125,10 +140,14 @@ export class ModuleFeaturePage implements OnInit {
 
   private saveFeature(state: Extract<EditorState, { kind: 'feature' }>): void {
     this.featureForm.markAllAsTouched(); if (this.featureForm.invalid) return;
-    const moduleId = this.selectedModuleId(); if (moduleId === null) return;
-    const request: NavigationFeatureRequest = { moduleId, ...this.featureForm.getRawValue() };
+    const request: NavigationFeatureRequest = this.featureForm.getRawValue();
     const operation = state.mode === 'create' ? this.api.createFeature(request) : this.api.updateFeature(state.feature!.id, request);
-    this.executeSave(operation, moduleId);
+    this.executeSave(operation, request.moduleId);
+  }
+
+  featureEditorModule(): NavigationModuleItem | null {
+    const moduleId = this.featureForm.controls.moduleId.value;
+    return this.modules().find(module => module.id === moduleId) ?? null;
   }
 
   private executeSave(operation: ReturnType<ModuleFeatureApiService['createModule']>, moduleId: number | null): void {
@@ -136,6 +155,18 @@ export class ModuleFeaturePage implements OnInit {
     operation.pipe(finalize(() => this.saving.set(false))).subscribe({
       next: (result) => { this.editor.set(null); this.load(moduleId ?? result.id); },
       error: (error: HttpErrorResponse) => this.saveError.set(this.getErrorMessage(error)),
+    });
+  }
+
+  private executeDelete(operation: ReturnType<ModuleFeatureApiService['deleteModule']>, preferredModuleId: number | null): void {
+    this.saving.set(true); this.saveError.set(null); this.error.set(null);
+    operation.pipe(finalize(() => this.saving.set(false))).subscribe({
+      next: () => this.load(preferredModuleId ?? undefined),
+      error: (error: HttpErrorResponse) => this.error.set(
+        error.status === 409
+          ? error.error?.title ?? 'This item still has dependent features or permissions and cannot be deleted.'
+          : this.getErrorMessage(error),
+      ),
     });
   }
 

@@ -1,0 +1,2 @@
+export interface ClientHospitalization { id:string; hospitalName:string; admittedAtUtc:string; dischargedAtUtc:string|null; reason:string; diagnosis:string; dischargeInstructions:string; status:'Admitted'|'Discharged'; editorVersion:string; }
+export interface SaveClientHospitalization { hospitalName:string; admittedAtUtc:string; dischargedAtUtc:string|null; reason:string; diagnosis:string|null; dischargeInstructions:string|null; editorVersion?:string; }

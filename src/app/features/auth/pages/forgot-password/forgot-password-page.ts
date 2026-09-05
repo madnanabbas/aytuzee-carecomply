@@ -26,6 +26,7 @@ import {
     LucideSend,
   ],
   templateUrl: './forgot-password-page.html',
+  styleUrl: '../../auth-density.css',
 })
 export class ForgotPasswordPageComponent {
   private readonly authApi = inject(AuthApiService);

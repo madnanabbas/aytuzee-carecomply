@@ -11,6 +11,7 @@ import { BrandLogoComponent } from '../../../../shared/components/brand-logo/bra
   standalone: true,
   imports: [ReactiveFormsModule, BrandLogoComponent],
   templateUrl: './mfa-enrollment-page.html',
+  styleUrl: '../../auth-density.css',
 })
 export class MfaEnrollmentPageComponent implements OnInit {
   private readonly session = inject(AuthSessionService);

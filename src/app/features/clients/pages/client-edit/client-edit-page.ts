@@ -14,13 +14,24 @@ import {
   createEmptyClientForm,
 } from '../../models/client-form.models';
 import { clientStatusCode } from '../../models/client-presentation';
+import { SuccessDialogComponent } from '../../../../shared/components/success-dialog/success-dialog';
+import {
+  formatPmi,
+  formatUsPhone,
+  formatUsPostalCode,
+  formatUsSsn,
+  isValidPmi,
+  isValidUsPhone,
+  isValidUsSsn,
+} from '../../models/client-field-validation';
+import { CLIENT_SERVICE_OPTIONS } from '../../models/client-service-catalog';
 
 type EditSection = 'basic' | 'additional';
 
 @Component({
   selector: 'app-client-edit-page',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, SuccessDialogComponent],
   templateUrl: './client-edit-page.html',
 })
 export class ClientEditPageComponent {
@@ -35,13 +46,14 @@ export class ClientEditPageComponent {
   readonly loadFailed = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly validationErrors = signal<readonly string[]>([]);
-  readonly saved = signal(false);
+  readonly completionDialog = signal<{ readonly title: string; readonly message: string } | null>(null);
   readonly servicesOpen = signal(false);
   readonly languagesOpen = signal(false);
 
   readonly locations = ['Minneapolis', 'St. Paul', 'Brooklyn Park', 'Bloomington'] as const;
-  readonly serviceOptions = ['PCA', 'CFSS', '245D', 'Respite'] as const;
+  readonly serviceOptions = CLIENT_SERVICE_OPTIONS;
   readonly languageOptions = ['English', 'Spanish', 'Somali', 'Hmong'] as const;
+  readonly dietOptions = ['Diabetic', 'Low Fat', 'Low Salt', 'High Fiber', 'Vegetarian', 'Regular', 'Uses Supplements'] as const;
   readonly model: ClientFormModel = createEmptyClientForm();
 
   private clientId = '';
@@ -94,7 +106,6 @@ export class ClientEditPageComponent {
       ));
 
     this.saving.set(true);
-    this.saved.set(false);
     this.clearMessages();
 
     this.api.updateClient(
@@ -117,11 +128,19 @@ export class ClientEditPageComponent {
       .subscribe({
         next: (updated) => {
           this.acceptClient(updated);
-          this.saved.set(true);
-          window.setTimeout(() => this.saved.set(false), 2500);
+          this.completionDialog.set({
+            title: 'Client updated successfully',
+            message: 'The client details were saved successfully.',
+          });
         },
         error: (error: HttpErrorResponse) => this.handleApiError(error),
       });
+  }
+
+  confirmCompletion(): void {
+    if (!this.completionDialog()) return;
+    this.completionDialog.set(null);
+    void this.router.navigate(this.backLink);
   }
 
   toggleServicesDropdown(): void {
@@ -134,12 +153,19 @@ export class ClientEditPageComponent {
     this.servicesOpen.set(false);
   }
 
-  toggleArray(field: 'services' | 'languages', value: string, event: Event): void {
+  toggleArray(field: 'services' | 'languages' | 'diet', value: string, event: Event): void {
     if (!(event.target instanceof HTMLInputElement)) return;
     const current = this.model[field];
     this.model[field] = event.target.checked
       ? [...current, value]
       : current.filter((item) => item !== value);
+  }
+
+  normalizePmi(value: string): void { this.model.pmi = formatPmi(value); }
+  normalizeSsn(value: string): void { this.model.ssn = formatUsSsn(value); }
+  normalizePostalCode(value: string): void { this.model.zip = formatUsPostalCode(value); }
+  normalizePhone(field: 'phone1' | 'phone2' | 'companyPhone', value: string): void {
+    this.model[field] = formatUsPhone(value);
   }
 
   selectedLabel(values: readonly string[], placeholder: string): string {
@@ -160,6 +186,13 @@ export class ClientEditPageComponent {
     if (!this.model.dob) errors.push('Date of birth is required.');
     if (!this.model.gender) errors.push('Gender is required.');
     if (!this.model.pmi.trim()) errors.push('PMI number is required.');
+    else if (!isValidPmi(this.model.pmi)) errors.push('PMI number must contain exactly 8 digits.');
+    if (!this.model.phone1.trim()) errors.push('Primary phone is required.');
+    else if (!isValidUsPhone(this.model.phone1)) errors.push('Primary phone must contain 10 digits.');
+    if (this.model.phone2 && !isValidUsPhone(this.model.phone2)) errors.push('Secondary phone must contain 10 digits.');
+    if (this.model.ssn && !isValidUsSsn(this.model.ssn)) errors.push('SSN must contain a valid 9-digit US Social Security number.');
+    if (!this.model.street.trim()) errors.push('Street address is required.');
+    if (!this.model.languages.length) errors.push('Select at least one preferred language.');
     if (!this.model.socDate) errors.push('SOC date is required.');
     if (this.model.intakeDate && this.model.socDate && this.model.intakeDate > this.model.socDate) {
       errors.push('Intake date cannot be after SOC date.');

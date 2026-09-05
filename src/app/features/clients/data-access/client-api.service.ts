@@ -51,20 +51,20 @@ export class ClientApiService {
   }
 
   updateClient(clientId: string, request: UpdateClientRequest): Observable<ClientDetails> {
-    return this.http.put<ClientDetails>(
+    return this.http.put<ClientDetailsApiResponse>(
       `${this.clientsUrl()}/${encodeURIComponent(clientId)}`,
       request,
-    );
+    ).pipe(map(mapClientDetails));
   }
 
   changeStatus(
     clientId: string,
     request: ChangeClientStatusRequest,
   ): Observable<ClientDetails> {
-    return this.http.put<ClientDetails>(
+    return this.http.put<ClientDetailsApiResponse>(
       `${this.clientsUrl()}/${encodeURIComponent(clientId)}/status`,
       request,
-    );
+    ).pipe(map(mapClientDetails));
   }
 
   private clientsUrl(): string {

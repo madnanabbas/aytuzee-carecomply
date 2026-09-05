@@ -23,6 +23,7 @@ import {
   standalone: true,
   imports: [RouterLink, UserFiltersComponent, UserTableComponent],
   templateUrl: './user-list-page.html',
+  styleUrls: ['../../user-density.css'],
 })
 export class UserListPageComponent {
   private readonly api = inject(UserManagementApiService);

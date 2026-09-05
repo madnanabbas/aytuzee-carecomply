@@ -23,6 +23,7 @@ import {
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink, PermissionMatrixComponent, SuccessDialogComponent],
   templateUrl: './role-editor-page.html',
+  styleUrls: ['../../../users/user-density.css'],
 })
 export class RoleEditorPage {
   private readonly formBuilder = inject(FormBuilder);
