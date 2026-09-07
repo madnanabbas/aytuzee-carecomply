@@ -30,14 +30,14 @@ function renderStartupFailure(): void {
 
   const guidance = document.createElement('p');
   guidance.className = 'mt-2 text-body text-text-secondary';
-  guidance.textContent = 'Please reload the page or contact your administrator.';
+  guidance.textContent = 'Please reload the page or contact your administrators.';
 
   content.append(title, guidance);
   message.append(content);
   appRoot.replaceChildren(message);
 }
 
-void startApplication().catch(() => {
-  console.error('CareComply startup failed.');
+void startApplication().catch((error: unknown) => {
+  console.error('CareComply startup failed.', error);
   renderStartupFailure();
 });
