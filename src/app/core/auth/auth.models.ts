@@ -20,6 +20,9 @@ export interface CurrentUserResponse {
   readonly id: string;
   readonly email: string;
   readonly displayName: string;
+  readonly companyId: string;
+  readonly companyName: string;
+  readonly isPlatformAdministrator: boolean;
   readonly permissions: readonly string[];
 }
 
@@ -27,6 +30,9 @@ export interface CurrentUser {
   readonly id: string;
   readonly email: string;
   readonly displayName: string;
+  readonly companyId: string;
+  readonly companyName: string;
+  readonly isPlatformAdministrator: boolean;
   readonly permissions: readonly Permission[];
 }
 

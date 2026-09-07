@@ -99,6 +99,9 @@ export const Permissions = {
   AuditLog: {
     View: 'AuditLog.View',
   },
+  Company: {
+    View: 'Company.View', Create: 'Company.Create', Edit: 'Company.Edit', Delete: 'Company.Delete',
+  },
 } as const;
 
 type PermissionCatalog = typeof Permissions;

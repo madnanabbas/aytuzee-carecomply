@@ -17,6 +17,12 @@ const userEditorChildren: Routes = [
 
 export const accessControlRoutes: Routes = [
   {
+    path: 'companies',
+    canActivate: [permissionGuard],
+    data: { permissions: [Permissions.Company.View] } satisfies PermissionRouteData,
+    loadComponent: () => import('./companies/company-page').then((m) => m.CompanyPage),
+  },
+  {
     path: '',
     component: AccessControlPlaceholderComponent,
   },

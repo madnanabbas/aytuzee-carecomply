@@ -91,6 +91,7 @@
             <th class="px-4 py-2.5 font-semibold">
               Description
             </th>
+            <th class="px-4 py-2.5 font-semibold">Company</th>
 
             <th class="px-4 py-2.5 text-center font-semibold">
               Users
@@ -109,13 +110,13 @@
         <tbody class="divide-y divide-border">
           @if (loading()) {
             <tr>
-              <td colspan="5" class="px-4 py-12 text-center text-small text-text-secondary">
+              <td colspan="6" class="px-4 py-12 text-center text-small text-text-secondary">
                 Loading roles…
               </td>
             </tr>
           } @else if (loadFailed()) {
             <tr>
-              <td colspan="5" class="px-4 py-12 text-center">
+              <td colspan="6" class="px-4 py-12 text-center">
                 <p class="text-card-title text-text-primary">Roles could not be loaded</p>
                 <p class="mt-1 text-small text-text-secondary">Try again or refresh the page.</p>
                 <button
@@ -142,6 +143,7 @@
                 <td class="px-4 py-3 text-small text-text-secondary">
                   {{ role.description || '—' }}
                 </td>
+                <td class="px-4 py-3 text-small text-text-secondary">{{ role.companyName }}</td>
 
                 <td class="px-4 py-3 text-center text-small text-text-secondary">
                   {{ role.assignedUsers }}
@@ -166,7 +168,7 @@
               </tr>
             } @empty {
               <tr>
-                <td colspan="5" class="px-4 py-12 text-center">
+                <td colspan="6" class="px-4 py-12 text-center">
                   <p class="text-card-title text-text-primary">No roles found</p>
                   <p class="mt-1 text-small text-text-secondary">
                     {{ search() ? 'Try another search.' : 'No roles are available.' }}

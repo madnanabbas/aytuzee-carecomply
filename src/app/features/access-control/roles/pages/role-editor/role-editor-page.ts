@@ -8,6 +8,8 @@ import {
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize, forkJoin, Observable, of, switchMap } from 'rxjs';
 import { AuthorizationService } from '../../../../../core/authorization/authorization.service';
+import { AuthSessionService } from '../../../../../core/auth/auth-session.service';
+import { Company, CompanyService } from '../../../companies/company.service';
 import { Permissions } from '../../../../../core/authorization/permissions';
 import { SuccessDialogComponent } from '../../../../../shared/components/success-dialog/success-dialog';
 import { PermissionMatrixComponent } from '../../components/permission-matrix/permission-matrix';
@@ -31,6 +33,10 @@ export class RoleEditorPage {
   private readonly router = inject(Router);
   private readonly roleService = inject(RoleManagementService);
   private readonly authorization = inject(AuthorizationService);
+  private readonly session = inject(AuthSessionService);
+  private readonly companiesApi = inject(CompanyService);
+  readonly isPlatformAdministrator = computed(() => this.session.currentUser()?.isPlatformAdministrator === true);
+  readonly companies = signal<readonly Company[]>([]);
 
   readonly roleId = this.route.snapshot.paramMap.get('roleId');
   readonly isCreateMode = computed(() => !this.roleId);
@@ -49,6 +55,7 @@ export class RoleEditorPage {
   readonly form = this.formBuilder.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(100)]],
     description: ['', Validators.maxLength(500)],
+    companyId: [''],
   });
 
   private loadedRole: RoleEditorModel | null = null;
@@ -63,6 +70,10 @@ export class RoleEditorPage {
   );
 
   constructor() {
+    if (this.isCreateMode() && this.isPlatformAdministrator()) {
+      this.form.controls.companyId.addValidators(Validators.required);
+      this.companiesApi.list().subscribe((companies) => this.companies.set(companies.filter(x => x.isActive)));
+    }
     if (!this.isCreateMode() && !this.canManage()) {
       this.form.disable({ emitEvent: false });
     }
@@ -165,6 +176,7 @@ export class RoleEditorPage {
   private createRole(): void {
     this.roleService
       .createRole({
+        companyId: this.isPlatformAdministrator() ? this.form.controls.companyId.value || null : null,
         name: this.form.controls.name.value.trim(),
         description: normalizeDescription(this.form.controls.description.value),
         permissionIds: sortedPermissionIds(this.selectedPermissionIds()),
