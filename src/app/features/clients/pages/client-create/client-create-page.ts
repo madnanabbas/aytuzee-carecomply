@@ -26,6 +26,7 @@ import {
   isValidUsSsn,
 } from '../../models/client-field-validation';
 import { CLIENT_SERVICE_OPTIONS } from '../../models/client-service-catalog';
+import { CompanyLocation, LocationService } from '../../../access-control/companies/location.service';
 
 @Component({
   selector: 'app-client-create-page',
@@ -39,6 +40,7 @@ export class ClientCreatePageComponent {
   private readonly postalLookup = inject(PostalLookupService);
   private readonly geography = inject(GeographyDirectoryService);
   private readonly router = inject(Router);
+  private readonly locationApi = inject(LocationService);
   private readonly postalCodeChanges = new Subject<string>();
   private lastAutofilledCity: string | null = null;
   private lastAutofilledState: string | null = null;
@@ -47,8 +49,9 @@ export class ClientCreatePageComponent {
   private postalLookupCountryName = 'United States';
 
   readonly steps: readonly ClientCreateStep[] = [
-    { id: 'basic', title: 'Basic information' },
+    { id: 'basic', title: 'Basic details' },
     { id: 'additional', title: 'Additional information' },
+    { id: 'contact', title: 'Contact information' },
     { id: 'review', title: 'Review' },
   ];
 
@@ -71,7 +74,7 @@ export class ClientCreatePageComponent {
   readonly stateNames = computed(() => this.stateOptions().map((state) => state.name));
   readonly geographyLoading = signal(false);
 
-  readonly locationOptions = ['Minneapolis', 'St. Paul', 'Brooklyn Park', 'Bloomington'] as const;
+  readonly locationOptions = signal<readonly CompanyLocation[]>([]);
   readonly serviceOptions = CLIENT_SERVICE_OPTIONS;
   readonly languageOptions = ['English', 'Spanish', 'Somali', 'Hmong'] as const;
   readonly dietOptions = ['Diabetic', 'Low Fat', 'Low Salt', 'High Fiber', 'Vegetarian', 'Regular', 'Uses Supplements'] as const;
@@ -83,6 +86,12 @@ export class ClientCreatePageComponent {
   readonly draft: ClientFormModel = createEmptyClientForm();
 
   constructor() {
+    this.locationApi.list().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((locations) => {
+      this.locationOptions.set(locations);
+      const selected = locations.find(location => location.id === this.draft.locationId)
+        ?? locations.find(location => location.isMain);
+      if (selected) this.selectLocation(selected.id);
+    });
     this.lastAutofilledState = this.draft.state || null;
     this.postalCodeChanges.pipe(
       debounceTime(350),
@@ -126,6 +135,12 @@ export class ClientCreatePageComponent {
     });
 
     this.loadCountries();
+  }
+
+  selectLocation(locationId: string): void {
+    const location = this.locationOptions().find(option => option.id === locationId);
+    this.draft.locationId = location?.id ?? '';
+    this.draft.location = location?.name ?? '';
   }
 
   onCountryChange(countryCode: string): void {
@@ -345,49 +360,47 @@ export class ClientCreatePageComponent {
   }
 
   private validateStep(index: number): readonly string[] {
-    return index === 0 ? this.validateBasic() : [];
+    if (index === 0) return this.validateSections(true, false);
+    if (index === 2) return this.validateSections(false, true);
+    return [];
   }
 
   private validateAll(): readonly string[] {
-    return [...this.validateBasic()];
+    return this.validateSections(true, true);
   }
 
-  private validateBasic(): readonly string[] {
+  private validateSections(includeBasic: boolean, includeContact: boolean): readonly string[] {
     const fields: Record<string, string> = {};
     const add = (field: string, message: string): void => { fields[field] = message; };
-    if (!this.draft.firstName.trim()) add('firstName', 'First name is required.');
-    if (!this.draft.lastName.trim()) add('lastName', 'Last name is required.');
-    if (!this.draft.dob) add('dob', 'Date of birth is required.');
-    if (!this.draft.gender) add('gender', 'Gender is required.');
-    if (!this.draft.pmi.trim()) add('pmi', 'PMI number is required.');
-    else if (!isValidPmi(this.draft.pmi)) add('pmi', 'PMI number must contain exactly 8 digits.');
-    if (!this.draft.socDate) add('socDate', 'SOC date is required.');
+    if (includeBasic) {
+      if (!this.draft.firstName.trim()) add('firstName', 'First name is required.');
+      if (!this.draft.lastName.trim()) add('lastName', 'Last name is required.');
+      if (!this.draft.dob) add('dob', 'Date of birth is required.');
+      if (!this.draft.gender) add('gender', 'Gender is required.');
+      if (!this.draft.pmi.trim()) add('pmi', 'PMI number is required.');
+      else if (!isValidPmi(this.draft.pmi)) add('pmi', 'PMI number must contain exactly 8 digits.');
+      if (!this.draft.socDate) add('socDate', 'SOC date is required.');
+      if (this.draft.ssn && !isValidUsSsn(this.draft.ssn)) add('ssn', 'Enter a valid 9-digit US Social Security number.');
+      if (this.draft.intakeDate && this.draft.socDate && this.draft.intakeDate > this.draft.socDate) add('intakeDate', 'Intake date cannot be after the SOC date.');
+      if (this.draft.status === 'Discharged' && !this.draft.dischargeDate) add('dischargeDate', 'Discharge date is required for a discharged client.');
+      if (this.draft.dischargeDate && this.draft.socDate && this.draft.dischargeDate < this.draft.socDate) add('dischargeDate', 'Discharge date cannot be before the SOC date.');
+      if (this.draft.evvHours) {
+        const hours = Number(this.draft.evvHours);
+        if (!Number.isFinite(hours) || hours < 0 || hours > 168) add('evvHours', 'EVV hours must be between 0 and 168 per week.');
+      }
+      if (this.draft.services.length > 20) add('services', 'Select no more than 20 services.');
+    }
+    if (includeContact) {
     if (!this.draft.phone1.trim()) add('phone1', 'Primary phone is required.');
     else if (!isValidUsPhone(this.draft.phone1)) add('phone1', 'Enter a 10-digit US phone number.');
     if (this.draft.phone2 && !isValidUsPhone(this.draft.phone2)) add('phone2', 'Enter a 10-digit US phone number.');
-    if (this.draft.ssn && !isValidUsSsn(this.draft.ssn)) add('ssn', 'Enter a valid 9-digit US Social Security number.');
     if (!this.draft.street.trim()) add('street', 'Street address is required.');
     if (this.draft.zip && this.selectedCountryCode() === 'US' && !isValidUsPostalCode(this.draft.zip)) {
       add('zip', 'Use ZIP format 12345 or 12345-6789.');
     }
-    if (this.draft.intakeDate && this.draft.socDate && this.draft.intakeDate > this.draft.socDate) {
-      add('intakeDate', 'Intake date cannot be after the SOC date.');
-    }
-    if (this.draft.status === 'Discharged' && !this.draft.dischargeDate) {
-      add('dischargeDate', 'Discharge date is required for a discharged client.');
-    }
-    if (this.draft.dischargeDate && this.draft.socDate && this.draft.dischargeDate < this.draft.socDate) {
-      add('dischargeDate', 'Discharge date cannot be before the SOC date.');
-    }
-    if (this.draft.evvHours) {
-      const hours = Number(this.draft.evvHours);
-      if (!Number.isFinite(hours) || hours < 0 || hours > 168) {
-        add('evvHours', 'EVV hours must be between 0 and 168 per week.');
-      }
-    }
     if (this.draft.languages.length === 0) add('languages', 'Select at least one preferred language.');
     else if (this.draft.languages.length > 10) add('languages', 'Select no more than 10 preferred languages.');
-    if (this.draft.services.length > 20) add('services', 'Select no more than 20 services.');
+    }
     this.fieldErrors.set(fields);
     return Object.values(fields);
   }

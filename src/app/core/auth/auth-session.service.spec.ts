@@ -224,6 +224,9 @@ function currentUserResponse(): CurrentUserResponse {
     id: '0198a5db-4000-7000-8000-000000000001',
     email: 'user@example.com',
     displayName: 'Test User',
+    companyId: null,
+    companyName: null,
+    isPlatformAdministrator: true,
     permissions: [Permissions.Dashboard.View],
   };
 }

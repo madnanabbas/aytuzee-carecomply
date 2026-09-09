@@ -50,6 +50,7 @@ describe('UserEditorStore create mode', () => {
 
     expect(api.listRoles).toHaveBeenCalledOnce();
     expect(api.createUser).toHaveBeenCalledWith({
+      companyId: null,
       firstName: 'Ada',
       lastName: 'Lovelace',
       email: 'ada@example.test',
@@ -59,6 +60,7 @@ describe('UserEditorStore create mode', () => {
       requiresMfa: false,
       mfaMethod: 'Authenticator',
       roleIds: ['role-1'],
+      locationIds: [],
     });
     expect(api.createUser.mock.calls[0][0].password).toBe('StrongPassword123!');
     expect(store.completionDialog()?.title).toContain('User created');
@@ -108,7 +110,7 @@ describe('UserEditorStore create mode', () => {
     expect(store.error()).toBe('duplicateEmail');
   });
 
-  it('supports explicit create-time MFA while preserving a role MFA floor', () => {
+  it('lets an administrator control create-time MFA independently of the role', () => {
     const store = TestBed.inject(UserEditorStore);
     store.initializeCreate();
     store.setCreateMfa(true);
@@ -124,8 +126,8 @@ describe('UserEditorStore create mode', () => {
     }]);
     store.selectCreateRole('mfa-role');
     store.setCreateMfa(false);
-    expect(store.createMfaRequiredByRoles()).toBe(true);
-    expect(store.createRequiresMfa()).toBe(true);
+    expect(store.createMfaRequiredByRoles()).toBe(false);
+    expect(store.createRequiresMfa()).toBe(false);
   });
 });
 
@@ -185,6 +187,17 @@ describe('UserEditorStore existing-user roles', () => {
 
     expect(api.getUser).toHaveBeenCalledWith(user.id);
     expect(api.listRoles).toHaveBeenCalledOnce();
+    expect(store.selectedRoleIds()).toEqual([assignedRole.id]);
+    expect(store.roles().map((role) => role.id)).toEqual([assignedRole.id, replacementRole.id]);
+  });
+
+  it('retains an assigned role when it is absent from the selectable role response', () => {
+    TestBed.inject(AuthorizationService).setPermissions([Permissions.User.Manage]);
+    api.listRoles.mockReturnValue(of([replacementRole]));
+    const store = TestBed.inject(UserEditorStore);
+
+    store.load(user.id);
+
     expect(store.selectedRoleIds()).toEqual([assignedRole.id]);
     expect(store.roles().map((role) => role.id)).toEqual([assignedRole.id, replacementRole.id]);
   });

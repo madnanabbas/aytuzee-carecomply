@@ -305,10 +305,8 @@ export class AuthSessionService {
       !response.email ||
       typeof response.displayName !== 'string' ||
       !response.displayName ||
-      typeof response.companyId !== 'string' ||
-      !response.companyId ||
-      typeof response.companyName !== 'string' ||
-      !response.companyName ||
+      (response.companyId !== null && typeof response.companyId !== 'string') ||
+      (response.companyName !== null && typeof response.companyName !== 'string') ||
       typeof response.isPlatformAdministrator !== 'boolean' ||
       !Array.isArray(response.permissions) ||
       permissions.length !== response.permissions.length

@@ -12,6 +12,9 @@ describe('HeaderComponent', () => {
     id: 'user-1',
     displayName: 'Adnan Abbas',
     email: 'admin@carecomply.local',
+    companyId: 'company-1',
+    companyName: 'Global Star Care',
+    isPlatformAdministrator: false,
     permissions: [Permissions.Dashboard.View],
   });
   const session = {
@@ -45,7 +48,8 @@ describe('HeaderComponent', () => {
 
     expect(copy).toContain('AA');
     expect(copy).toContain('Adnan Abbas');
-    expect(copy).toContain('admin@carecomply.local');
+    expect(copy).toContain('Global Star Care');
+    expect(copy).not.toContain('admin@carecomply.local');
     expect(copy).not.toContain('System Administrator');
     expect((fixture.nativeElement as HTMLElement).querySelector('[aria-label="Notifications"]')).toBeNull();
   });

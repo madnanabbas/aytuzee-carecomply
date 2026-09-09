@@ -25,8 +25,16 @@ import {
   isValidUsSsn,
 } from '../../models/client-field-validation';
 import { CLIENT_SERVICE_OPTIONS } from '../../models/client-service-catalog';
+import { CompanyLocation, LocationService } from '../../../access-control/companies/location.service';
 
-type EditSection = 'basic' | 'additional';
+type EditSection = 'basic' | 'additional' | 'contact' | 'review';
+
+const EDIT_SECTIONS: readonly { id: EditSection; label: string }[] = [
+  { id: 'basic', label: 'Basic details' },
+  { id: 'additional', label: 'Additional information' },
+  { id: 'contact', label: 'Contact information' },
+  { id: 'review', label: 'Review' },
+];
 
 @Component({
   selector: 'app-client-edit-page',
@@ -39,8 +47,10 @@ export class ClientEditPageComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly locationApi = inject(LocationService);
 
   readonly section = signal<EditSection>('basic');
+  readonly sections = EDIT_SECTIONS;
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly loadFailed = signal(false);
@@ -50,7 +60,7 @@ export class ClientEditPageComponent {
   readonly servicesOpen = signal(false);
   readonly languagesOpen = signal(false);
 
-  readonly locations = ['Minneapolis', 'St. Paul', 'Brooklyn Park', 'Bloomington'] as const;
+  readonly locations = signal<readonly CompanyLocation[]>([]);
   readonly serviceOptions = CLIENT_SERVICE_OPTIONS;
   readonly languageOptions = ['English', 'Spanish', 'Somali', 'Hmong'] as const;
   readonly dietOptions = ['Diabetic', 'Low Fat', 'Low Salt', 'High Fiber', 'Vegetarian', 'Regular', 'Uses Supplements'] as const;
@@ -60,6 +70,7 @@ export class ClientEditPageComponent {
   private original: ClientDetails | null = null;
 
   constructor() {
+    this.locationApi.list().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(locations => this.locations.set(locations));
     this.clientId = this.route.snapshot.paramMap.get('clientId') ?? '';
     if (!this.clientId) {
       this.loadFailed.set(true);
@@ -67,6 +78,12 @@ export class ClientEditPageComponent {
       return;
     }
     this.load();
+  }
+
+  selectLocation(locationId: string): void {
+    const location = this.locations().find(option => option.id === locationId);
+    this.model.locationId = location?.id ?? '';
+    this.model.location = location?.name ?? '';
   }
 
   get backLink(): readonly string[] {

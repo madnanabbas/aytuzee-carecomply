@@ -29,9 +29,12 @@
     }
 
     <nav class="mt-3 border-b border-border bg-surface">
-      <div class="flex gap-6">
-        <button type="button" class="edit-tab" [class.active]="section()==='basic'" (click)="section.set('basic')">Basic information</button>
-        <button type="button" class="edit-tab" [class.active]="section()==='additional'" (click)="section.set('additional')">Additional information</button>
+      <div class="flex gap-7 overflow-x-auto">
+        @for (item of sections; track item.id; let index = $index) {
+          <button type="button" class="edit-tab whitespace-nowrap" [class.active]="section() === item.id" (click)="section.set(item.id)">
+            <span class="mr-1.5 text-[9px] font-semibold">0{{ index + 1 }}</span>{{ item.label }}
+          </button>
+        }
       </div>
     </nav>
 
@@ -59,7 +62,7 @@
             <label><span class="form-label">SOC date *</span><input class="form-control" type="date" [(ngModel)]="model.socDate" /></label>
             <label><span class="form-label">Referral source</span><select class="form-control" [(ngModel)]="model.referralSource"><option value="">Select source</option><option>Self</option><option>County</option><option>Hospital</option><option>Clinic</option><option>Family / Friend</option><option>Other</option></select></label>
             <label><span class="form-label">Status</span><select class="form-control" [(ngModel)]="model.status"><option>Pending</option><option>Active</option><option>On hold</option><option>Discharged</option><option>Inactive</option></select></label>
-            <label><span class="form-label">Location</span><select class="form-control" [(ngModel)]="model.location"><option value="">Select location</option>@for (value of locations; track value) {<option>{{ value }}</option>}</select></label>
+            <label><span class="form-label">Location <span class="required-mark">*</span></span><select class="form-control" [ngModel]="model.locationId" (ngModelChange)="selectLocation($event)"><option value="" disabled>Select location</option>@for (value of locations(); track value.id) {<option [value]="value.id">{{ value.name }}{{ value.isMain ? ' (Main)' : '' }}</option>}</select></label>
 
             <div class="relative">
               <span class="form-label">Client services</span>
@@ -77,6 +80,9 @@
           </div>
         </section>
 
+      }
+
+      @if (section() === 'contact') {
         <section class="form-section">
           <header><h2>Contact & address</h2><p>Primary contact channels and home address.</p></header>
           <div class="form-grid">
@@ -108,7 +114,9 @@
             <label class="flex items-center gap-2 pt-5 text-[11px] text-text-secondary"><input type="checkbox" [(ngModel)]="model.onboarding" />Client is in onboarding</label>
           </div>
         </section>
-      } @else {
+      }
+
+      @if (section() === 'additional') {
         <section class="form-section">
           <header><h2>Program & demographics</h2><p>Additional program and client profile information.</p></header>
           <div class="form-grid">
@@ -162,6 +170,16 @@
           </div>
         </section>
       }
+
+      @if (section() === 'review') {
+        <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <section class="review-card"><header><h2>Basic details</h2><button type="button" (click)="section.set('basic')">Edit</button></header><dl><dt>Name</dt><dd>{{ model.firstName || '—' }} {{ model.middleName }} {{ model.lastName }}</dd><dt>PMI</dt><dd>{{ model.pmi || '—' }}</dd><dt>Date of birth</dt><dd>{{ model.dob || '—' }}</dd><dt>Status</dt><dd>{{ model.status }}</dd></dl></section>
+          <section class="review-card"><header><h2>Care setup</h2><button type="button" (click)="section.set('basic')">Edit</button></header><dl><dt>SOC date</dt><dd>{{ model.socDate || '—' }}</dd><dt>Location</dt><dd>{{ model.location || '—' }}</dd><dt>Services</dt><dd>{{ model.services.length ? model.services.join(', ') : '—' }}</dd><dt>EVV hours</dt><dd>{{ model.evvHours || '—' }}</dd></dl></section>
+          <section class="review-card"><header><h2>Additional information</h2><button type="button" (click)="section.set('additional')">Edit</button></header><dl><dt>Program</dt><dd>{{ model.programType || '—' }}</dd><dt>Complexity</dt><dd>{{ model.pcaComplexity || '—' }}</dd><dt>Living arrangement</dt><dd>{{ model.livingArrangement || '—' }}</dd><dt>Hospital</dt><dd>{{ model.hospitalName || '—' }}</dd></dl></section>
+          <section class="review-card"><header><h2>Contact information</h2><button type="button" (click)="section.set('contact')">Edit</button></header><dl><dt>Phone</dt><dd>{{ model.phone1 || '—' }}</dd><dt>Email</dt><dd class="break-all">{{ model.email || '—' }}</dd><dt>Languages</dt><dd>{{ model.languages.length ? model.languages.join(', ') : '—' }}</dd><dt>Address</dt><dd>{{ model.city || '—' }}, {{ model.state || '—' }}</dd></dl></section>
+        </div>
+        <div class="mt-3 rounded-control border border-border bg-surface-muted/50 px-4 py-3 text-[11px] text-text-secondary">Review the changes above, then select <strong>Save changes</strong>. Related client records are managed separately from the client profile.</div>
+      }
     </main>
 
     <div class="mt-4 flex items-center justify-end gap-2 border-t border-border pt-3">
@@ -188,4 +206,5 @@
   .form-label{display:block;margin-bottom:.22rem;font-size:10.5px;font-weight:500;color:var(--color-text-secondary,#475569)}.form-control{width:100%;min-height:2rem;border-radius:.375rem;border:1px solid var(--color-border-strong,#cbd5e1);background:var(--color-surface,#fff);padding:.35rem .6rem;font-size:11px;color:var(--color-text-primary,#0f172a);outline:none}.form-control:focus{border-color:var(--color-primary,#0f766e);box-shadow:0 0 0 1px var(--color-primary,#0f766e)}
   .required-mark{color:#dc2626}.field-help{display:block;margin-top:.2rem;font-size:9px;color:var(--color-text-muted,#64748b)}
   .choice-row{display:flex;flex-wrap:wrap;gap:.45rem 1rem;border:1px solid var(--color-border,#e2e8f0);border-radius:.375rem;padding:.5rem .65rem}.choice-row label{display:flex;align-items:center;gap:.35rem;font-size:11px;color:var(--color-text-secondary,#475569)}
+  .review-card{border:1px solid var(--color-border,#e2e8f0);border-radius:.5rem;background:var(--color-surface,#fff);padding:.8rem}.review-card header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--color-border,#e2e8f0);padding-bottom:.5rem}.review-card h2{font-size:12px;font-weight:600}.review-card button{font-size:10px;font-weight:600;color:var(--color-primary,#0f766e)}.review-card dl{display:grid;grid-template-columns:6.5rem minmax(0,1fr);gap:.4rem .5rem;margin-top:.65rem;font-size:10.5px}.review-card dt{color:var(--color-text-muted,#64748b)}.review-card dd{min-width:0;color:var(--color-text-primary,#0f172a)}
 </style>

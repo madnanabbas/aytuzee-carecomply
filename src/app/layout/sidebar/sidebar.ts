@@ -1,6 +1,5 @@
 import {
   Component,
-  computed,
   effect,
   ElementRef,
   inject,
@@ -23,7 +22,6 @@ import {
 
 import { NavigationItem } from '../../core/navigation/navigation.models';
 import { NavigationService } from '../../core/navigation/navigation.service';
-import { AuthSessionService } from '../../core/auth/auth-session.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -43,7 +41,6 @@ import { AuthSessionService } from '../../core/auth/auth-session.service';
 })
 export class SidebarComponent {
   private readonly navigation = inject(NavigationService);
-  private readonly authSession = inject(AuthSessionService);
   private readonly router = inject(Router);
 
   private readonly closeButton =
@@ -63,7 +60,6 @@ export class SidebarComponent {
 
   readonly groups = this.navigation.groups;
   readonly navigationStatus = this.navigation.status;
-  readonly companyName = computed(() => this.authSession.currentUser()?.companyName ?? '');
 
   constructor() {
     effect(() => {

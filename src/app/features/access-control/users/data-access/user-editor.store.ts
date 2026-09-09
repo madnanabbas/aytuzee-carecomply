@@ -65,10 +65,8 @@ export class UserEditorStore {
   readonly effectivePermissions = computed(() => Array.from(new Set(
     this.selectedRoles().flatMap((role) => role.permissions),
   )).sort((left, right) => left.localeCompare(right)));
-  readonly createMfaRequiredByRoles = computed(() =>
-    this.selectedRoles().some((role) => role.requiresMfa));
-  readonly createRequiresMfa = computed(() =>
-    this.createMfaEnabled() || this.createMfaRequiredByRoles());
+  readonly createMfaRequiredByRoles = computed(() => false);
+  readonly createRequiresMfa = computed(() => this.createMfaEnabled());
 
   initializeCreate(): void {
     this.isCreateMode.set(true);
@@ -101,11 +99,7 @@ export class UserEditorStore {
       .subscribe({
         next: ({ user, availableRoles }) => {
           this.acceptUser(user);
-          this.roles.set(availableRoles ?? user.roles.map((role) => ({
-            ...role,
-            permissions: [],
-            requiresMfa: false,
-          })));
+          this.roles.set(mergeAssignedRoles(user, availableRoles ?? []));
         },
         error: (error: HttpErrorResponse) => this.error.set(error.status === 404 ? 'notFound' : 'failed'),
       });
@@ -130,7 +124,6 @@ export class UserEditorStore {
   }
 
   setCreateMfa(isEnabled: boolean): void {
-    if (!isEnabled && this.createMfaRequiredByRoles()) return;
     this.createMfaEnabled.set(isEnabled);
   }
 
@@ -154,6 +147,7 @@ export class UserEditorStore {
     const general = this.createGeneral();
     this.beginOperation();
     this.api.createUser({
+      companyId: general.companyId || null,
       firstName: general.firstName.trim(),
       lastName: general.lastName.trim(),
       email: general.email.trim(),
@@ -163,6 +157,7 @@ export class UserEditorStore {
       requiresMfa: this.createMfaEnabled(),
       mfaMethod: this.createMfaMethod(),
       roleIds: this.selectedRoleIds(),
+      locationIds: general.locationIds ?? [],
     })
       .pipe(
         finalize(() => this.saving.set(false)),
@@ -382,4 +377,23 @@ export class UserEditorStore {
     this.user.set(user);
     this.selectedRoleIds.set(user.roles.map((role) => role.id));
   }
+}
+
+function mergeAssignedRoles(
+  user: UserDetails,
+  availableRoles: readonly RoleMetadata[],
+): readonly RoleMetadata[] {
+  const availableRoleIds = new Set(availableRoles.map((role) => role.id));
+  const missingAssignedRoles = user.roles
+    .filter((role) => !availableRoleIds.has(role.id))
+    .map((role): RoleMetadata => ({
+      ...role,
+      ...(user.companyId ? { companyId: user.companyId } : {}),
+      ...(user.companyName ? { companyName: user.companyName } : {}),
+      permissions: [],
+      requiresMfa: false,
+    }));
+
+  return [...availableRoles, ...missingAssignedRoles]
+    .sort((left, right) => left.name.localeCompare(right.name));
 }

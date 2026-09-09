@@ -12,6 +12,11 @@ describe('application route metadata', () => {
       Permissions.BackgroundCheckDocument.View,
     ]);
     expect(APP_ROUTE_METADATA.accessControl.permissions).toContain(Permissions.User.View);
+    expect(APP_ROUTE_METADATA.companies).toEqual({
+      key: 'companies',
+      route: '/access-control/companies',
+      permissions: [Permissions.Company.View],
+    });
     expect(APP_ROUTE_METADATA.users.route).toBe('/access-control/users');
   });
 
@@ -22,5 +27,17 @@ describe('application route metadata', () => {
     expect(canAccessNavigationRoute(authorization, 'employees', '/employees')).toBe(true);
     expect(canAccessNavigationRoute(authorization, 'employees', '/clients')).toBe(false);
     expect(canAccessNavigationRoute(authorization, 'unknown', '/employees')).toBe(false);
+  });
+
+  it('allows the Companies menu only with the matching company permission and route', () => {
+    const authorization = TestBed.inject(AuthorizationService);
+    authorization.setPermissions([Permissions.Company.View]);
+
+    expect(canAccessNavigationRoute(
+      authorization,
+      'companies',
+      '/access-control/companies',
+    )).toBe(true);
+    expect(canAccessNavigationRoute(authorization, 'companies', '/access-control')).toBe(false);
   });
 });

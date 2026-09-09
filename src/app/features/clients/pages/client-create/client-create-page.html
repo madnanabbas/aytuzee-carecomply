@@ -95,7 +95,7 @@
                 <label><span class="form-label">SOC date <span class="text-red-600">*</span></span><input type="date" [(ngModel)]="draft.socDate" (ngModelChange)="clearFieldError('socDate')" class="form-control" [style.border-color]="fieldError('socDate') ? '#dc2626' : null" [attr.aria-invalid]="!!fieldError('socDate')" required />@if (fieldError('socDate'); as error) {<small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>}</label>
                 <label><span class="form-label">Referral source</span><select [(ngModel)]="draft.referralSource" class="form-control"><option value="">Select source</option><option>Self</option><option>County</option><option>Hospital</option><option>Clinic</option><option>Family / Friend</option><option>Other</option></select></label>
                 <label><span class="form-label">Status</span><select [(ngModel)]="draft.status" class="form-control"><option>Active</option><option>Pending</option><option>On hold</option><option>Inactive</option><option>Discharged</option></select></label>
-                <label><span class="form-label">Location</span><select [(ngModel)]="draft.location" class="form-control"><option value="">Select location</option>@for (option of locationOptions; track option) {<option [value]="option">{{ option }}</option>}</select></label>
+                <label><span class="form-label">Location <span class="text-red-600">*</span></span><select [ngModel]="draft.locationId" (ngModelChange)="selectLocation($event)" class="form-control"><option value="" disabled>Select location</option>@for (option of locationOptions(); track option.id) {<option [value]="option.id">{{ option.name }}{{ option.isMain ? ' (Main)' : '' }}</option>}</select></label>
 
                 <div class="relative">
                   <span class="form-label">Client services</span>
@@ -112,7 +112,11 @@
                 }
               </div>
             </section>
+          </div>
+        }
 
+        @case ('contact') {
+          <div class="space-y-6">
             <section>
               <div class="mb-3 flex items-center gap-2 border-b border-border pb-2">
                 <span class="flex size-7 items-center justify-center rounded-md bg-primary-subtle text-primary"><svg aria-hidden="true" class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.78.62 2.63a2 2 0 0 1-.45 2.11L8 9.73a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.85.29 1.73.5 2.63.62A2 2 0 0 1 22 16.92z"/></svg></span>
@@ -216,10 +220,11 @@
 
         @case ('review') {
           <div class="space-y-4">
-            <div class="grid gap-3 lg:grid-cols-3">
+            <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
               <section class="rounded-control border border-border p-3"><div class="flex items-center justify-between"><h3 class="text-[13px] font-semibold text-text-primary">Client</h3><button type="button" class="text-[11px] font-medium text-primary" (click)="goToStep(0)">Edit</button></div><dl class="mt-3 grid grid-cols-[7rem_1fr] gap-x-2 gap-y-1.5 text-[11px]"><dt class="text-text-muted">Name</dt><dd>{{ draft.firstName || '—' }} {{ draft.middleName }} {{ draft.lastName }}</dd><dt class="text-text-muted">PMI</dt><dd>{{ draft.pmi || '—' }}</dd><dt class="text-text-muted">DOB</dt><dd>{{ draft.dob || '—' }} · {{ ageFromDob() }}</dd><dt class="text-text-muted">Status</dt><dd>{{ draft.status }}</dd></dl></section>
               <section class="rounded-control border border-border p-3"><div class="flex items-center justify-between"><h3 class="text-[13px] font-semibold text-text-primary">Care setup</h3><button type="button" class="text-[11px] font-medium text-primary" (click)="goToStep(0)">Edit</button></div><dl class="mt-3 grid grid-cols-[7rem_1fr] gap-x-2 gap-y-1.5 text-[11px]"><dt class="text-text-muted">SOC</dt><dd>{{ draft.socDate || '—' }}</dd><dt class="text-text-muted">Location</dt><dd>{{ draft.location || '—' }}</dd><dt class="text-text-muted">Services</dt><dd>{{ draft.services.length ? draft.services.join(', ') : '—' }}</dd><dt class="text-text-muted">Languages</dt><dd>{{ draft.languages.length ? draft.languages.join(', ') : '—' }}</dd><dt class="text-text-muted">Supervisor</dt><dd>Assigned after creation</dd></dl></section>
               <section class="rounded-control border border-border p-3"><div class="flex items-center justify-between"><h3 class="text-[13px] font-semibold text-text-primary">Additional</h3><button type="button" class="text-[11px] font-medium text-primary" (click)="goToStep(1)">Edit</button></div><dl class="mt-3 grid grid-cols-[7rem_1fr] gap-x-2 gap-y-1.5 text-[11px]"><dt class="text-text-muted">Program</dt><dd>{{ draft.programType || '—' }}</dd><dt class="text-text-muted">Complexity</dt><dd>{{ draft.pcaComplexity || '—' }}</dd><dt class="text-text-muted">Living</dt><dd>{{ draft.livingArrangement || '—' }}</dd><dt class="text-text-muted">Hospital</dt><dd>{{ draft.hospitalName || '—' }}</dd></dl></section>
+              <section class="rounded-control border border-border p-3"><div class="flex items-center justify-between"><h3 class="text-[13px] font-semibold text-text-primary">Contact</h3><button type="button" class="text-[11px] font-medium text-primary" (click)="goToStep(2)">Edit</button></div><dl class="mt-3 grid grid-cols-[7rem_1fr] gap-x-2 gap-y-1.5 text-[11px]"><dt class="text-text-muted">Phone</dt><dd>{{ draft.phone1 || '—' }}</dd><dt class="text-text-muted">Email</dt><dd class="break-all">{{ draft.email || '—' }}</dd><dt class="text-text-muted">Languages</dt><dd>{{ draft.languages.length ? draft.languages.join(', ') : '—' }}</dd><dt class="text-text-muted">Address</dt><dd>{{ draft.city || '—' }}, {{ draft.state || '—' }}</dd></dl></section>
             </div>
 
             <div class="rounded-control border border-border bg-surface-muted/50 p-3.5">

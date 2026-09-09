@@ -1,7 +1,11 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
 import { AuthorizationService } from '../../../../../core/authorization/authorization.service';
 import { Permissions } from '../../../../../core/authorization/permissions';
+import { AuthSessionService } from '../../../../../core/auth/auth-session.service';
+import { CompanyService } from '../../../companies/company.service';
+import { LocationService } from '../../../companies/location.service';
 import { UserEditorStore } from '../../data-access/user-editor.store';
 import { UserGeneralPageComponent } from './user-general-page';
 
@@ -59,7 +63,14 @@ describe('UserGeneralPageComponent', () => {
     store.replaceRoles.mockClear();
     store.createRequiresMfa.set(false);
     TestBed.configureTestingModule({
-      providers: [{ provide: UserEditorStore, useValue: store }],
+      providers: [
+        { provide: UserEditorStore, useValue: store },
+        { provide: AuthSessionService, useValue: {
+          currentUser: signal({ companyId: 'company-1', isPlatformAdministrator: false }),
+        } },
+        { provide: CompanyService, useValue: { list: vi.fn().mockReturnValue(of([])) } },
+        { provide: LocationService, useValue: { list: vi.fn().mockReturnValue(of([])) } },
+      ],
     });
     TestBed.inject(AuthorizationService).setPermissions([Permissions.User.Manage]);
   });
@@ -71,7 +82,7 @@ describe('UserGeneralPageComponent', () => {
     const form = (fixture.nativeElement as HTMLElement).querySelector('form');
     expect(form).not.toBeNull();
     expect(form?.querySelectorAll('[formcontrolname]')).toHaveLength(6);
-    expect(Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('select option'))
+    expect(Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('#user-account-status option'))
       .map((option) => option.textContent?.trim())).toEqual(['Active', 'Inactive']);
     expect((fixture.nativeElement as HTMLElement).querySelectorAll('input[type="radio"]'))
       .toHaveLength(2);
@@ -88,27 +99,48 @@ describe('UserGeneralPageComponent', () => {
     expect(store.saveEdit).not.toHaveBeenCalled();
   });
 
+  it('allows MFA to be turned off regardless of role permissions', () => {
+    store.user.set({
+      ...existingUser,
+      isMfaRequiredByPermissions: true,
+    });
+    store.roles.set([
+      { id: 'role-1', name: 'Protected Role', permissions: [], requiresMfa: true },
+      { id: 'role-2', name: 'Standard Role', permissions: [], requiresMfa: false },
+    ]);
+    const fixture = TestBed.createComponent(UserGeneralPageComponent);
+    fixture.detectChanges();
+
+    fixture.componentInstance.changeMfa(false);
+
+    expect(fixture.componentInstance.editMfaEnabled()).toBe(false);
+  });
+
   it('captures validated create-mode General data without a password field', () => {
     store.isCreateMode.set(true);
     const fixture = TestBed.createComponent(UserGeneralPageComponent);
     fixture.detectChanges();
     fixture.componentInstance.form.setValue({
+      companyId: 'company-1',
       firstName: 'Ada',
       lastName: 'Lovelace',
       email: 'ada@example.test',
       password: 'StrongPassword123!',
       phoneNumber: '+1 555 0100',
       isActive: false,
+      locationIds: ['location-1'],
     });
     fixture.detectChanges();
 
     expect(store.updateCreateGeneral).toHaveBeenLastCalledWith({
+      companyId: 'company-1',
       firstName: 'Ada',
       lastName: 'Lovelace',
       email: 'ada@example.test',
       password: 'StrongPassword123!',
       phoneNumber: '+1 555 0100',
       isActive: false,
+      locationIds: ['location-1'],
     }, true);
     expect((fixture.nativeElement as HTMLElement).querySelector('[formcontrolname="isActive"]'))
       .not.toBeNull();

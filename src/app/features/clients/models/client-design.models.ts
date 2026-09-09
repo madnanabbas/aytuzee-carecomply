@@ -28,6 +28,6 @@ export interface ClientListFilter {
 }
 
 export interface ClientCreateStep {
-  id: 'basic' | 'additional' | 'review';
+  id: 'basic' | 'additional' | 'contact' | 'review';
   title: string;
 }

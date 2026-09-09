@@ -3,6 +3,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthorizationService } from '../../../../../core/authorization/authorization.service';
 import { Permissions } from '../../../../../core/authorization/permissions';
+import { AuthSessionService } from '../../../../../core/auth/auth-session.service';
+import { Company, CompanyService } from '../../../companies/company.service';
+import { CompanyLocation, LocationService } from '../../../companies/location.service';
 import { UserEditorStore } from '../../data-access/user-editor.store';
 import { UserMfaMethod } from '../../models/user-management.models';
 
@@ -18,6 +21,12 @@ export class UserGeneralPageComponent {
   private readonly authorization = inject(AuthorizationService);
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly destroyRef = inject(DestroyRef);
+  readonly session = inject(AuthSessionService);
+  private readonly companyApi = inject(CompanyService);
+  private readonly locationApi = inject(LocationService);
+  readonly companies = signal<readonly Company[]>([]);
+  readonly locations = signal<readonly CompanyLocation[]>([]);
+  readonly isPlatformAdministrator = computed(() => this.session.currentUser()?.isPlatformAdministrator === true);
 
   readonly canManage = computed(() => this.authorization.hasPermission(Permissions.User.Manage));
 
@@ -57,19 +66,29 @@ export class UserGeneralPageComponent {
   });
 
   readonly form = this.formBuilder.group({
+    companyId: [''],
     firstName: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(100)]],
     lastName: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(100)]],
     email: ['', [Validators.required, Validators.email, Validators.maxLength(256)]],
     password: ['', [Validators.minLength(15), Validators.maxLength(128)]],
     phoneNumber: ['', [Validators.maxLength(32), Validators.pattern(/^\+?[0-9 ()-]{7,32}$/)]],
     isActive: [true],
+    locationIds: [[] as string[], Validators.required],
   });
 
   constructor() {
+    if (this.isPlatformAdministrator()) {
+      if (this.store.isCreateMode()) this.form.controls.companyId.addValidators(Validators.required);
+      this.companyApi.list().subscribe((companies) => this.companies.set(companies.filter(company => company.isActive)));
+    }
     if (this.store.isCreateMode()) {
       this.form.controls.password.addValidators(Validators.required);
       this.form.controls.password.updateValueAndValidity({ emitEvent: false });
       this.form.reset(this.store.createGeneral(), { emitEvent: false });
+      if (!this.isPlatformAdministrator()) {
+        this.form.controls.companyId.setValue(this.session.currentUser()?.companyId ?? '', { emitEvent: false });
+      }
+      this.loadLocations(this.form.controls.companyId.value);
       this.syncCreateDraft();
       this.form.valueChanges
         .pipe(takeUntilDestroyed(this.destroyRef))
@@ -84,6 +103,7 @@ export class UserGeneralPageComponent {
       }
 
       this.resetEditDraft(user);
+      if (!user.isPlatformAdministrator) this.loadLocations(user.companyId, user.locationIds ?? []);
 
       if (!this.canManage()) {
         this.form.disable({ emitEvent: false });
@@ -105,6 +125,7 @@ export class UserGeneralPageComponent {
     const email = value.email.trim();
     const phoneNumber = value.phoneNumber.trim() || null;
     const password = value.password.trim() || null;
+    const companyId = user.isPlatformAdministrator ? null : value.companyId || user.companyId;
 
     const generalChanged =
       firstName !== user.firstName ||
@@ -112,6 +133,8 @@ export class UserGeneralPageComponent {
       email !== user.email ||
       phoneNumber !== user.phoneNumber ||
       password !== null;
+    const companyChanged = companyId !== user.companyId;
+    const locationsChanged = !sameIds(value.locationIds, user.locationIds ?? []);
 
     const statusChanged = value.isActive !== user.isActive;
 
@@ -129,24 +152,26 @@ export class UserGeneralPageComponent {
       this.editMfaEnabled() !== currentMfaEnabled ||
       (this.editMfaEnabled() && this.editMfaMethod() !== user.mfaMethod);
 
-    if (!generalChanged && !statusChanged && !rolesChanged && !mfaChanged) {
+    if (!generalChanged && !companyChanged && !statusChanged && !rolesChanged && !mfaChanged) {
       return;
     }
 
     this.store.saveEdit({
       general: {
+        companyId,
         firstName,
         lastName,
         email,
         phoneNumber,
         password,
+        locationIds: value.locationIds,
         editorVersion: user.editorVersion,
       },
       isActive: value.isActive,
       roleIds,
       mfaEnabled: this.editMfaEnabled(),
       mfaMethod: this.editMfaMethod(),
-      generalChanged,
+      generalChanged: generalChanged || companyChanged || locationsChanged,
       statusChanged,
       rolesChanged,
       mfaChanged,
@@ -173,6 +198,34 @@ export class UserGeneralPageComponent {
     }
   }
 
+  changeCompany(): void {
+    this.store.selectCreateRole('');
+    this.editRoleId.set('');
+    this.form.controls.locationIds.setValue([]);
+    this.loadLocations(this.form.controls.companyId.value);
+  }
+
+  toggleLocation(locationId: string, selected: boolean): void {
+    const next = new Set(this.form.controls.locationIds.value);
+    if (selected) next.add(locationId); else next.delete(locationId);
+    this.form.controls.locationIds.setValue([...next]);
+    this.form.controls.locationIds.markAsDirty();
+  }
+
+  selectedLocationsLabel(): string {
+    const selected = new Set(this.form.controls.locationIds.value);
+    const names = this.locations().filter(location => selected.has(location.id)).map(location => location.name);
+    return names.length ? names.join(', ') : 'Select locations';
+  }
+
+  availableRoles(): readonly import('../../models/user-management.models').RoleMetadata[] {
+    if (!this.isPlatformAdministrator()) return this.store.roles();
+    const companyId = this.form.controls.companyId.value;
+    const assignedRoleIds = new Set(this.store.user()?.roles.map((role) => role.id) ?? []);
+    return this.store.roles().filter((role) =>
+      assignedRoleIds.has(role.id) || (companyId !== '' && role.companyId === companyId));
+  }
+
   changeEditRole(event: Event): void {
     if (!(event.target instanceof HTMLSelectElement) || this.hasMultipleAssignedRoles()) {
       return;
@@ -182,11 +235,6 @@ export class UserGeneralPageComponent {
 
     const select = event.target as HTMLSelectElement;
 
-    const selectedRole = this.store.roles().find((role) => role.id === select.value);
-
-    if (selectedRole?.requiresMfa) {
-      this.editMfaEnabled.set(true);
-    }
     this.store.clearMessages();
   }
 
@@ -195,8 +243,7 @@ export class UserGeneralPageComponent {
   }
 
   changeMfa(isEnabled: boolean): void {
-    const user = this.store.user();
-    if (!user || (!isEnabled && user.isMfaRequiredByPermissions)) {
+    if (!this.store.user()) {
       return;
     }
 
@@ -221,11 +268,13 @@ export class UserGeneralPageComponent {
     this.form.reset(
       {
         firstName: user.firstName,
+        companyId: user.companyId ?? '',
         lastName: user.lastName,
         email: user.email,
         password: '',
         phoneNumber: user.phoneNumber ?? '',
         isActive: user.isActive,
+        locationIds: [...(user.locationIds ?? [])],
       },
       { emitEvent: false },
     );
@@ -239,14 +288,34 @@ export class UserGeneralPageComponent {
     const value = this.form.getRawValue();
     this.store.updateCreateGeneral(
       {
+        companyId: value.companyId ?? '',
         firstName: value.firstName,
         lastName: value.lastName,
         email: value.email,
         password: value.password,
         phoneNumber: value.phoneNumber,
         isActive: value.isActive,
+        locationIds: value.locationIds ?? [],
       },
       this.form.valid,
     );
   }
+
+  private loadLocations(companyId: string | null | undefined, selected?: readonly string[]): void {
+    if (!companyId) { this.locations.set([]); return; }
+    this.locationApi.list(this.isPlatformAdministrator() ? companyId : null)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((locations) => {
+        this.locations.set(locations);
+        if (selected) this.form.controls.locationIds.setValue([...selected], { emitEvent: false });
+        else if (!this.form.controls.locationIds.value.length) {
+          const main = locations.find(location => location.isMain);
+          if (main) this.form.controls.locationIds.setValue([main.id]);
+        }
+      });
+  }
+}
+
+function sameIds(left: readonly string[], right: readonly string[]): boolean {
+  return left.length === right.length && left.every(id => right.includes(id));
 }

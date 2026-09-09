@@ -81,6 +81,10 @@ export class HeaderComponent {
   readonly activeSearchIndex = signal(-1);
 
   readonly currentUser = this.session.currentUser;
+  readonly accountSubtitle = computed(() => {
+    const user = this.currentUser();
+    return user?.companyName?.trim() || (user?.isPlatformAdministrator ? 'Platform administration' : '');
+  });
 
   readonly canViewNotifications = computed(() =>
     this.authorization.hasPermission(Permissions.Notification.View),

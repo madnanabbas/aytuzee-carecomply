@@ -80,6 +80,48 @@
 
       <div class="grid gap-x-5 gap-y-4 md:grid-cols-2">
 
+        @if (isPlatformAdministrator() && !store.user()?.isPlatformAdministrator) {
+          <div>
+            <label for="user-company" class="block text-label font-medium text-text-primary">Company <span class="text-danger">*</span></label>
+            <select id="user-company" formControlName="companyId" class="mt-1.5 h-control w-full rounded-control border border-border-strong bg-surface px-3 text-body" (change)="changeCompany()">
+              <option value="" disabled>Select company</option>
+              @for (company of companies(); track company.id) { <option [value]="company.id">{{ company.name }}</option> }
+            </select>
+            <p class="mt-1.5 text-helper text-text-muted">The user and assigned roles will belong to this company.</p>
+          </div>
+        } @else {
+          <div>
+            <span class="block text-label font-medium text-text-primary">Company</span>
+            <p class="mt-2 text-body text-text-primary">{{ store.user()?.isPlatformAdministrator ? 'Platform administration' : (session.currentUser()?.companyName ?? store.user()?.companyName) }}</p>
+          </div>
+        }
+
+        @if (!store.user()?.isPlatformAdministrator) {
+          <fieldset class="md:col-span-2">
+            <legend class="block text-label font-medium text-text-primary">Locations <span class="text-danger">*</span></legend>
+            <p class="mt-1 text-helper text-text-muted">This user can access clients assigned to the selected locations.</p>
+            <details class="relative mt-2">
+              <summary class="flex h-control cursor-pointer list-none items-center justify-between rounded-control border border-border-strong bg-surface px-3.5 text-body text-text-primary">
+                <span class="truncate">{{ selectedLocationsLabel() }}</span><span aria-hidden="true">⌄</span>
+              </summary>
+              <div class="absolute z-30 mt-1 max-h-56 w-full overflow-y-auto rounded-control border border-border bg-surface p-1.5 shadow-lg">
+                @for (location of locations(); track location.id) {
+                  <label class="flex cursor-pointer items-center gap-2 rounded px-2 py-2 text-body hover:bg-surface-muted">
+                    <input type="checkbox" [checked]="form.controls.locationIds.value.includes(location.id)" (change)="toggleLocation(location.id, $any($event.target).checked)" />
+                    <span>{{ location.name }}</span>
+                    @if (location.isMain) { <span class="text-helper text-text-muted">Main</span> }
+                  </label>
+                } @empty {
+                  <span class="block px-2 py-2 text-small text-text-muted">Select a company to load its locations.</span>
+                }
+              </div>
+            </details>
+            @if (form.controls.locationIds.touched && form.controls.locationIds.invalid) {
+              <p class="mt-1.5 text-helper text-danger">Select at least one location.</p>
+            }
+          </fieldset>
+        }
+
         <!-- First name -->
         <div>
           <label
@@ -318,7 +360,7 @@
               (change)="store.isCreateMode() ? changeCreateRole($event) : changeEditRole($event)"
             >
               <option value="" disabled>Select role</option>
-              @for (role of store.roles(); track role.id) {
+              @for (role of availableRoles(); track role.id) {
                 <option [value]="role.id">{{ role.name }}</option>
               }
             </select>
@@ -355,10 +397,7 @@
                 role="switch"
                 aria-label="Require multi-factor authentication"
                 [attr.aria-checked]="store.createRequiresMfa()"
-                [disabled]="
-                  store.saving() ||
-                  store.createMfaRequiredByRoles()
-                "
+                [disabled]="store.saving()"
                 class="relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
                 [class.bg-primary]="store.createRequiresMfa()"
                 [class.bg-border-strong]="!store.createRequiresMfa()"
@@ -390,11 +429,7 @@
                 [attr.aria-checked]="
                   editMfaEnabled()
                 "
-                [disabled]="
-                  !canManage() ||
-                  store.saving() ||
-                  store.user()!.isMfaRequiredByPermissions
-                "
+                [disabled]="!canManage() || store.saving()"
                 class="relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
                 [class.bg-primary]="
                   editMfaEnabled()
@@ -431,29 +466,13 @@
 
           </div>
 
-          <!-- CREATE ROLE POLICY MESSAGE -->
-          @if (
-            store.isCreateMode() &&
-            store.createMfaRequiredByRoles()
-          ) {
-            <p class="mt-1.5 text-helper text-text-muted">
-              Required by the selected role.
-            </p>
-          } @else if (store.isCreateMode()) {
+          @if (store.isCreateMode()) {
             <p class="mt-1.5 text-helper text-text-muted">
               Require additional verification during sign in.
             </p>
           }
 
-          <!-- EDIT POLICY MESSAGE -->
-          @if (
-            !store.isCreateMode() &&
-            store.user()!.isMfaRequiredByPermissions
-          ) {
-            <p class="mt-1.5 text-helper text-text-muted">
-              Required by the user's permissions.
-            </p>
-          } @else if (!store.isCreateMode()) {
+          @if (!store.isCreateMode()) {
             <p class="mt-1.5 text-helper text-text-muted">
               Require additional verification during sign in.
             </p>

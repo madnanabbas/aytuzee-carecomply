@@ -27,6 +27,7 @@ export interface ClientFormModel {
   referralSource: string;
   status: string;
   location: string;
+  locationId: string;
   pmi: string;
   insurance: string;
   services: string[];
@@ -100,7 +101,7 @@ export interface ClientFormModel {
 
 export function createEmptyClientForm(): ClientFormModel {
   return {
-    intakeDate: '', socDate: '', referralSource: '', status: 'Active', location: '', pmi: '', insurance: '', services: [], serviceChangeEffectiveDate: '',
+    intakeDate: '', socDate: '', referralSource: '', status: 'Active', location: '', locationId: '', pmi: '', insurance: '', services: [], serviceChangeEffectiveDate: '',
     email: '', firstName: '', middleName: '', lastName: '', goesBy: '', dob: '', gender: '', dischargeDate: '', dischargeReason: '',
     phone1: '', phone2: '', ssn: '', languages: [], street: '', apartment: '', zip: '', city: '', county: '', state: 'Minnesota', country: 'United States',
     safetyMeasure: '', specialEquipment: '', allergies: '', otherServices: '', evvHours: '', supervisor: '', onboarding: true,
@@ -126,6 +127,7 @@ export function clientDetailsToForm(details: ClientDetails): ClientFormModel {
     referralSource: details.referralSource ?? '',
     status: clientStatusLabel(details.status),
     location: details.location ?? '',
+    locationId: details.locationId,
     pmi: details.pmiNumber,
     insurance: details.insuranceProvider ?? '',
     services: details.services.filter((service) => service.isActive).map((service) => serviceLabel(service.code, service.name)),
@@ -218,6 +220,7 @@ export function clientFormToCreateRequest(form: ClientFormModel): CreateClientRe
       socDate: form.socDate,
       referralSource: nullableTrimmed(form.referralSource),
       location: nullableTrimmed(form.location),
+      locationId: nullableTrimmed(form.locationId),
       isOnboarding: form.onboarding,
       evvAuthorizedHoursPerWeek: parseNullableNumber(form.evvHours),
     },

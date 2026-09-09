@@ -62,6 +62,21 @@ describe('NavigationService', () => {
     expect(navigation.groups()[0]?.items.map((item) => item.id)).toEqual(['dashboard']);
   });
 
+  it('renders Companies when the API returns it for a user with Company.View', async () => {
+    TestBed.inject(AuthorizationService).setPermissions([Permissions.Company.View]);
+    api.getNavigation.mockReturnValue(of([
+      module('administration', 'Administration', 20, [
+        feature('companies', 'Companies', '/access-control/companies', 5),
+      ]),
+    ]));
+    const navigation = TestBed.inject(NavigationService);
+
+    await navigation.loadForSession('user-1');
+
+    expect(navigation.groups()[0]?.items[0]?.label).toBe('Companies');
+    expect(navigation.groups()[0]?.items[0]?.route).toBe('/access-control/companies');
+  });
+
   it('uses a safe fallback icon and exposes a minimal failure state', async () => {
     expect(resolveNavigationIcon('not-registered')).toBeTruthy();
     api.getNavigation.mockReturnValue(throwError(() => new Error('offline')));
