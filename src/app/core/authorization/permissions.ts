@@ -28,6 +28,10 @@ export const Permissions = {
   ClientServiceAgreement: { View: 'ClientServiceAgreement.View', Create: 'ClientServiceAgreement.Create', Edit: 'ClientServiceAgreement.Edit' },
   ClientCaregiver: { View: 'ClientCaregiver.View', Create: 'ClientCaregiver.Create', Edit: 'ClientCaregiver.Edit' },
   ClientResponsibleParty: { View: 'ClientResponsibleParty.View', Create: 'ClientResponsibleParty.Create', Edit: 'ClientResponsibleParty.Edit' },
+  ClientContact: { View: 'ClientContact.View', Create: 'ClientContact.Create', Edit: 'ClientContact.Edit' },
+  ClientCareCoordinator: { View: 'ClientCareCoordinator.View', Create: 'ClientCareCoordinator.Create', Edit: 'ClientCareCoordinator.Edit' },
+  ClientConsultationProvider: { View: 'ClientConsultationProvider.View', Create: 'ClientConsultationProvider.Create', Edit: 'ClientConsultationProvider.Edit' },
+  ClientPhysician: { View: 'ClientPhysician.View', Create: 'ClientPhysician.Create', Edit: 'ClientPhysician.Edit' },
   ClientHospitalization: { View: 'ClientHospitalization.View', Create: 'ClientHospitalization.Create', Edit: 'ClientHospitalization.Edit' },
   ClientVisit: { View: 'ClientVisit.View', Create: 'ClientVisit.Create', Edit: 'ClientVisit.Edit' },
   ClientForm: { View: 'ClientForm.View', Create: 'ClientForm.Create', Edit: 'ClientForm.Edit' },
@@ -98,6 +102,12 @@ export const Permissions = {
   },
   AuditLog: {
     View: 'AuditLog.View',
+  },
+  Company: {
+    View: 'Company.View',
+    Create: 'Company.Create',
+    Edit: 'Company.Edit',
+    Delete: 'Company.Delete',
   },
 } as const;
 

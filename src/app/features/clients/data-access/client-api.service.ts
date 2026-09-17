@@ -92,6 +92,7 @@ function mapClientDetails(response: ClientDetailsApiResponse): ClientDetails {
     referralSource: response.careSetup.referralSource || null,
     status: response.careSetup.status,
     location: response.careSetup.location || null,
+    locationId: response.careSetup.locationId ?? '',
     isOnboarding: response.careSetup.isOnboarding,
     dischargeDate: response.careSetup.dischargeDate,
     dischargeReason: response.careSetup.dischargeReason || null,

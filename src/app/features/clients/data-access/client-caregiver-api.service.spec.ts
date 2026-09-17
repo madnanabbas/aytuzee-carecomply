@@ -18,7 +18,7 @@ describe('ClientCaregiverApiService', () => {
   });
 
   it('sends assignment mutations with concurrency data', () => {
-    const request = { userId: 'u1', type: 'Primary' as const, isPreferred: true, services: null, startDate: '2026-09-04', endDate: null, notes: null };
+    const request = { userId: 'u1', type: 'Primary' as const, isPreferred: true, services: null, startDate: '2026-09-04', endDate: null, notes: null, relationshipToClient: 'Professional caregiver', livesWithClient: false };
     service.create('c1', request).subscribe(); expect(http.expectOne('/api/clients/c1/caregivers').request.method).toBe('POST');
     service.update('c1', 'a1', { ...request, editorVersion: 'V' }).subscribe(); expect(http.expectOne('/api/clients/c1/caregivers/a1').request.method).toBe('PUT');
   });

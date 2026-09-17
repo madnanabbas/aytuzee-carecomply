@@ -12,6 +12,8 @@ export interface UserListRole {
 
 export interface RoleMetadata {
   readonly id: string;
+  readonly companyId?: string;
+  readonly companyName?: string;
   readonly name: string;
   readonly permissions: readonly string[];
   readonly requiresMfa: boolean;
@@ -54,6 +56,9 @@ export interface UserListFilterValues {
 
 export interface UserDetails {
   readonly id: string;
+  readonly companyId: string | null;
+  readonly companyName: string | null;
+  readonly isPlatformAdministrator: boolean;
   readonly firstName: string;
   readonly lastName: string;
   readonly displayName: string;
@@ -67,27 +72,33 @@ export interface UserDetails {
   readonly mfaMethod: UserMfaMethod;
   readonly roles: readonly UserListRole[];
   readonly editorVersion: string;
+  readonly locationIds?: string[];
 }
 
 export interface UpdateUserGeneralRequest {
+  readonly companyId?: string | null;
   readonly firstName: string;
   readonly lastName: string;
   readonly email: string;
   readonly phoneNumber: string | null;
   readonly password?: string | null;
   readonly editorVersion: string;
+  readonly locationIds?: readonly string[];
 }
 
 export interface CreateUserGeneral {
+  readonly companyId?: string;
   readonly firstName: string;
   readonly lastName: string;
   readonly email: string;
   readonly password: string;
   readonly phoneNumber: string;
   readonly isActive: boolean;
+  readonly locationIds?: string[];
 }
 
 export interface CreateUserRequest {
+  readonly companyId?: string | null;
   readonly firstName: string;
   readonly lastName: string;
   readonly email: string;
@@ -97,6 +108,7 @@ export interface CreateUserRequest {
   readonly requiresMfa: boolean;
   readonly mfaMethod: UserMfaMethod;
   readonly roleIds: readonly string[];
+  readonly locationIds?: readonly string[];
 }
 
 export interface CreateUserResponse {
@@ -109,12 +121,14 @@ export interface UpdateUserRolesRequest {
 }
 
 export const EMPTY_CREATE_USER_GENERAL: CreateUserGeneral = {
+  companyId: '',
   firstName: '',
   lastName: '',
   email: '',
   password: '',
   phoneNumber: '',
   isActive: true,
+  locationIds: [],
 };
 
 export const DEFAULT_USER_LIST_QUERY: UserListQuery = {

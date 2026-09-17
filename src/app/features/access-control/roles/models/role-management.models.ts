@@ -1,5 +1,7 @@
 export interface RoleListItem {
   readonly id: string;
+  readonly companyId: string;
+  readonly companyName: string;
   readonly name: string;
   readonly description: string;
   readonly assignedUsers: number;
@@ -37,6 +39,8 @@ export interface ModulePermissionGroup {
 
 export interface RoleEditorModel {
   readonly id: string;
+  readonly companyId: string;
+  readonly companyName: string;
   readonly name: string;
   readonly description: string;
   readonly permissionIds: readonly number[];
@@ -45,6 +49,7 @@ export interface RoleEditorModel {
 }
 
 export interface CreateRoleRequest {
+  readonly companyId: string | null;
   readonly name: string;
   readonly description: string | null;
   readonly permissionIds: readonly number[];

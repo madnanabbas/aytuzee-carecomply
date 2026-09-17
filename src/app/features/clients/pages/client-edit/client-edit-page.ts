@@ -99,6 +99,7 @@ export class ClientEditPageComponent {
       return;
     }
 
+    this.model.country = 'United States';
     const statusChanged = clientStatusCode(this.model.status) !== normalizeStatus(original.status)
       || (this.model.status === 'Discharged' && (
         (original.dischargeDate ?? '') !== this.model.dischargeDate
@@ -161,7 +162,11 @@ export class ClientEditPageComponent {
       : current.filter((item) => item !== value);
   }
 
-  normalizePmi(value: string): void { this.model.pmi = formatPmi(value); }
+  normalizePmi(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.model.pmi = formatPmi(input.value);
+    input.value = this.model.pmi;
+  }
   normalizeSsn(value: string): void { this.model.ssn = formatUsSsn(value); }
   normalizePostalCode(value: string): void { this.model.zip = formatUsPostalCode(value); }
   normalizePhone(field: 'phone1' | 'phone2' | 'companyPhone', value: string): void {
@@ -177,6 +182,7 @@ export class ClientEditPageComponent {
   private acceptClient(client: ClientDetails): void {
     this.original = client;
     Object.assign(this.model, clientDetailsToForm(client));
+    this.model.country = 'United States';
   }
 
   private validate(): readonly string[] {

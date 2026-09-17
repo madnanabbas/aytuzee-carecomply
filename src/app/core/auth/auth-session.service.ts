@@ -305,6 +305,9 @@ export class AuthSessionService {
       !response.email ||
       typeof response.displayName !== 'string' ||
       !response.displayName ||
+      (response.companyId !== null && typeof response.companyId !== 'string') ||
+      (response.companyName !== null && typeof response.companyName !== 'string') ||
+      typeof response.isPlatformAdministrator !== 'boolean' ||
       !Array.isArray(response.permissions) ||
       permissions.length !== response.permissions.length
     ) {
@@ -315,6 +318,9 @@ export class AuthSessionService {
       id: response.id,
       email: response.email,
       displayName: response.displayName,
+      companyId: response.companyId,
+      companyName: response.companyName,
+      isPlatformAdministrator: response.isPlatformAdministrator,
       permissions,
     };
   }

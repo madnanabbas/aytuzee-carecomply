@@ -1,0 +1,52 @@
+<section class="panel-card">
+  <header class="panel-header">
+    <div><h2>Responsible parties</h2><p>People responsible for client decisions and financial obligations.</p></div>
+    @if (canCreate()) { <button type="button" class="primary-action" (click)="add()">+ Add responsible party</button> }
+  </header>
+
+  @if (error() && !panelOpen()) { <p role="alert" class="px-4 py-3 text-[11px] text-danger">{{ error() }} <button type="button" class="underline" (click)="load()">Retry</button></p> }
+  @if (loading()) {
+    <p class="px-4 py-8 text-center text-[11px] text-text-muted">Loading responsible parties…</p>
+  } @else if (!parties().length) {
+    <div class="empty-state"><div class="empty-state-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2M17 8h5m-2.5-2.5v5"/></svg></div><p>No responsible parties recorded</p><span>Add a contact when the client has a responsible party.</span>@if (canCreate()) { <button type="button" class="empty-action" (click)="add()">Add responsible party</button> }</div>
+  } @else {
+    <div class="overflow-x-auto">
+      <table class="compact-table min-w-[62rem]">
+        <thead><tr><th>Name</th><th>Relationship</th><th>Contact</th><th>Lives with client</th><th>Spenddown</th><th>Status</th><th class="text-right">Actions</th></tr></thead>
+        <tbody>
+          @for (party of parties(); track party.id) {
+            <tr>
+              <td class="font-medium text-text-primary">{{ party.name }}@if (party.address) { <div class="mt-1 max-w-56 truncate text-[10px] font-normal text-text-muted" [title]="party.address">{{ party.address }}</div> }</td>
+              <td>{{ party.relationship }}</td>
+              <td><div>{{ party.phone }}</div>@if (party.email) { <div class="mt-1 text-[10px] text-text-muted">{{ party.email }}</div> }</td>
+              <td>{{ party.livesWithClient === null ? 'Not specified' : party.livesWithClient ? 'Yes' : 'No' }}</td>
+              <td>{{ party.hasSpenddown === null ? 'Not specified' : party.hasSpenddown ? 'Yes' : 'No' }}</td>
+              <td><span class="status-pill">{{ party.isActive ? 'Active' : 'Inactive' }}</span></td>
+              <td class="text-right">@if (canEdit()) { <button type="button" class="table-link" (click)="edit(party)"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>Edit</button> }</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+@if (panelOpen()) {
+  <div class="fixed inset-0 z-50 flex justify-end bg-slate-950/35" (click)="close()">
+    <aside class="flex h-full w-full max-w-[32rem] flex-col bg-surface shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="responsible-party-title" (click)="$event.stopPropagation()">
+      <header class="flex items-start justify-between border-b border-border px-5 py-4"><div><h2 id="responsible-party-title" class="text-[14px] font-semibold">{{ editing() ? 'Edit responsible party' : 'Add responsible party' }}</h2><p class="mt-1 text-[10px] text-text-muted">Record contact details and responsibilities. Portal access is managed separately.</p></div><button type="button" aria-label="Close" (click)="close()">×</button></header>
+      <div class="flex-1 space-y-4 overflow-y-auto p-5">
+        @if (error()) { <p role="alert" class="text-[11px] text-danger">{{ error() }}</p> }
+        <label><span class="form-label">Full name *</span><input class="form-control" [(ngModel)]="draft.name" maxlength="200" autocomplete="name" /></label>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <label><span class="form-label">Relationship to client *</span><select class="form-control" [(ngModel)]="draft.relationship"><option value="">Select relationship</option><option>Parent</option><option>Guardian</option><option>Spouse or partner</option><option>Child</option><option>Sibling</option><option>Other relative</option><option>Other</option></select></label>
+          <label><span class="form-label">Status *</span><select class="form-control" [(ngModel)]="draft.isActive"><option [ngValue]="true">Active</option><option [ngValue]="false">Inactive</option></select></label>
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2"><label><span class="form-label">Phone *</span><input class="form-control" type="tel" [value]="draft.phone" (input)="onPhoneInput($event)" maxlength="30" inputmode="tel" autocomplete="tel" placeholder="(612) 555-0100" [attr.aria-invalid]="draft.phone && !validPhone()" />@if (draft.phone && !validPhone()) { <small class="field-error">Enter a 10-digit US phone number.</small> }</label><label><span class="form-label">Email</span><input class="form-control" type="email" [(ngModel)]="draft.email" (blur)="onEmailBlur()" maxlength="320" autocomplete="email" placeholder="name@example.com" [attr.aria-invalid]="draft.email && !validEmail()" />@if (draft.email && !validEmail()) { <small class="field-error">Enter a valid email address.</small> }</label></div>
+        <label><span class="form-label">Address</span><textarea class="form-control min-h-20" [(ngModel)]="draft.address" maxlength="500" autocomplete="street-address"></textarea></label>
+        <div class="grid gap-4 sm:grid-cols-2"><label><span class="form-label">Lives with client? *</span><select class="form-control" [(ngModel)]="draft.livesWithClient"><option [ngValue]="null">Select an answer</option><option [ngValue]="true">Yes</option><option [ngValue]="false">No</option></select></label><label><span class="form-label">Spenddown responsibility? *</span><select class="form-control" [(ngModel)]="draft.hasSpenddown"><option [ngValue]="null">Select an answer</option><option [ngValue]="true">Yes</option><option [ngValue]="false">No</option></select></label></div>
+      </div>
+      <footer class="flex justify-end gap-2 border-t border-border px-5 py-3"><button class="command-button" type="button" (click)="close()">Cancel</button><button class="primary-action" type="button" [disabled]="saving() || !valid()" (click)="save()">{{ saving() ? 'Saving…' : editing() ? 'Save changes' : 'Add responsible party' }}</button></footer>
+    </aside>
+  </div>
+}

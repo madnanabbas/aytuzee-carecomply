@@ -46,7 +46,7 @@
             <label><span class="form-label">Goes by</span><input class="form-control" [(ngModel)]="model.goesBy" /></label>
             <label><span class="form-label">Date of birth *</span><input class="form-control" type="date" [(ngModel)]="model.dob" /></label>
             <label><span class="form-label">Gender *</span><select class="form-control" [(ngModel)]="model.gender"><option value="">Select</option><option>Female</option><option>Male</option><option>Non-binary</option><option>Other</option><option>Prefer not to say</option></select></label>
-            <label><span class="form-label">PMI number <span class="required-mark">*</span></span><input class="form-control" [ngModel]="model.pmi" (ngModelChange)="normalizePmi($event)" maxlength="8" inputmode="numeric" /></label>
+            <label><span class="form-label">PMI number <span class="required-mark">*</span></span><input class="form-control" [value]="model.pmi" (input)="normalizePmi($event)" required minlength="8" maxlength="8" inputmode="numeric" pattern="[0-9]{8}" autocomplete="off" /></label>
             <label><span class="form-label">SSN</span><input class="form-control" [ngModel]="model.ssn" (ngModelChange)="normalizeSsn($event)" maxlength="11" inputmode="numeric" placeholder="Leave blank to keep the stored SSN" /><span class="field-help">Enter a value only to add or replace the protected SSN.</span></label>
             <label><span class="form-label">Insurance</span><input class="form-control" [(ngModel)]="model.insurance" /></label>
           </div>
@@ -92,7 +92,7 @@
             <label><span class="form-label">Apartment</span><input class="form-control" [(ngModel)]="model.apartment" /></label>
             <label><span class="form-label">City</span><input class="form-control" [(ngModel)]="model.city" /></label>
             <label><span class="form-label">County</span><input class="form-control" [(ngModel)]="model.county" /></label>
-            <label><span class="form-label">Country</span><input class="form-control" [(ngModel)]="model.country" maxlength="100" autocomplete="country-name" /></label>
+            <label><span class="form-label">Country</span><input class="form-control bg-surface-muted" value="United States" autocomplete="country-name" readonly /></label>
             <label><span class="form-label">State</span><input class="form-control" [(ngModel)]="model.state" /></label>
             <label><span class="form-label">ZIP</span><input class="form-control" [ngModel]="model.zip" (ngModelChange)="normalizePostalCode($event)" maxlength="10" /></label>
           </div>

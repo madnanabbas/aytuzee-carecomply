@@ -2,7 +2,7 @@ import { ALL_PERMISSIONS, isPermission, Permissions } from './permissions';
 
 describe('Permissions', () => {
   it('contains the complete canonical permission catalog', () => {
-    expect(ALL_PERMISSIONS).toHaveLength(80);
+    expect(ALL_PERMISSIONS).toHaveLength(96);
   });
 
   it('should contain only unique values', () => {

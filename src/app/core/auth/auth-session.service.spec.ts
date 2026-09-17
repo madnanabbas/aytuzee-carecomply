@@ -52,7 +52,7 @@ describe('AuthSessionService', () => {
     expect(session.currentUser()?.displayName).toBe('Test User');
     expect(session.csrfToken()).toBe('csrf-token');
     expect(authorization.hasPermission(Permissions.Dashboard.View)).toBe(true);
-    expect(navigation.loadForSession).toHaveBeenCalledWith('user-id');
+    expect(navigation.loadForSession).toHaveBeenCalledWith('0198a5db-4000-7000-8000-000000000001');
   });
 
   it('should initialize anonymously when me returns 401', async () => {
@@ -203,7 +203,7 @@ describe('AuthSessionService', () => {
     expect(session.currentUser()).toBeNull();
     expect(session.csrfToken()).toBeNull();
     expect(authorization.hasPermission(Permissions.Dashboard.View)).toBe(false);
-    expect(router.navigate).toHaveBeenCalledWith(['/login']);
+    expect(router.navigate).toHaveBeenCalledWith(['/auth/login']);
   });
 
   it('should clear session-invalid 401 state but preserve it for a forbidden response', async () => {
@@ -224,6 +224,9 @@ function currentUserResponse(): CurrentUserResponse {
     id: '0198a5db-4000-7000-8000-000000000001',
     email: 'user@example.com',
     displayName: 'Test User',
+    companyId: '0198a5db-4000-7000-8000-000000000002',
+    companyName: 'Test Care Company',
+    isPlatformAdministrator: false,
     permissions: [Permissions.Dashboard.View],
   };
 }

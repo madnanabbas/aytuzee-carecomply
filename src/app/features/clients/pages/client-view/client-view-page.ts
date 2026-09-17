@@ -10,6 +10,10 @@ import { ClientTodoApiService } from '../../data-access/client-todo-api.service'
 import { ClientDetails } from '../../models/client-api.models';
 import { ClientTodosComponent } from '../../components/client-todos/client-todos';
 import { ClientCaregiversComponent } from '../../components/client-caregivers/client-caregivers';
+import { ClientResponsiblePartiesComponent } from '../../components/client-responsible-parties/client-responsible-parties';
+import { ClientContactsComponent } from '../../components/client-contacts/client-contacts';
+import { ClientCareCoordinatorsComponent } from '../../components/client-care-coordinators/client-care-coordinators';
+import { ClientClinicalContactsComponent } from '../../components/client-clinical-contacts/client-clinical-contacts';
 import { ClientHospitalizationsComponent } from '../../components/client-hospitalizations/client-hospitalizations';
 import { clientGenderLabel, clientProgramLabel, clientStatusLabel, formatDateForDisplay } from '../../models/client-presentation';
 
@@ -19,6 +23,10 @@ type ClientViewTab =
   | 'todos'
   | 'service-agreements'
   | 'pcg'
+  | 'contacts'
+  | 'care-coordinators'
+  | 'consultation-providers'
+  | 'physicians'
   | 'responsible-party'
   | 'hospitalization'
   | 'visits'
@@ -39,7 +47,6 @@ type ClientDialog =
   | 'hospitalization'
   | 'document'
   | 'employee-service'
-  | 'responsible-party'
   | 'visit'
   | 'form'
   | null;
@@ -124,7 +131,7 @@ interface ClientViewModel {
 @Component({
   selector: 'app-client-view-page',
   standalone: true,
-  imports: [FormsModule, RouterLink, ClientTodosComponent, ClientCaregiversComponent, ClientHospitalizationsComponent],
+  imports: [FormsModule, RouterLink, ClientTodosComponent, ClientCaregiversComponent, ClientContactsComponent, ClientCareCoordinatorsComponent, ClientClinicalContactsComponent, ClientResponsiblePartiesComponent, ClientHospitalizationsComponent],
   templateUrl: './client-view-page.html',
 })
 export class ClientViewPageComponent {
@@ -225,6 +232,10 @@ export class ClientViewPageComponent {
     { id: 'todos', label: 'To-dos', viewPermission: Permissions.ClientTodo.View },
     { id: 'service-agreements', label: 'Service agreements', viewPermission: Permissions.ClientServiceAgreement.View },
     { id: 'pcg', label: 'Primary caregivers', viewPermission: Permissions.ClientCaregiver.View },
+    { id: 'contacts', label: 'Contacts', viewPermission: Permissions.ClientContact.View },
+    { id: 'care-coordinators', label: 'Care coordinators', viewPermission: Permissions.ClientCareCoordinator.View },
+    { id: 'consultation-providers', label: 'Consultation providers', viewPermission: Permissions.ClientConsultationProvider.View },
+    { id: 'physicians', label: 'Doctors', viewPermission: Permissions.ClientPhysician.View },
     { id: 'responsible-party', label: 'Responsible parties', viewPermission: Permissions.ClientResponsibleParty.View },
     { id: 'hospitalization', label: 'Hospitalizations', viewPermission: Permissions.ClientHospitalization.View },
     { id: 'visits', label: 'Visits', viewPermission: Permissions.ClientVisit.View },
@@ -245,7 +256,6 @@ export class ClientViewPageComponent {
   readonly visits: readonly RelatedRecordPreviewRow[] = [];
   readonly forms: readonly RelatedRecordPreviewRow[] = [];
   readonly emailLogs: readonly RelatedRecordPreviewRow[] = [];
-  readonly responsibleParties: readonly RelatedRecordPreviewRow[] = [];
   readonly primaryCaregivers: readonly RelatedRecordPreviewRow[] = [];
 
   readonly dialogDefinitions: Record<Exclude<ClientDialog, null>, DialogDefinition> = {
@@ -254,7 +264,6 @@ export class ClientViewPageComponent {
     hospitalization: { title: 'Add hospitalization', description: 'Record an admission and discharge period for the client.', submitLabel: 'Add hospitalization' },
     document: { title: 'Upload client document', description: 'Add document metadata and select a file for secure upload.', submitLabel: 'Upload document' },
     'employee-service': { title: 'Assign employee / caregiver', description: 'Link an employee to this client and define the service assignment.', submitLabel: 'Assign employee' },
-    'responsible-party': { title: 'Add responsible party', description: 'Add an authorized responsible party or representative.', submitLabel: 'Add responsible party' },
     visit: { title: 'Add visit', description: 'Record a client service visit for design review.', submitLabel: 'Add visit' },
     form: { title: 'Add client form', description: 'Create or attach a client-related form record.', submitLabel: 'Add form' },
   };
@@ -265,7 +274,6 @@ export class ClientViewPageComponent {
     hospital: '', hospitalizedIn: '', inTime: '', hospitalizedOut: '', outTime: '', reason: '',
     documentName: '', documentType: '', documentFile: '', issueDate: '', expiryDate: '', reviewDate: '',
     employee: '', employeeTitle: '', employeeService: '', assignmentStart: '', assignmentEnd: '',
-    rpName: '', rpRelationship: '', rpPhone: '', rpEmail: '', rpAddress: '',
     visitDate: '', visitEmployee: '', visitService: '', visitStart: '', visitEnd: '',
     formName: '', formCategory: '', formDueDate: '',
   };

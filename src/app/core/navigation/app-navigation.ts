@@ -25,6 +25,7 @@ export const APP_ROUTE_METADATA = {
   backgroundChecks: route('background-checks', '/background-checks', [Permissions.BackgroundCheck.View]),
   notifications: route('notifications', '/notifications', [Permissions.Notification.View]),
   reports: route('reports', '/reports', [Permissions.FinancialReport.View]),
+  companies: route('companies', '/access-control/companies', [Permissions.Company.View]),
   accessControl: route('access-management', '/access-control', [
     Permissions.User.View,
     Permissions.User.Manage,

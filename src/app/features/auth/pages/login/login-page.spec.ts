@@ -97,8 +97,8 @@ describe('LoginPageComponent', () => {
   );
 
   it.each([
-    { status: 'mfaRequired', route: '/login/mfa' },
-    { status: 'mfaEnrollmentRequired', route: '/login/mfa/setup' },
+    { status: 'mfaRequired', route: '/auth/mfa' },
+    { status: 'mfaEnrollmentRequired', route: '/auth/mfa/setup' },
   ] satisfies readonly { status: LoginAttemptResult['status']; route: string }[])(
     'should route $status without establishing a local session',
     async ({ status, route }) => {
@@ -134,7 +134,7 @@ describe('LoginPageComponent', () => {
     expect(copy).not.toContain('google');
     expect(copy).not.toContain('microsoft');
     expect(copy).not.toContain('remember me');
-    expect(copy).not.toContain('forgot password');
+    expect(copy).toContain('forgot password');
     expect(storageSet).not.toHaveBeenCalled();
     storageSet.mockRestore();
   });

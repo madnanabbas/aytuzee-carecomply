@@ -1,0 +1,40 @@
+<section class="panel-card">
+  <header class="panel-header">
+    <div><h2>External care coordinators</h2><p>Care coordination contacts outside your company for this client.</p></div>
+    @if (canCreate()) { <button type="button" class="primary-action" (click)="add()">+ Add coordinator</button> }
+  </header>
+  @if (error() && !panelOpen()) { <p class="px-4 py-3 text-[11px] text-danger" role="alert">{{ error() }} <button type="button" class="underline" (click)="load()">Retry</button></p> }
+  @if (loading()) {
+    <p class="px-4 py-8 text-center text-[11px] text-text-muted">Loading care coordinators…</p>
+  } @else if (!coordinators().length) {
+    <div class="empty-state"><div class="empty-state-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2M17 8h5m-2.5-2.5v5"/></svg></div><p>No external care coordinators recorded</p><span>Add a coordinator when an external person coordinates care for this client.</span>@if (canCreate()) { <button type="button" class="empty-action" (click)="add()">Add coordinator</button> }</div>
+  } @else {
+    <div class="overflow-x-auto"><table class="compact-table min-w-[60rem]">
+      <thead><tr><th>Name</th><th>Company</th><th>Phone</th><th>Extension</th><th>Fax</th><th>Email</th><th>Status</th><th class="text-right">Actions</th></tr></thead>
+      <tbody>@for (coordinator of coordinators(); track coordinator.id) {
+        <tr><td class="font-medium text-text-primary">{{ coordinator.name }}</td><td>{{ coordinator.companyName || '—' }}</td>
+          <td>{{ coordinator.phone || '—' }}</td><td>{{ coordinator.phoneExtension || '—' }}</td>
+          <td>{{ coordinator.fax || '—' }}</td><td>{{ coordinator.email || '—' }}</td>
+          <td><span class="status-pill">{{ coordinator.isActive ? 'Active' : 'Inactive' }}</span></td>
+          <td class="text-right">@if (canEdit()) { <button type="button" class="table-link" (click)="edit(coordinator)"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>Edit</button> }</td>
+        </tr>
+      }</tbody>
+    </table></div>
+  }
+</section>
+
+@if (panelOpen()) {
+  <div class="fixed inset-0 z-50 flex justify-end bg-slate-950/35" (click)="close()">
+    <aside class="flex h-full w-full max-w-[32rem] flex-col bg-surface shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="care-coordinator-title" (click)="$event.stopPropagation()">
+      <header class="flex items-start justify-between border-b border-border px-5 py-4"><div><h2 id="care-coordinator-title" class="text-[14px] font-semibold">{{ editing() ? 'Edit external care coordinator' : 'Add external care coordinator' }}</h2><p class="mt-1 text-[10px] text-text-muted">Record the coordinator's contact details. This does not create a user account.</p></div><button type="button" aria-label="Close" (click)="close()">×</button></header>
+      <div class="flex-1 space-y-4 overflow-y-auto p-5">
+        @if (error()) { <p role="alert" class="text-[11px] text-danger">{{ error() }}</p> }
+        <label><span class="form-label">Coordinator name *</span><input class="form-control" [(ngModel)]="draft.name" maxlength="200" autocomplete="name" /></label>
+        <div class="grid gap-4 sm:grid-cols-2"><label><span class="form-label">Company / agency</span><input class="form-control" [(ngModel)]="draft.companyName" maxlength="200" autocomplete="organization" /></label><label><span class="form-label">Status</span><select class="form-control" [(ngModel)]="draft.isActive"><option [ngValue]="true">Active</option><option [ngValue]="false">Inactive</option></select></label></div>
+        <div class="grid gap-4 sm:grid-cols-2"><label><span class="form-label">Phone</span><input class="form-control" type="tel" [value]="draft.phone" (input)="onPhoneInput('phone', $event)" maxlength="30" inputmode="tel" autocomplete="tel" placeholder="(612) 555-0100" [attr.aria-invalid]="draft.phone && !validPhone('phone')" />@if (draft.phone && !validPhone('phone')) { <small class="field-error">Enter a 10-digit US phone number.</small> }</label><label><span class="form-label">Extension</span><input class="form-control" [value]="draft.phoneExtension" (input)="onExtensionInput($event)" maxlength="15" inputmode="numeric" /></label></div>
+        <div class="grid gap-4 sm:grid-cols-2"><label><span class="form-label">Fax</span><input class="form-control" type="tel" [value]="draft.fax" (input)="onPhoneInput('fax', $event)" maxlength="30" inputmode="tel" placeholder="(612) 555-0100" [attr.aria-invalid]="draft.fax && !validPhone('fax')" />@if (draft.fax && !validPhone('fax')) { <small class="field-error">Enter a 10-digit US fax number.</small> }</label><label><span class="form-label">Email</span><input class="form-control" type="email" [(ngModel)]="draft.email" (blur)="onEmailBlur()" maxlength="320" autocomplete="email" placeholder="name@example.com" [attr.aria-invalid]="draft.email && !validEmail()" />@if (draft.email && !validEmail()) { <small class="field-error">Enter a valid email address.</small> }</label></div>
+      </div>
+      <footer class="flex justify-end gap-2 border-t border-border px-5 py-3"><button type="button" class="command-button" (click)="close()">Cancel</button><button type="button" class="primary-action" [disabled]="saving() || !valid()" (click)="save()">{{ saving() ? 'Saving…' : editing() ? 'Save changes' : 'Add coordinator' }}</button></footer>
+    </aside>
+  </div>
+}

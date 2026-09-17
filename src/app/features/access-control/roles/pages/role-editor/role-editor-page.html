@@ -73,6 +73,15 @@
       </div>
 
       <div class="mt-5 grid gap-4 md:grid-cols-2">
+        @if (isCreateMode() && isPlatformAdministrator()) {
+          <div>
+            <label for="role-company" class="block text-label font-medium text-text-primary">Company <span class="text-danger">*</span></label>
+            <select id="role-company" formControlName="companyId" class="mt-1.5 h-control w-full rounded-control border border-border-strong bg-surface px-3.5 text-body">
+              <option value="">Select company</option>
+              @for (company of companies(); track company.id) { <option [value]="company.id">{{ company.name }}</option> }
+            </select>
+          </div>
+        }
         <!-- Role name -->
         <div>
           <label

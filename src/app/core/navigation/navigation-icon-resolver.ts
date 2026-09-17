@@ -1,6 +1,7 @@
 import {
   LucideBell,
   LucideBookOpen,
+  LucideBuilding2,
   LucideCalendarClock,
   LucideChartNoAxesColumn,
   LucideCircle,
@@ -27,6 +28,7 @@ const NAVIGATION_ICONS: Readonly<Record<string, LucideIcon>> = {
   'background-checks': LucideShieldCheck,
   notifications: LucideBell,
   reports: LucideChartNoAxesColumn,
+  companies: LucideBuilding2,
   'access-management': LucideUserRoundCog,
   users: LucideUsers,
   roles: LucideShieldCheck,

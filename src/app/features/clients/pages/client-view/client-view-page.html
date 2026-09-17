@@ -378,40 +378,16 @@
     </section>
     } @else if (activeTab() === 'pcg') {
     <app-client-caregivers [clientId]="client.id" />
+    } @else if (activeTab() === 'contacts') {
+    <app-client-contacts [clientId]="client.id" />
+    } @else if (activeTab() === 'care-coordinators') {
+    <app-client-care-coordinators [clientId]="client.id" />
+    } @else if (activeTab() === 'consultation-providers') {
+    <app-client-clinical-contacts [clientId]="client.id" kind="consultation-providers" />
+    } @else if (activeTab() === 'physicians') {
+    <app-client-clinical-contacts [clientId]="client.id" kind="physicians" />
     } @else if (activeTab() === 'responsible-party') {
-    <section class="panel-card">
-      <header class="panel-header">
-        <div>
-          <h2>Responsible Party</h2>
-          <p>Authorized representatives and responsible-party contact details.</p>
-        </div>@if (hasPermission(permissions.ClientResponsibleParty.Create)) {<button class="primary-action" type="button" (click)="openDialog('responsible-party')">Add responsible
-          party</button>}
-      </header>
-      <div class="overflow-x-auto">
-        <table class="compact-table min-w-[64rem]">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Relationship</th>
-              <th>Phone</th>
-              <th>Email</th>
-              <th>Living with client</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>@for (row of responsibleParties; track row.email) {<tr>
-              <td class="font-medium text-text-primary">{{ row.name }}</td>
-              <td>{{ row.relationship }}</td>
-              <td>{{ row.phone }}</td>
-              <td>{{ row.email }}</td>
-              <td>{{ row.livingWithClient }}</td>
-              <td><span class="status-pill" [class]="statusClass(row.status)">{{ row.status }}</span></td>
-              <td>@if (hasPermission(permissions.ClientResponsibleParty.Edit)) {<button class="table-link">Edit</button>}</td>
-            </tr>}</tbody>
-        </table>
-      </div>
-    </section>
+    <app-client-responsible-parties [clientId]="client.id" />
     } @else if (activeTab() === 'hospitalization') {
     <app-client-hospitalizations [clientId]="client.id" />
     @if (false) {<section class="panel-card">
@@ -729,20 +705,6 @@
           </select></label><label><span class="form-label">Start date *</span><input class="form-control" type="date"
             [(ngModel)]="draft.assignmentStart" /></label><label><span class="form-label">End date</span><input
             class="form-control" type="date" [(ngModel)]="draft.assignmentEnd" /></label></div>}
-      @case ('responsible-party') {<div class="form-grid"><label class="col-span-2"><span class="form-label">Name
-            *</span><input class="form-control" [(ngModel)]="draft.rpName" /></label><label><span
-            class="form-label">Relationship *</span><select class="form-control" [(ngModel)]="draft.rpRelationship">
-            <option value="">Select relationship</option>
-            <option>Parent</option>
-            <option>Guardian</option>
-            <option>Spouse</option>
-            <option>Sibling</option>
-            <option>Other</option>
-          </select></label><label><span class="form-label">Phone *</span><input class="form-control"
-            [(ngModel)]="draft.rpPhone" /></label><label class="col-span-2"><span class="form-label">Email</span><input
-            class="form-control" type="email" [(ngModel)]="draft.rpEmail" /></label><label class="col-span-2"><span
-            class="form-label">Address</span><textarea class="form-control min-h-[80px] py-2"
-            [(ngModel)]="draft.rpAddress"></textarea></label></div>}
       @case ('visit') {<div class="form-grid"><label><span class="form-label">Visit date *</span><input
             class="form-control" type="date" [(ngModel)]="draft.visitDate" /></label><label><span
             class="form-label">Employee *</span><select class="form-control" [(ngModel)]="draft.visitEmployee">

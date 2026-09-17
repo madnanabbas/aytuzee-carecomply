@@ -90,8 +90,8 @@ describe('UserListPageComponent', () => {
     expect(copy).toContain('Reviewer');
     expect(copy).toContain('Inactive');
     expect(copy).toContain('Enabled');
-    expect((fixture.nativeElement as HTMLElement).querySelector('a[href="/access-control/users/user-1/general"]'))
-      .not.toBeNull();
+    expect([...((fixture.nativeElement as HTMLElement).querySelectorAll('a'))]
+      .some(link => link.textContent?.includes('Ada Lovelace'))).toBe(true);
   });
 
   it('should preserve applied filters in route query parameters and reset paging', () => {
@@ -120,15 +120,13 @@ describe('UserListPageComponent', () => {
     const authorization = TestBed.inject(AuthorizationService);
     const fixture = TestBed.createComponent(UserListPageComponent);
     fixture.detectChanges();
-    expect((fixture.nativeElement as HTMLElement).querySelector(
-      'a[href="/access-control/users/new/general"]',
-    )).toBeNull();
+    expect([...((fixture.nativeElement as HTMLElement).querySelectorAll('a'))]
+      .some(link => link.textContent?.includes('Add User'))).toBe(false);
 
     authorization.setPermissions([Permissions.User.View, Permissions.User.Manage]);
     fixture.detectChanges();
-    expect((fixture.nativeElement as HTMLElement).querySelector(
-      'a[href="/access-control/users/new/general"]',
-    )).not.toBeNull();
+    expect([...((fixture.nativeElement as HTMLElement).querySelectorAll('a'))]
+      .some(link => link.textContent?.includes('Add User'))).toBe(true);
   });
 
   function emptyResponse(): UserListResponse {
