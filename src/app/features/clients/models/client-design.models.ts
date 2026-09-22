@@ -28,6 +28,9 @@ export interface ClientListFilter {
 }
 
 export interface ClientCreateStep {
-  id: 'basic' | 'additional' | 'contact' | 'review';
+  id: 'basic' | 'additional' | 'contact' | 'review'
+    | 'caregivers' | 'client-contacts' | 'care-coordinators'
+    | 'consultation-providers' | 'doctors' | 'responsible-parties'
+    | 'hospitalizations' | 'visits';
   title: string;
 }

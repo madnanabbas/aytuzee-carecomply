@@ -77,6 +77,26 @@ describe('NavigationService', () => {
     expect(navigation.groups()[0]?.items[0]?.route).toBe('/access-control/companies');
   });
 
+  it('refreshes Employees navigation when the same user gains Employee.View', async () => {
+    const authorization = TestBed.inject(AuthorizationService);
+    authorization.setPermissions([Permissions.Dashboard.View]);
+    api.getNavigation.mockReturnValue(of([
+      module('people', 'People', 20, [
+        feature('employees', 'Employees', '/employees', 10),
+      ]),
+    ]));
+    const navigation = TestBed.inject(NavigationService);
+
+    await navigation.loadForSession('user-1');
+    expect(navigation.findByUrl('/employees')).toBeUndefined();
+
+    authorization.setPermissions([Permissions.Dashboard.View, Permissions.Employee.View]);
+    await navigation.loadForSession('user-1');
+
+    expect(api.getNavigation).toHaveBeenCalledTimes(2);
+    expect(navigation.findByUrl('/employees')?.label).toBe('Employees');
+  });
+
   it('uses a safe fallback icon and exposes a minimal failure state', async () => {
     expect(resolveNavigationIcon('not-registered')).toBeTruthy();
     api.getNavigation.mockReturnValue(throwError(() => new Error('offline')));

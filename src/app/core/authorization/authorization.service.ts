@@ -36,4 +36,8 @@ export class AuthorizationService {
     const currentPermissions = this.currentPermissions();
     return permissions.every((permission) => currentPermissions.has(permission));
   }
+
+  permissionKey(): string {
+    return [...this.currentPermissions()].sort().join('|');
+  }
 }

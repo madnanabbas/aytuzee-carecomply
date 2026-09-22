@@ -8,7 +8,7 @@
       <div>
         <h1 class="text-[21px] font-semibold leading-7 text-text-primary">Add client</h1>
         <p class="mt-0.5 max-w-4xl text-[12px] text-text-secondary">
-          Create the client record first. Contacts, service agreements, hospitalization history, documents and notes are managed from the client profile after creation.
+          Complete the client record, then add caregivers, contacts, providers, hospitalizations and visits in the same guided workflow.
         </p>
       </div>
       <div class="text-right text-[11px] text-text-muted">
@@ -103,7 +103,7 @@
                   @if (servicesOpen()) {<div class="absolute z-30 mt-1 w-full rounded-control border border-border bg-surface p-1.5 shadow-lg">@for (option of serviceOptions; track option) {<label class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-[12px] hover:bg-surface-muted"><input type="checkbox" [checked]="draft.services.includes(option)" (change)="onToggleArray('services', option, $event)" /><span>{{ option }}</span></label>}</div>}
                 </div>
 
-                <label><span class="form-label">Supervisor</span><select [(ngModel)]="draft.supervisor" class="form-control bg-surface-muted" disabled title="Supervisor assignment will be connected when the Employee module is implemented."><option value="">Assigned after client creation</option></select></label>
+                <label><span class="form-label">Supervisor</span><select [(ngModel)]="draft.supervisor" class="form-control" [disabled]="!draft.locationId || supervisorLoading()"><option value="">{{ supervisorLoading() ? 'Loading employees…' : 'No supervisor assigned' }}</option>@for (person of supervisorOptions(); track person.id) {<option [value]="person.id">{{ person.name }} — {{ person.jobTitle }}</option>}</select></label>
                 <label><span class="form-label">EVV hours</span><input type="number" min="0" max="168" [(ngModel)]="draft.evvHours" (ngModelChange)="clearFieldError('evvHours')" class="form-control" [class.border-red-500]="fieldError('evvHours')" [attr.aria-invalid]="!!fieldError('evvHours')" placeholder="Authorized hours" />@if (fieldError('evvHours'); as error) {<small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>}</label>
                 <label class="flex items-center gap-2 self-end pb-2"><input type="checkbox" [(ngModel)]="draft.onboarding" /><span class="text-[12px] font-medium text-text-secondary">Client is onboarding</span></label>
                 @if (draft.status === 'Discharged') {
@@ -222,7 +222,7 @@
           <div class="space-y-4">
             <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
               <section class="rounded-control border border-border p-3"><div class="flex items-center justify-between"><h3 class="text-[13px] font-semibold text-text-primary">Client</h3><button type="button" class="text-[11px] font-medium text-primary" (click)="goToStep(0)">Edit</button></div><dl class="mt-3 grid grid-cols-[7rem_1fr] gap-x-2 gap-y-1.5 text-[11px]"><dt class="text-text-muted">Name</dt><dd>{{ draft.firstName || '—' }} {{ draft.middleName }} {{ draft.lastName }}</dd><dt class="text-text-muted">PMI</dt><dd>{{ draft.pmi || '—' }}</dd><dt class="text-text-muted">DOB</dt><dd>{{ draft.dob || '—' }} · {{ ageFromDob() }}</dd><dt class="text-text-muted">Status</dt><dd>{{ draft.status }}</dd></dl></section>
-              <section class="rounded-control border border-border p-3"><div class="flex items-center justify-between"><h3 class="text-[13px] font-semibold text-text-primary">Care setup</h3><button type="button" class="text-[11px] font-medium text-primary" (click)="goToStep(0)">Edit</button></div><dl class="mt-3 grid grid-cols-[7rem_1fr] gap-x-2 gap-y-1.5 text-[11px]"><dt class="text-text-muted">SOC</dt><dd>{{ draft.socDate || '—' }}</dd><dt class="text-text-muted">Location</dt><dd>{{ draft.location || '—' }}</dd><dt class="text-text-muted">Services</dt><dd>{{ draft.services.length ? draft.services.join(', ') : '—' }}</dd><dt class="text-text-muted">Languages</dt><dd>{{ draft.languages.length ? draft.languages.join(', ') : '—' }}</dd><dt class="text-text-muted">Supervisor</dt><dd>Assigned after creation</dd></dl></section>
+              <section class="rounded-control border border-border p-3"><div class="flex items-center justify-between"><h3 class="text-[13px] font-semibold text-text-primary">Care setup</h3><button type="button" class="text-[11px] font-medium text-primary" (click)="goToStep(0)">Edit</button></div><dl class="mt-3 grid grid-cols-[7rem_1fr] gap-x-2 gap-y-1.5 text-[11px]"><dt class="text-text-muted">SOC</dt><dd>{{ draft.socDate || '—' }}</dd><dt class="text-text-muted">Location</dt><dd>{{ draft.location || '—' }}</dd><dt class="text-text-muted">Services</dt><dd>{{ draft.services.length ? draft.services.join(', ') : '—' }}</dd><dt class="text-text-muted">Languages</dt><dd>{{ draft.languages.length ? draft.languages.join(', ') : '—' }}</dd><dt class="text-text-muted">Supervisor</dt><dd>{{ selectedSupervisorName() }}</dd></dl></section>
               <section class="rounded-control border border-border p-3"><div class="flex items-center justify-between"><h3 class="text-[13px] font-semibold text-text-primary">Additional</h3><button type="button" class="text-[11px] font-medium text-primary" (click)="goToStep(1)">Edit</button></div><dl class="mt-3 grid grid-cols-[7rem_1fr] gap-x-2 gap-y-1.5 text-[11px]"><dt class="text-text-muted">Program</dt><dd>{{ draft.programType || '—' }}</dd><dt class="text-text-muted">Complexity</dt><dd>{{ draft.pcaComplexity || '—' }}</dd><dt class="text-text-muted">Living</dt><dd>{{ draft.livingArrangement || '—' }}</dd><dt class="text-text-muted">Hospital</dt><dd>{{ draft.hospitalName || '—' }}</dd></dl></section>
               <section class="rounded-control border border-border p-3"><div class="flex items-center justify-between"><h3 class="text-[13px] font-semibold text-text-primary">Contact</h3><button type="button" class="text-[11px] font-medium text-primary" (click)="goToStep(2)">Edit</button></div><dl class="mt-3 grid grid-cols-[7rem_1fr] gap-x-2 gap-y-1.5 text-[11px]"><dt class="text-text-muted">Phone</dt><dd>{{ draft.phone1 || '—' }}</dd><dt class="text-text-muted">Email</dt><dd class="break-all">{{ draft.email || '—' }}</dd><dt class="text-text-muted">Languages</dt><dd>{{ draft.languages.length ? draft.languages.join(', ') : '—' }}</dd><dt class="text-text-muted">Address</dt><dd>{{ draft.city || '—' }}, {{ draft.state || '—' }}</dd></dl></section>
             </div>
@@ -231,10 +231,10 @@
               <div class="flex items-start gap-3">
                 <div class="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary-subtle text-primary"><svg aria-hidden="true" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
                 <div>
-                  <h3 class="text-[13px] font-semibold text-text-primary">Related records are added after the client is created</h3>
-                  <p class="mt-1 text-[11px] leading-5 text-text-secondary">This keeps client creation fast and avoids creating child records before a Client ID exists.</p>
+                  <h3 class="text-[13px] font-semibold text-text-primary">Create the client to continue</h3>
+                  <p class="mt-1 text-[11px] leading-5 text-text-secondary">The next wizard steps use the new client ID to save related information safely.</p>
                   <div class="mt-3 flex flex-wrap gap-2">
-                    @for (item of ['Contacts & responsible party', 'Service agreements', 'Hospitalization history', 'Documents', 'Quick notes']; track item) {
+                    @for (item of ['Primary caregivers', 'Contacts', 'Care coordinators', 'Providers', 'Responsible parties', 'Hospitalizations', 'Visits']; track item) {
                       <span class="rounded-full border border-border bg-surface px-2.5 py-1 text-[10px] font-medium text-text-secondary">{{ item }}</span>
                     }
                   </div>
@@ -243,19 +243,33 @@
             </div>
           </div>
         }
+        @case ('caregivers') { @if (createdClientId(); as clientId) { <app-client-caregivers [clientId]="clientId" /> } }
+        @case ('client-contacts') { @if (createdClientId(); as clientId) { <app-client-contacts [clientId]="clientId" /> } }
+        @case ('care-coordinators') { @if (createdClientId(); as clientId) { <app-client-care-coordinators [clientId]="clientId" /> } }
+        @case ('consultation-providers') { @if (createdClientId(); as clientId) { <app-client-clinical-contacts [clientId]="clientId" kind="consultation-providers" /> } }
+        @case ('doctors') { @if (createdClientId(); as clientId) { <app-client-clinical-contacts [clientId]="clientId" kind="physicians" /> } }
+        @case ('responsible-parties') { @if (createdClientId(); as clientId) { <app-client-responsible-parties [clientId]="clientId" /> } }
+        @case ('hospitalizations') { @if (createdClientId(); as clientId) { <app-client-hospitalizations [clientId]="clientId" /> } }
+        @case ('visits') {
+          <section class="rounded-control border border-border bg-surface p-5">
+            <h3 class="text-[13px] font-semibold text-text-primary">Visits</h3>
+            <p class="mt-1 text-[11px] text-text-secondary">Visit scheduling and service entries will appear here when the visits workflow is connected.</p>
+            <div class="mt-4 rounded-control border border-dashed border-border bg-surface-muted/40 px-4 py-8 text-center text-[11px] text-text-muted">No visits recorded for this client.</div>
+          </section>
+        }
       }
     </div>
 
     <div class="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3 lg:px-5">
       <a routerLink="/clients" class="text-[12px] font-medium text-text-secondary hover:text-text-primary">Cancel</a>
       <div class="flex items-center gap-2">
-        @if (!isFirstStep()) {
+        @if (!isFirstStep() && (!createdClientId() || stepIndex() > 4)) {
           <button type="button" class="h-8 rounded-control border border-border-strong bg-surface px-3.5 text-[12px] font-medium text-text-primary hover:bg-surface-muted" (click)="back()">Back</button>
         }
         @if (!isLastStep()) {
-          <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-control bg-primary px-4 text-[12px] font-semibold text-on-primary hover:bg-primary-hover" (click)="next()">Next<svg aria-hidden="true" class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m9 18 6-6-6-6"/></svg></button>
+          <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-control bg-primary px-4 text-[12px] font-semibold text-on-primary hover:bg-primary-hover disabled:opacity-60" [disabled]="saving()" (click)="next()">{{ activeStep().id === 'review' ? (saving() ? 'Creating…' : 'Create & continue') : 'Next' }}<svg aria-hidden="true" class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m9 18 6-6-6-6"/></svg></button>
         } @else {
-          <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-control bg-primary px-4 text-[12px] font-semibold text-on-primary hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60" [disabled]="saving()" (click)="createClient()"><svg aria-hidden="true" class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4 4L19 6"/></svg>{{ saving() ? 'Creating…' : 'Create client' }}</button>
+          <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-control bg-primary px-4 text-[12px] font-semibold text-on-primary hover:bg-primary-hover" (click)="finish()"><svg aria-hidden="true" class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4 4L19 6"/></svg>Finish</button>
         }
       </div>
     </div>

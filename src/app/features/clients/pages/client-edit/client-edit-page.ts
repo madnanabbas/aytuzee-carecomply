@@ -25,13 +25,22 @@ import {
   isValidUsSsn,
 } from '../../models/client-field-validation';
 import { CLIENT_SERVICE_OPTIONS } from '../../models/client-service-catalog';
+import { ClientCaregiversComponent } from '../../components/client-caregivers/client-caregivers';
+import { ClientContactsComponent } from '../../components/client-contacts/client-contacts';
+import { ClientCareCoordinatorsComponent } from '../../components/client-care-coordinators/client-care-coordinators';
+import { ClientClinicalContactsComponent } from '../../components/client-clinical-contacts/client-clinical-contacts';
+import { ClientResponsiblePartiesComponent } from '../../components/client-responsible-parties/client-responsible-parties';
+import { ClientHospitalizationsComponent } from '../../components/client-hospitalizations/client-hospitalizations';
 
-type EditSection = 'basic' | 'additional';
+type EditSection = 'basic' | 'additional' | 'caregivers' | 'client-contacts' | 'care-coordinators'
+  | 'consultation-providers' | 'doctors' | 'responsible-parties' | 'hospitalizations' | 'visits';
 
 @Component({
   selector: 'app-client-edit-page',
   standalone: true,
-  imports: [FormsModule, RouterLink, SuccessDialogComponent],
+  imports: [FormsModule, RouterLink, SuccessDialogComponent, ClientCaregiversComponent,
+    ClientContactsComponent, ClientCareCoordinatorsComponent, ClientClinicalContactsComponent,
+    ClientResponsiblePartiesComponent, ClientHospitalizationsComponent],
   templateUrl: './client-edit-page.html',
 })
 export class ClientEditPageComponent {
@@ -49,6 +58,12 @@ export class ClientEditPageComponent {
   readonly completionDialog = signal<{ readonly title: string; readonly message: string } | null>(null);
   readonly servicesOpen = signal(false);
   readonly languagesOpen = signal(false);
+  readonly supervisorOptions = signal<readonly { id: string; name: string; jobTitle: string }[]>([]);
+  readonly supervisorLoading = signal(false);
+
+  assignedSupervisorUnavailable(): boolean {
+    return !!this.model.supervisor && !this.supervisorOptions().some(person => person.id === this.model.supervisor);
+  }
 
   readonly locations = ['Minneapolis', 'St. Paul', 'Brooklyn Park', 'Bloomington'] as const;
   readonly serviceOptions = CLIENT_SERVICE_OPTIONS;
@@ -56,7 +71,7 @@ export class ClientEditPageComponent {
   readonly dietOptions = ['Diabetic', 'Low Fat', 'Low Salt', 'High Fiber', 'Vegetarian', 'Regular', 'Uses Supplements'] as const;
   readonly model: ClientFormModel = createEmptyClientForm();
 
-  private clientId = '';
+  readonly clientId: string;
   private original: ClientDetails | null = null;
 
   constructor() {
@@ -183,6 +198,10 @@ export class ClientEditPageComponent {
     this.original = client;
     Object.assign(this.model, clientDetailsToForm(client));
     this.model.country = 'United States';
+    this.supervisorOptions.set([]);
+    this.supervisorLoading.set(true);
+    this.api.supervisorCandidates(client.locationId).pipe(finalize(() => this.supervisorLoading.set(false)), takeUntilDestroyed(this.destroyRef))
+      .subscribe({ next: staff => this.supervisorOptions.set(staff), error: () => this.errorMessage.set('Supervisors could not be loaded. Please retry.') });
   }
 
   private validate(): readonly string[] {

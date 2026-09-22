@@ -19,26 +19,32 @@ export class NavigationService {
   private readonly groupsState = signal<readonly NavigationGroup[]>([]);
   private readonly statusState = signal<NavigationLoadStatus>('idle');
   private loadedUserId: string | null = null;
+  private loadedPermissionKey: string | null = null;
   private loadingUserId: string | null = null;
+  private loadingPermissionKey: string | null = null;
   private loadingPromise: Promise<void> | null = null;
 
   readonly groups = this.groupsState.asReadonly();
   readonly status = this.statusState.asReadonly();
 
   async loadForSession(userId: string): Promise<void> {
-    if (this.loadedUserId === userId && this.statusState() === 'loaded') return;
-    if (this.loadingUserId === userId && this.loadingPromise) return this.loadingPromise;
+    const permissionKey = this.authorization.permissionKey();
+    if (this.loadedUserId === userId && this.loadedPermissionKey === permissionKey && this.statusState() === 'loaded') return;
+    if (this.loadingUserId === userId && this.loadingPermissionKey === permissionKey && this.loadingPromise) return this.loadingPromise;
 
     this.loadingUserId = userId;
+    this.loadingPermissionKey = permissionKey;
     this.statusState.set('loading');
     this.groupsState.set([]);
-    this.loadingPromise = this.load(userId);
+    this.loadingPromise = this.load(userId, permissionKey);
     return this.loadingPromise;
   }
 
   clear(): void {
     this.loadedUserId = null;
+    this.loadedPermissionKey = null;
     this.loadingUserId = null;
+    this.loadingPermissionKey = null;
     this.loadingPromise = null;
     this.groupsState.set([]);
     this.statusState.set('idle');
@@ -59,26 +65,29 @@ export class NavigationService {
         .find((item) => normalized.startsWith(`${normalizeUrl(item.route)}/`));
   }
 
-  private async load(userId: string): Promise<void> {
+  private async load(userId: string, permissionKey: string): Promise<void> {
     try {
       const response = await firstValueFrom(
         this.api.getNavigation().pipe(timeout(NAVIGATION_REQUEST_TIMEOUT_MS)),
       );
       const groups = this.parseModules(response);
-      if (this.loadingUserId !== userId) return;
+      if (this.loadingUserId !== userId || this.loadingPermissionKey !== permissionKey) return;
 
       this.groupsState.set(groups);
       this.statusState.set('loaded');
       this.loadedUserId = userId;
+      this.loadedPermissionKey = permissionKey;
     } catch {
-      if (this.loadingUserId === userId) {
+      if (this.loadingUserId === userId && this.loadingPermissionKey === permissionKey) {
         this.groupsState.set([]);
         this.statusState.set('error');
         this.loadedUserId = null;
+        this.loadedPermissionKey = null;
       }
     } finally {
-      if (this.loadingUserId === userId) {
+      if (this.loadingUserId === userId && this.loadingPermissionKey === permissionKey) {
         this.loadingUserId = null;
+        this.loadingPermissionKey = null;
         this.loadingPromise = null;
       }
     }

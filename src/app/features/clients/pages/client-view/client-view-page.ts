@@ -9,12 +9,6 @@ import { ClientApiService } from '../../data-access/client-api.service';
 import { ClientTodoApiService } from '../../data-access/client-todo-api.service';
 import { ClientDetails } from '../../models/client-api.models';
 import { ClientTodosComponent } from '../../components/client-todos/client-todos';
-import { ClientCaregiversComponent } from '../../components/client-caregivers/client-caregivers';
-import { ClientResponsiblePartiesComponent } from '../../components/client-responsible-parties/client-responsible-parties';
-import { ClientContactsComponent } from '../../components/client-contacts/client-contacts';
-import { ClientCareCoordinatorsComponent } from '../../components/client-care-coordinators/client-care-coordinators';
-import { ClientClinicalContactsComponent } from '../../components/client-clinical-contacts/client-clinical-contacts';
-import { ClientHospitalizationsComponent } from '../../components/client-hospitalizations/client-hospitalizations';
 import { clientGenderLabel, clientProgramLabel, clientStatusLabel, formatDateForDisplay } from '../../models/client-presentation';
 
 type ClientViewTab =
@@ -22,14 +16,6 @@ type ClientViewTab =
   | 'quick-notes'
   | 'todos'
   | 'service-agreements'
-  | 'pcg'
-  | 'contacts'
-  | 'care-coordinators'
-  | 'consultation-providers'
-  | 'physicians'
-  | 'responsible-party'
-  | 'hospitalization'
-  | 'visits'
   | 'forms'
   | 'documents'
   | 'email-logs'
@@ -131,7 +117,7 @@ interface ClientViewModel {
 @Component({
   selector: 'app-client-view-page',
   standalone: true,
-  imports: [FormsModule, RouterLink, ClientTodosComponent, ClientCaregiversComponent, ClientContactsComponent, ClientCareCoordinatorsComponent, ClientClinicalContactsComponent, ClientResponsiblePartiesComponent, ClientHospitalizationsComponent],
+  imports: [FormsModule, RouterLink, ClientTodosComponent],
   templateUrl: './client-view-page.html',
 })
 export class ClientViewPageComponent {
@@ -231,14 +217,6 @@ export class ClientViewPageComponent {
     { id: 'quick-notes', label: 'Quick notes', viewPermission: Permissions.ClientQuickNote.View },
     { id: 'todos', label: 'To-dos', viewPermission: Permissions.ClientTodo.View },
     { id: 'service-agreements', label: 'Service agreements', viewPermission: Permissions.ClientServiceAgreement.View },
-    { id: 'pcg', label: 'Primary caregivers', viewPermission: Permissions.ClientCaregiver.View },
-    { id: 'contacts', label: 'Contacts', viewPermission: Permissions.ClientContact.View },
-    { id: 'care-coordinators', label: 'Care coordinators', viewPermission: Permissions.ClientCareCoordinator.View },
-    { id: 'consultation-providers', label: 'Consultation providers', viewPermission: Permissions.ClientConsultationProvider.View },
-    { id: 'physicians', label: 'Doctors', viewPermission: Permissions.ClientPhysician.View },
-    { id: 'responsible-party', label: 'Responsible parties', viewPermission: Permissions.ClientResponsibleParty.View },
-    { id: 'hospitalization', label: 'Hospitalizations', viewPermission: Permissions.ClientHospitalization.View },
-    { id: 'visits', label: 'Visits', viewPermission: Permissions.ClientVisit.View },
     { id: 'forms', label: 'Forms', viewPermission: Permissions.ClientForm.View },
     { id: 'documents', label: 'Documents', viewPermission: Permissions.ClientDocument.View },
     { id: 'email-logs', label: 'Email logs', viewPermission: Permissions.ClientEmailLog.View },

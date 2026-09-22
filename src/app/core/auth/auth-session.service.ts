@@ -48,6 +48,12 @@ export class AuthSessionService {
     return this.initializationPromise;
   }
 
+  async refreshPermissionsAndNavigation(): Promise<void> {
+    if (!this.isAuthenticated()) return;
+    this.navigation.clear();
+    await this.loadAuthenticatedSession();
+  }
+
   async login(credentials: LoginCredentials): Promise<LoginAttemptResult> {
     this.clearSession('anonymous');
 

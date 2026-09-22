@@ -158,6 +158,11 @@ export class RoleEditorPage {
       .subscribe({
         next: (role) => {
           this.applyRole(role);
+          if (permissionsChanged) {
+            void this.session.refreshPermissionsAndNavigation().catch(() => {
+              this.successMessage.set('Permissions were saved. Refresh the page to update your navigation.');
+            });
+          }
           this.completionDialog.set({
             title: 'Role updated successfully',
             message: 'The role details and assigned permissions were saved successfully.',

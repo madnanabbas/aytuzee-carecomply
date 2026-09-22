@@ -33,3 +33,99 @@
 
 @media (max-width: 1100px) { .grid.five { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 640px) { .grid.five { grid-template-columns: 1fr; } .address-row { align-items: center; } }
+
+/* The wizard's repeatable-section actions use the same controls as its footer. */
+.employee-page button.primary,
+.employee-page button.secondary {
+  display: inline-flex;
+  min-height: 2.4rem;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  border-radius: .4rem;
+  padding: .55rem .9rem;
+  font: inherit;
+  font-size: .72rem;
+  font-weight: 650;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+
+.employee-page button.primary {
+  margin-left: 0;
+  border: 1px solid #087f78;
+  background: #087f78;
+  color: #fff;
+}
+
+.employee-page button.primary:hover:not(:disabled) {
+  border-color: #066a64;
+  background: #066a64;
+}
+
+.employee-page button.secondary {
+  border: 1px solid #aebdce;
+  background: #fff;
+  color: #334155;
+}
+
+.employee-page button.secondary:hover:not(:disabled) {
+  border-color: #087f78;
+  background: #f0fdfa;
+  color: #066a64;
+}
+
+.employee-page button:focus-visible,
+.employee-page .cancel:focus-visible,
+.employee-page .back:focus-visible {
+  outline: 2px solid #087f78;
+  outline-offset: 2px;
+}
+
+.employee-page button:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+
+.employee-page .form-body {
+  min-height: 18rem;
+}
+
+.employee-page .form-body .flex.justify-end.gap-2 {
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.employee-page .section-row {
+  padding-bottom: .45rem;
+}
+
+.employee-page .section-row h3 {
+  padding-bottom: 0;
+}
+
+.employee-page .section-row .hint {
+  margin-bottom: 0;
+}
+
+.employee-page .grid > label {
+  min-width: 0;
+}
+
+.employee-page nav button:focus-visible {
+  outline-offset: -3px;
+}
+
+@media (max-width: 640px) {
+  .employee-page .form-body {
+    padding: .9rem;
+  }
+
+  .employee-page .form-body .flex.justify-end.gap-2 button {
+    flex: 1 1 auto;
+  }
+}

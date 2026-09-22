@@ -55,6 +55,17 @@ describe('AuthSessionService', () => {
     expect(navigation.loadForSession).toHaveBeenCalledWith('0198a5db-4000-7000-8000-000000000001');
   });
 
+  it('refreshes permissions and navigation after role changes', async () => {
+    await session.initialize();
+    navigation.clear.mockClear();
+    navigation.loadForSession.mockClear();
+
+    await session.refreshPermissionsAndNavigation();
+
+    expect(navigation.clear).toHaveBeenCalledOnce();
+    expect(navigation.loadForSession).toHaveBeenCalledWith('0198a5db-4000-7000-8000-000000000001');
+  });
+
   it('should initialize anonymously when me returns 401', async () => {
     api.meResponse = throwError(() => new HttpErrorResponse({ status: 401 }));
 

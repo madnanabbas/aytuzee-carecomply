@@ -30,6 +30,15 @@ describe('ClientApiService', () => {
 
   afterEach(() => http.verify());
 
+  it('requests only supervisor candidates at the selected location', () => {
+    let names: string[] = [];
+    api.supervisorCandidates('location-1').subscribe(staff => { names = staff.map(person => person.name); });
+    const request = http.expectOne('/api/clients/supervisor-candidates?locationId=location-1');
+    expect(request.request.method).toBe('GET');
+    request.flush([{ id: 'employee-1', name: 'Alex Smith', jobTitle: 'RN' }]);
+    expect(names).toEqual(['Alex Smith']);
+  });
+
   it('builds the approved server-side client list query', () => {
     let result: ClientListResponse | undefined;
     api.listClients({

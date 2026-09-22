@@ -27,11 +27,19 @@ import {
 } from '../../models/client-field-validation';
 import { CLIENT_SERVICE_OPTIONS } from '../../models/client-service-catalog';
 import { CompanyLocation, LocationService } from '../../../access-control/companies/location.service';
+import { ClientCaregiversComponent } from '../../components/client-caregivers/client-caregivers';
+import { ClientContactsComponent } from '../../components/client-contacts/client-contacts';
+import { ClientCareCoordinatorsComponent } from '../../components/client-care-coordinators/client-care-coordinators';
+import { ClientClinicalContactsComponent } from '../../components/client-clinical-contacts/client-clinical-contacts';
+import { ClientResponsiblePartiesComponent } from '../../components/client-responsible-parties/client-responsible-parties';
+import { ClientHospitalizationsComponent } from '../../components/client-hospitalizations/client-hospitalizations';
 
 @Component({
   selector: 'app-client-create-page',
   standalone: true,
-  imports: [FormsModule, RouterLink, ThemedComboboxComponent, SuccessDialogComponent],
+  imports: [FormsModule, RouterLink, ThemedComboboxComponent, SuccessDialogComponent,
+    ClientCaregiversComponent, ClientContactsComponent, ClientCareCoordinatorsComponent,
+    ClientClinicalContactsComponent, ClientResponsiblePartiesComponent, ClientHospitalizationsComponent],
   templateUrl: './client-create-page.html',
 })
 export class ClientCreatePageComponent {
@@ -53,6 +61,14 @@ export class ClientCreatePageComponent {
     { id: 'additional', title: 'Additional information' },
     { id: 'contact', title: 'Contact information' },
     { id: 'review', title: 'Review' },
+    { id: 'caregivers', title: 'Primary caregivers' },
+    { id: 'client-contacts', title: 'Contacts' },
+    { id: 'care-coordinators', title: 'Care coordinators' },
+    { id: 'consultation-providers', title: 'Consultation providers' },
+    { id: 'doctors', title: 'Doctors' },
+    { id: 'responsible-parties', title: 'Responsible parties' },
+    { id: 'hospitalizations', title: 'Hospitalizations' },
+    { id: 'visits', title: 'Visits' },
   ];
 
   readonly stepIndex = signal(0);
@@ -60,7 +76,7 @@ export class ClientCreatePageComponent {
   readonly languagesOpen = signal(false);
   readonly saving = signal(false);
   readonly completionDialog = signal<{ readonly title: string; readonly message: string } | null>(null);
-  private createdClientId: string | null = null;
+  readonly createdClientId = signal<string | null>(null);
   readonly errorMessage = signal<string | null>(null);
   readonly validationErrors = signal<readonly string[]>([]);
   readonly fieldErrors = signal<Readonly<Record<string, string>>>({});
@@ -73,6 +89,8 @@ export class ClientCreatePageComponent {
   readonly stateNames = computed(() => this.stateOptions().map((state) => state.name));
 
   readonly locationOptions = signal<readonly CompanyLocation[]>([]);
+  readonly supervisorOptions = signal<readonly { id: string; name: string; jobTitle: string }[]>([]);
+  readonly supervisorLoading = signal(false);
   readonly serviceOptions = CLIENT_SERVICE_OPTIONS;
   readonly languageOptions = ['English', 'Spanish', 'Somali', 'Hmong'] as const;
   readonly dietOptions = ['Diabetic', 'Low Fat', 'Low Salt', 'High Fiber', 'Vegetarian', 'Regular', 'Uses Supplements'] as const;
@@ -135,8 +153,18 @@ export class ClientCreatePageComponent {
 
   selectLocation(locationId: string): void {
     const location = this.locationOptions().find(option => option.id === locationId);
+    if (this.draft.locationId !== locationId) this.draft.supervisor = '';
     this.draft.locationId = location?.id ?? '';
     this.draft.location = location?.name ?? '';
+    this.supervisorOptions.set([]);
+    if (!location) return;
+    this.supervisorLoading.set(true);
+    this.api.supervisorCandidates(location.id).pipe(finalize(() => this.supervisorLoading.set(false)), takeUntilDestroyed(this.destroyRef))
+      .subscribe({ next: staff => { if (this.draft.locationId === location.id) this.supervisorOptions.set(staff); }, error: () => { if (this.draft.locationId === location.id) this.errorMessage.set('Supervisors could not be loaded. Try selecting the location again.'); } });
+  }
+
+  selectedSupervisorName(): string {
+    return this.supervisorOptions().find(person => person.id === this.draft.supervisor)?.name ?? 'Not assigned';
   }
 
   onStateChange(stateName: string): void {
@@ -156,7 +184,8 @@ export class ClientCreatePageComponent {
 
   goToStep(index: number): void {
     if (index < 0 || index >= this.steps.length || this.saving()) return;
-    if (index > this.stepIndex()) {
+    if (this.createdClientId() && index < 4) return;
+    if (index > this.stepIndex() && this.stepIndex() < 4) {
       const errors = this.validateStep(this.stepIndex());
       if (errors.length) {
         this.validationErrors.set(errors);
@@ -171,6 +200,11 @@ export class ClientCreatePageComponent {
 
   next(): void {
     if (this.isLastStep()) return;
+
+    if (this.activeStep().id === 'review') {
+      this.createClient();
+      return;
+    }
 
     const errors = this.validateStep(this.stepIndex());
     if (errors.length) {
@@ -298,11 +332,10 @@ export class ClientCreatePageComponent {
       )
       .subscribe({
         next: (created) => {
-          this.createdClientId = created.id;
-          this.completionDialog.set({
-            title: 'Client created successfully',
-            message: `${this.draft.firstName.trim()} ${this.draft.lastName.trim()} was created successfully.`,
-          });
+          this.createdClientId.set(created.id);
+          this.stepIndex.set(4);
+          this.clearMessages();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
         },
         error: (error: unknown) => {
           if (error instanceof TimeoutError) {
@@ -315,10 +348,15 @@ export class ClientCreatePageComponent {
   }
 
   confirmCompletion(): void {
-    const clientId = this.createdClientId;
+    const clientId = this.createdClientId();
     if (!clientId) return;
     this.completionDialog.set(null);
     void this.router.navigate(['/clients', clientId], { state: { clientCreated: true } });
+  }
+
+  finish(): void {
+    const clientId = this.createdClientId();
+    if (clientId) void this.router.navigate(['/clients', clientId], { state: { clientCreated: true } });
   }
 
   private validateStep(index: number): readonly string[] {

@@ -18,6 +18,11 @@ export class ClientApiService {
   private readonly http = inject(HttpClient);
   private readonly apiBaseUrl = inject(API_BASE_URL);
 
+  supervisorCandidates(locationId: string): Observable<readonly { id: string; name: string; jobTitle: string }[]> {
+    return this.http.get<readonly { id: string; name: string; jobTitle: string }[]>(
+      `${this.clientsUrl()}/supervisor-candidates`, { params: new HttpParams().set('locationId', locationId) });
+  }
+
   listClients(query: ClientListQuery): Observable<ClientListResponse> {
     let params = new HttpParams()
       .set('pageNumber', query.pageNumber)
@@ -93,6 +98,7 @@ function mapClientDetails(response: ClientDetailsApiResponse): ClientDetails {
     status: response.careSetup.status,
     location: response.careSetup.location || null,
     locationId: response.careSetup.locationId ?? '',
+    supervisorUserId: response.careSetup.supervisorUserId ?? null,
     isOnboarding: response.careSetup.isOnboarding,
     dischargeDate: response.careSetup.dischargeDate,
     dischargeReason: response.careSetup.dischargeReason || null,

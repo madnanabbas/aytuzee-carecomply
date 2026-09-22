@@ -59,4 +59,13 @@ describe('clientFormToCreateRequest', () => {
     expect(request).not.toHaveProperty('firstName');
     expect(request).not.toHaveProperty('status');
   });
+
+  it('persists the supervisor employee identifier in create and edit care setup', () => {
+    const form = createEmptyClientForm();
+    form.supervisor = '7acb8288-5501-4896-bfe2-c4145e2156fa';
+    expect(clientFormToCreateRequest(form).careSetup.supervisorUserId).toBe(form.supervisor);
+    expect(clientFormToUpdateRequest(form, 'version').careSetup.supervisorUserId).toBe(form.supervisor);
+    form.supervisor = '';
+    expect(clientFormToUpdateRequest(form, 'version').careSetup.supervisorUserId).toBeNull();
+  });
 });

@@ -7,7 +7,7 @@
     <div class="mt-1 flex items-center justify-between gap-4">
       <div>
         <h1 class="text-[20px] font-semibold text-text-primary">Edit client</h1>
-        <p class="mt-0.5 text-[11px] text-text-secondary">Update the core client record. Related records remain managed from the client profile.</p>
+        <p class="mt-0.5 text-[11px] text-text-secondary">Update client details and manage related care records in one workflow.</p>
       </div>
     </div>
   </header>
@@ -29,9 +29,17 @@
     }
 
     <nav class="mt-3 border-b border-border bg-surface">
-      <div class="flex gap-6">
+      <div class="flex gap-6 overflow-x-auto">
         <button type="button" class="edit-tab" [class.active]="section()==='basic'" (click)="section.set('basic')">Basic information</button>
         <button type="button" class="edit-tab" [class.active]="section()==='additional'" (click)="section.set('additional')">Additional information</button>
+        <button type="button" class="edit-tab" [class.active]="section()==='caregivers'" (click)="section.set('caregivers')">Primary caregivers</button>
+        <button type="button" class="edit-tab" [class.active]="section()==='client-contacts'" (click)="section.set('client-contacts')">Contacts</button>
+        <button type="button" class="edit-tab" [class.active]="section()==='care-coordinators'" (click)="section.set('care-coordinators')">Care coordinators</button>
+        <button type="button" class="edit-tab" [class.active]="section()==='consultation-providers'" (click)="section.set('consultation-providers')">Consultation providers</button>
+        <button type="button" class="edit-tab" [class.active]="section()==='doctors'" (click)="section.set('doctors')">Doctors</button>
+        <button type="button" class="edit-tab" [class.active]="section()==='responsible-parties'" (click)="section.set('responsible-parties')">Responsible parties</button>
+        <button type="button" class="edit-tab" [class.active]="section()==='hospitalizations'" (click)="section.set('hospitalizations')">Hospitalizations</button>
+        <button type="button" class="edit-tab" [class.active]="section()==='visits'" (click)="section.set('visits')">Visits</button>
       </div>
     </nav>
 
@@ -69,7 +77,7 @@
 
             <label><span class="form-label">Service change effective date</span><input class="form-control" type="date" [(ngModel)]="model.serviceChangeEffectiveDate" /><span class="mt-1 block text-[9px] text-text-muted">Required only when active services are changed.</span></label>
             <label><span class="form-label">EVV authorized hours</span><input class="form-control" type="number" min="0" max="168" [(ngModel)]="model.evvHours" /></label>
-            <label><span class="form-label">Supervisor</span><input class="form-control bg-surface-muted" value="Managed by Employee Services" disabled /></label>
+            <label><span class="form-label">Supervisor</span><select class="form-control" [(ngModel)]="model.supervisor" [disabled]="supervisorLoading()"><option value="">{{ supervisorLoading() ? 'Loading employees…' : 'No supervisor assigned' }}</option>@if (assignedSupervisorUnavailable()) {<option [value]="model.supervisor">Previously assigned supervisor (inactive or unavailable)</option>}@for (person of supervisorOptions(); track person.id) {<option [value]="person.id">{{ person.name }} — {{ person.jobTitle }}</option>}</select></label>
             @if (model.status === 'Discharged') {
               <label><span class="form-label">Discharge date *</span><input class="form-control" type="date" [(ngModel)]="model.dischargeDate" /></label>
               <label><span class="form-label">Discharge reason</span><input class="form-control" [(ngModel)]="model.dischargeReason" /></label>
@@ -108,7 +116,7 @@
             <label class="flex items-center gap-2 pt-5 text-[11px] text-text-secondary"><input type="checkbox" [(ngModel)]="model.onboarding" />Client is in onboarding</label>
           </div>
         </section>
-      } @else {
+      } @else if (section() === 'additional') {
         <section class="form-section">
           <header><h2>Program & demographics</h2><p>Additional program and client profile information.</p></header>
           <div class="form-grid">
@@ -161,12 +169,34 @@
             <label class="xl:col-span-4"><span class="form-label">Additional information</span><textarea class="form-control min-h-[90px] py-2" [(ngModel)]="model.additionalInformation"></textarea></label>
           </div>
         </section>
+      } @else if (section() === 'caregivers') {
+        <app-client-caregivers [clientId]="clientId" />
+      } @else if (section() === 'client-contacts') {
+        <app-client-contacts [clientId]="clientId" />
+      } @else if (section() === 'care-coordinators') {
+        <app-client-care-coordinators [clientId]="clientId" />
+      } @else if (section() === 'consultation-providers') {
+        <app-client-clinical-contacts [clientId]="clientId" kind="consultation-providers" />
+      } @else if (section() === 'doctors') {
+        <app-client-clinical-contacts [clientId]="clientId" kind="physicians" />
+      } @else if (section() === 'responsible-parties') {
+        <app-client-responsible-parties [clientId]="clientId" />
+      } @else if (section() === 'hospitalizations') {
+        <app-client-hospitalizations [clientId]="clientId" />
+      } @else if (section() === 'visits') {
+        <section class="form-section p-5">
+          <h2>Visits</h2>
+          <p class="mt-1 text-[11px] text-text-secondary">Visit scheduling and service entries will appear here when the visits workflow is connected.</p>
+          <div class="mt-4 rounded-control border border-dashed border-border bg-surface-muted/40 px-4 py-8 text-center text-[11px] text-text-muted">No visits recorded for this client.</div>
+        </section>
       }
     </main>
 
     <div class="mt-4 flex items-center justify-end gap-2 border-t border-border pt-3">
       <a [routerLink]="backLink" class="h-8 rounded-control border border-border-strong bg-surface px-3 text-[11px] font-medium leading-8 text-text-primary hover:bg-surface-muted">Cancel</a>
-      <button type="button" class="h-8 rounded-control bg-primary px-4 text-[11px] font-semibold text-on-primary hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60" [disabled]="saving()" (click)="save()">{{ saving() ? 'Saving…' : 'Save changes' }}</button>
+      @if (section() === 'basic' || section() === 'additional') {
+        <button type="button" class="h-8 rounded-control bg-primary px-4 text-[11px] font-semibold text-on-primary hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60" [disabled]="saving()" (click)="save()">{{ saving() ? 'Saving…' : 'Save changes' }}</button>
+      }
     </div>
   }
 </div>

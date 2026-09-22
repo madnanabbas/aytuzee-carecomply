@@ -91,6 +91,7 @@ export interface CreateClientRequest {
     readonly referralSource: string | null;
     readonly location: string | null;
     readonly locationId?: string | null;
+    readonly supervisorUserId?: string | null;
     readonly isOnboarding: boolean;
     readonly evvAuthorizedHoursPerWeek: number | null;
   };
@@ -221,6 +222,7 @@ export interface ClientDetails {
   readonly status: ClientStatusCode | string;
   readonly location: string | null;
   readonly locationId: string;
+  readonly supervisorUserId?: string | null;
   readonly isOnboarding: boolean;
   readonly dischargeDate: string | null;
   readonly dischargeReason: string | null;
@@ -290,6 +292,7 @@ export interface ClientDetailsApiResponse {
     readonly status: string;
     readonly location: string;
     readonly locationId?: string;
+    readonly supervisorUserId?: string | null;
     readonly isOnboarding: boolean;
     readonly evvAuthorizedHoursPerWeek: number | null;
     readonly dischargeDate: string | null;
