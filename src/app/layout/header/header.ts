@@ -1,12 +1,4 @@
-import {
-  Component,
-  computed,
-  ElementRef,
-  inject,
-  output,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { Component, computed, ElementRef, inject, output, signal, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import {
   LucideBell,
@@ -19,18 +11,8 @@ import {
 import { AuthSessionService } from '../../core/auth/auth-session.service';
 import { AuthorizationService } from '../../core/authorization/authorization.service';
 import { Permissions } from '../../core/authorization/permissions';
-import { NavigationItem } from '../../core/navigation/navigation.models';
 import { NavigationService } from '../../core/navigation/navigation.service';
-
-interface HeaderSearchResult {
-  readonly id: string;
-  readonly label: string;
-  readonly route: string;
-  readonly moduleLabel: string;
-  readonly parentLabel: string | null;
-}
-
-const MAX_FILTERED_SEARCH_RESULTS = 8;
+import { buildHeaderSearchResults, HeaderSearchResult } from './header-search';
 
 @Component({
   selector: 'app-header',
@@ -56,20 +38,15 @@ export class HeaderComponent {
   private readonly router = inject(Router);
   private readonly navigation = inject(NavigationService);
 
-  private readonly accountControl =
-    viewChild<ElementRef<HTMLElement>>('accountControl');
+  private readonly accountControl = viewChild<ElementRef<HTMLElement>>('accountControl');
 
-  private readonly accountButton =
-    viewChild<ElementRef<HTMLButtonElement>>('accountButton');
+  private readonly accountButton = viewChild<ElementRef<HTMLButtonElement>>('accountButton');
 
-  private readonly menuButton =
-    viewChild<ElementRef<HTMLButtonElement>>('menuButton');
+  private readonly menuButton = viewChild<ElementRef<HTMLButtonElement>>('menuButton');
 
-  private readonly searchControl =
-    viewChild<ElementRef<HTMLElement>>('searchControl');
+  private readonly searchControl = viewChild<ElementRef<HTMLElement>>('searchControl');
 
-  private readonly searchInput =
-    viewChild<ElementRef<HTMLInputElement>>('searchInput');
+  private readonly searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
 
   readonly menuRequested = output<void>();
 
@@ -83,7 +60,9 @@ export class HeaderComponent {
   readonly currentUser = this.session.currentUser;
   readonly accountSubtitle = computed(() => {
     const user = this.currentUser();
-    return user?.companyName?.trim() || (user?.isPlatformAdministrator ? 'Platform administration' : '');
+    return (
+      user?.companyName?.trim() || (user?.isPlatformAdministrator ? 'Platform administration' : '')
+    );
   });
 
   readonly canViewNotifications = computed(() =>
@@ -104,67 +83,18 @@ export class HeaderComponent {
    * navigation tree, so unauthorized features are never exposed here.
    */
   readonly searchResults = computed<readonly HeaderSearchResult[]>(() => {
-    const query = normalizeSearch(this.searchQuery());
-    const results: HeaderSearchResult[] = [];
-
-    for (const group of this.navigation.groups()) {
-      const moduleMatches =
-        query.length > 0 &&
-        normalizeSearch(group.label).includes(query);
-
-      for (const item of group.items) {
-        this.collectSearchResults(
-          results,
-          item,
-          group.label,
-          null,
-          query,
-          moduleMatches,
-        );
-      }
-    }
-
-    if (!query) {
-      return results;
-    }
-
-    return results
-      .sort((left, right) => {
-        const leftLabel = normalizeSearch(left.label);
-        const rightLabel = normalizeSearch(right.label);
-
-        const leftExact = leftLabel === query ? 0 : 1;
-        const rightExact = rightLabel === query ? 0 : 1;
-
-        const leftStartsWith = leftLabel.startsWith(query) ? 0 : 1;
-        const rightStartsWith = rightLabel.startsWith(query) ? 0 : 1;
-
-        return (
-          leftExact - rightExact ||
-          leftStartsWith - rightStartsWith ||
-          left.label.localeCompare(right.label)
-        );
-      })
-      .slice(0, MAX_FILTERED_SEARCH_RESULTS);
+    return buildHeaderSearchResults(this.navigation.groups(), this.searchQuery());
   });
 
   readonly initials = computed(() => {
-    const words =
-      this.currentUser()
-        ?.displayName
-        .trim()
-        .split(/\s+/u)
-        .filter(Boolean) ?? [];
+    const words = this.currentUser()?.displayName.trim().split(/\s+/u).filter(Boolean) ?? [];
 
     if (words.length === 0) {
       return 'CC';
     }
 
     const first = words[0]?.charAt(0) ?? '';
-    const last =
-      words.length > 1
-        ? words.at(-1)?.charAt(0) ?? ''
-        : '';
+    const last = words.length > 1 ? (words.at(-1)?.charAt(0) ?? '') : '';
 
     return `${first}${last}`.toUpperCase();
   });
@@ -182,9 +112,7 @@ export class HeaderComponent {
     this.accountMenuOpen.set(false);
 
     if (restoreFocus) {
-      queueMicrotask(() =>
-        this.accountButton()?.nativeElement.focus(),
-      );
+      queueMicrotask(() => this.accountButton()?.nativeElement.focus());
     }
   }
 
@@ -212,9 +140,7 @@ export class HeaderComponent {
     this.searchOpen.set(true);
     this.activeSearchIndex.set(-1);
 
-    queueMicrotask(() =>
-      this.searchInput()?.nativeElement.focus(),
-    );
+    queueMicrotask(() => this.searchInput()?.nativeElement.focus());
   }
 
   onSearchKeydown(event: KeyboardEvent): void {
@@ -229,9 +155,7 @@ export class HeaderComponent {
 
       this.searchOpen.set(true);
 
-      this.activeSearchIndex.update(
-        (index) => (index + 1) % results.length,
-      );
+      this.activeSearchIndex.update((index) => (index + 1) % results.length);
 
       return;
     }
@@ -245,11 +169,7 @@ export class HeaderComponent {
 
       this.searchOpen.set(true);
 
-      this.activeSearchIndex.update((index) =>
-        index <= 0
-          ? results.length - 1
-          : index - 1,
-      );
+      this.activeSearchIndex.update((index) => (index <= 0 ? results.length - 1 : index - 1));
 
       return;
     }
@@ -258,11 +178,7 @@ export class HeaderComponent {
       const index = this.activeSearchIndex();
 
       const selected =
-        index >= 0
-          ? results[index]
-          : this.searchQuery().trim()
-            ? results[0]
-            : undefined;
+        index >= 0 ? results[index] : this.searchQuery().trim() ? results[0] : undefined;
 
       if (selected) {
         event.preventDefault();
@@ -271,9 +187,7 @@ export class HeaderComponent {
     }
   }
 
-  async openSearchResult(
-    result: HeaderSearchResult,
-  ): Promise<void> {
+  async openSearchResult(result: HeaderSearchResult): Promise<void> {
     this.searchQuery.set('');
     this.searchOpen.set(false);
     this.activeSearchIndex.set(-1);
@@ -290,9 +204,7 @@ export class HeaderComponent {
     this.activeSearchIndex.set(-1);
 
     if (restoreFocus) {
-      queueMicrotask(() =>
-        this.searchInput()?.nativeElement.focus(),
-      );
+      queueMicrotask(() => this.searchInput()?.nativeElement.focus());
     }
   }
 
@@ -310,19 +222,11 @@ export class HeaderComponent {
       return;
     }
 
-    if (
-      !this.accountControl()
-        ?.nativeElement
-        .contains(event.target)
-    ) {
+    if (!this.accountControl()?.nativeElement.contains(event.target)) {
       this.closeAccountMenu();
     }
 
-    if (
-      !this.searchControl()
-        ?.nativeElement
-        .contains(event.target)
-    ) {
+    if (!this.searchControl()?.nativeElement.contains(event.target)) {
       this.closeSearch();
     }
   }
@@ -345,50 +249,4 @@ export class HeaderComponent {
       this.logoutPending.set(false);
     }
   }
-
-  private collectSearchResults(
-    results: HeaderSearchResult[],
-    item: NavigationItem,
-    moduleLabel: string,
-    parentLabel: string | null,
-    query: string,
-    moduleMatches: boolean,
-  ): void {
-    const itemLabel = normalizeSearch(item.label);
-    const parent = normalizeSearch(parentLabel ?? '');
-
-    const itemMatches =
-      !query ||
-      moduleMatches ||
-      itemLabel.includes(query) ||
-      parent.includes(query);
-
-    if (itemMatches && item.route) {
-      results.push({
-        id: item.id,
-        label: item.label,
-        route: item.route,
-        moduleLabel,
-        parentLabel,
-      });
-    }
-
-    const currentItemMatches =
-      query.length > 0 && itemLabel.includes(query);
-
-    for (const child of item.children) {
-      this.collectSearchResults(
-        results,
-        child,
-        moduleLabel,
-        item.label,
-        query,
-        moduleMatches || currentItemMatches,
-      );
-    }
-  }
-}
-
-function normalizeSearch(value: string): string {
-  return value.trim().toLocaleLowerCase();
 }

@@ -20,9 +20,7 @@ export class RoleManagementService {
   private readonly basePath = 'access-management/role-management';
 
   listRoles(): Observable<readonly RoleListItem[]> {
-    return this.http.get<readonly RoleListItem[]>(
-      `${this.apiBaseUrl}/${this.basePath}/roles`,
-    );
+    return this.http.get<readonly RoleListItem[]>(`${this.apiBaseUrl}/${this.basePath}/roles`);
   }
 
   getRole(roleId: string): Observable<RoleEditorModel> {
@@ -38,16 +36,10 @@ export class RoleManagementService {
   }
 
   createRole(request: CreateRoleRequest): Observable<RoleEditorModel> {
-    return this.http.post<RoleEditorModel>(
-      `${this.apiBaseUrl}/${this.basePath}/roles`,
-      request,
-    );
+    return this.http.post<RoleEditorModel>(`${this.apiBaseUrl}/${this.basePath}/roles`, request);
   }
 
-  updateGeneral(
-    roleId: string,
-    request: UpdateRoleGeneralRequest,
-  ): Observable<RoleEditorModel> {
+  updateGeneral(roleId: string, request: UpdateRoleGeneralRequest): Observable<RoleEditorModel> {
     return this.http.put<RoleEditorModel>(
       `${this.apiBaseUrl}/${this.basePath}/roles/${encodeURIComponent(roleId)}/general`,
       request,

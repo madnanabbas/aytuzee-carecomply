@@ -25,10 +25,14 @@ describe('AppShellComponent', () => {
             logout: vi.fn().mockResolvedValue(undefined),
           },
         },
-        { provide: NavigationService, useValue: {
-          groups: signal([]).asReadonly(), status: signal('loaded').asReadonly(),
-          findByUrl: () => undefined,
-        } },
+        {
+          provide: NavigationService,
+          useValue: {
+            groups: signal([]).asReadonly(),
+            status: signal('loaded').asReadonly(),
+            findByUrl: () => undefined,
+          },
+        },
       ],
     }).compileComponents();
     TestBed.inject(AuthorizationService).setPermissions([Permissions.Dashboard.View]);

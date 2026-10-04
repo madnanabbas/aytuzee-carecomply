@@ -1,6 +1,128 @@
 <div class="mx-auto w-full max-w-[88rem]">
-  <header class="flex items-center justify-between border-b border-border pb-5"><div><h1 class="text-page-title text-text-primary">Companies</h1><p class="mt-1 text-body text-text-secondary">Manage tenant organizations and their access status.</p></div>@if(canCreate()){<button class="h-control rounded-control bg-primary px-4 text-button font-semibold text-on-primary" (click)="open()">+ Add company</button>}</header>
-  @if(error()){<div class="mt-4 rounded-control border border-danger/30 bg-danger/5 px-4 py-3 text-small text-danger">{{error()}}</div>}
-  <section class="mt-section overflow-hidden rounded-surface border border-border bg-surface shadow-sm"><table class="w-full text-left"><thead class="border-b border-border bg-surface-muted/80 text-table-heading uppercase text-text-secondary"><tr><th class="px-4 py-2.5">Company</th><th class="px-4 py-2.5">Code</th><th class="px-4 py-2.5 text-center">Users</th><th class="px-4 py-2.5 text-center">Clients</th><th class="px-4 py-2.5">Status</th><th class="px-4 py-2.5 text-right">Actions</th></tr></thead><tbody class="divide-y divide-border">@if(loading()){<tr><td colspan="6" class="px-4 py-12 text-center text-small">Loading companies…</td></tr>}@for(company of companies();track company.id){<tr><td class="px-4 py-3 font-medium">{{company.name}}</td><td class="px-4 py-3 text-small">{{company.code}}</td><td class="px-4 py-3 text-center">{{company.userCount}}</td><td class="px-4 py-3 text-center">{{company.clientCount}}</td><td class="px-4 py-3"><span class="rounded-status px-2 py-1 text-helper" [class.bg-success-subtle]="company.isActive" [class.text-success]="company.isActive">{{company.isActive?'Active':'Inactive'}}</span></td><td class="px-4 py-3 text-right">@if(canEdit()){<button class="mr-2 text-small font-medium text-primary" (click)="open(company)">Edit</button>}@if(canDelete()){<button class="text-small font-medium text-danger" (click)="remove(company)">Delete</button>}</td></tr>}@empty{<tr><td colspan="6" class="px-4 py-12 text-center text-small">No companies found.</td></tr>}</tbody></table></section>
+  <header class="flex items-center justify-between border-b border-border pb-5">
+    <div>
+      <h1 class="text-page-title text-text-primary">Companies</h1>
+      <p class="mt-1 text-body text-text-secondary">
+        Manage tenant organizations and their access status.
+      </p>
+    </div>
+    @if (canCreate()) {
+      <button
+        class="h-control rounded-control bg-primary px-4 text-button font-semibold text-on-primary"
+        (click)="open()"
+      >
+        + Add company
+      </button>
+    }
+  </header>
+  @if (error()) {
+    <div
+      class="mt-4 rounded-control border border-danger/30 bg-danger/5 px-4 py-3 text-small text-danger"
+    >
+      {{ error() }}
+    </div>
+  }
+  <section
+    class="mt-section overflow-hidden rounded-surface border border-border bg-surface shadow-sm"
+  >
+    <table class="w-full text-left">
+      <thead
+        class="border-b border-border bg-surface-muted/80 text-table-heading uppercase text-text-secondary"
+      >
+        <tr>
+          <th class="px-4 py-2.5">Company</th>
+          <th class="px-4 py-2.5">Code</th>
+          <th class="px-4 py-2.5 text-center">Users</th>
+          <th class="px-4 py-2.5 text-center">Clients</th>
+          <th class="px-4 py-2.5">Status</th>
+          <th class="px-4 py-2.5 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-border">
+        @if (loading()) {
+          <tr>
+            <td colspan="6" class="px-4 py-12 text-center text-small">Loading companies…</td>
+          </tr>
+        }
+        @for (company of companies(); track company.id) {
+          <tr>
+            <td class="px-4 py-3 font-medium">{{ company.name }}</td>
+            <td class="px-4 py-3 text-small">{{ company.code }}</td>
+            <td class="px-4 py-3 text-center">{{ company.userCount }}</td>
+            <td class="px-4 py-3 text-center">{{ company.clientCount }}</td>
+            <td class="px-4 py-3">
+              <span
+                class="rounded-status px-2 py-1 text-helper"
+                [class.bg-success-subtle]="company.isActive"
+                [class.text-success]="company.isActive"
+                >{{ company.isActive ? 'Active' : 'Inactive' }}</span
+              >
+            </td>
+            <td class="px-4 py-3 text-right">
+              @if (canEdit()) {
+                <button class="mr-2 text-small font-medium text-primary" (click)="open(company)">
+                  Edit
+                </button>
+              }
+              @if (canDelete()) {
+                <button class="text-small font-medium text-danger" (click)="remove(company)">
+                  Delete
+                </button>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="6" class="px-4 py-12 text-center text-small">No companies found.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
 </div>
-@if(editor()){<div class="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4"><form class="w-full max-w-lg rounded-surface bg-surface shadow-xl" [formGroup]="form" (ngSubmit)="save()"><header class="border-b border-border px-5 py-4"><h2 class="text-card-title">{{editor()==='new'?'Add company':'Edit company'}}</h2></header><div class="space-y-4 p-5"><label class="block text-small font-medium">Company name<input class="mt-1 h-control w-full rounded-control border border-border-strong px-3" formControlName="name"></label><label class="block text-small font-medium">Company code<input class="mt-1 h-control w-full rounded-control border border-border-strong px-3 uppercase" formControlName="code"><span class="mt-1 block text-helper text-text-muted">Letters, numbers and hyphens only.</span></label>@if(editor()!=='new'){<label class="flex items-center gap-2 text-small"><input type="checkbox" formControlName="isActive"> Active company</label>}</div><footer class="flex justify-end gap-2 border-t border-border px-5 py-4"><button type="button" class="h-control rounded-control border border-border px-4" (click)="close()">Cancel</button><button class="h-control rounded-control bg-primary px-4 font-semibold text-on-primary" [disabled]="saving()">{{saving()?'Saving…':'Save company'}}</button></footer></form></div>}
+@if (editor()) {
+  <div class="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
+    <form
+      class="w-full max-w-lg rounded-surface bg-surface shadow-xl"
+      [formGroup]="form"
+      (ngSubmit)="save()"
+    >
+      <header class="border-b border-border px-5 py-4">
+        <h2 class="text-card-title">{{ editor() === 'new' ? 'Add company' : 'Edit company' }}</h2>
+      </header>
+      <div class="space-y-4 p-5">
+        <label class="block text-small font-medium"
+          >Company name<input
+            class="mt-1 h-control w-full rounded-control border border-border-strong px-3"
+            formControlName="name" /></label
+        ><label class="block text-small font-medium"
+          >Company code<input
+            class="mt-1 h-control w-full rounded-control border border-border-strong px-3 uppercase"
+            formControlName="code"
+          /><span class="mt-1 block text-helper text-text-muted"
+            >Letters, numbers and hyphens only.</span
+          ></label
+        >
+        @if (editor() !== 'new') {
+          <label class="flex items-center gap-2 text-small"
+            ><input type="checkbox" formControlName="isActive" /> Active company</label
+          >
+        }
+      </div>
+      <footer class="flex justify-end gap-2 border-t border-border px-5 py-4">
+        <button
+          type="button"
+          class="h-control rounded-control border border-border px-4"
+          (click)="close()"
+        >
+          Cancel</button
+        ><button
+          class="h-control rounded-control bg-primary px-4 font-semibold text-on-primary"
+          [disabled]="saving()"
+        >
+          {{ saving() ? 'Saving…' : 'Save company' }}
+        </button>
+      </footer>
+    </form>
+  </div>
+}

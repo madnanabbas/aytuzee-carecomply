@@ -1,18 +1,9 @@
 import { Component, inject, signal } from '@angular/core';
-import {
-  FormBuilder,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AuthApiService } from '../../../../core/auth/auth-api.service';
-import {
-  LucideArrowLeft,
-  LucideCheckCircle2,
-  LucideMail,
-  LucideSend,
-} from '@lucide/angular';
+import { LucideArrowLeft, LucideCheckCircle2, LucideMail, LucideSend } from '@lucide/angular';
 
 @Component({
   selector: 'app-forgot-password-page',
@@ -37,14 +28,7 @@ export class ForgotPasswordPageComponent {
   readonly requestFailed = signal(false);
 
   readonly form = new FormBuilder().nonNullable.group({
-    email: [
-      '',
-      [
-        Validators.required,
-        Validators.email,
-        Validators.maxLength(256),
-      ],
-    ],
+    email: ['', [Validators.required, Validators.email, Validators.maxLength(256)]],
   });
 
   async submit(): Promise<void> {
@@ -62,9 +46,7 @@ export class ForgotPasswordPageComponent {
     this.isSubmitting.set(true);
     this.requestFailed.set(false);
     try {
-      await firstValueFrom(
-        this.authApi.requestPasswordReset(this.form.controls.email.value),
-      );
+      await firstValueFrom(this.authApi.requestPasswordReset(this.form.controls.email.value));
       this.requestSubmitted.set(true);
     } catch {
       this.requestFailed.set(true);

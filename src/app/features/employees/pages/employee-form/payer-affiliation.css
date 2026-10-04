@@ -1,24 +1,105 @@
-.section-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
-.subsection-heading { border-bottom: 1px solid #d8e0ea; margin-top: 1.25rem; padding-bottom: .55rem; }
-.subsection-heading h4 { color: #0f172a; font-size: .78rem; margin: 0 0 .2rem; }
-.payer-table { width: 100%; min-width: 60rem; border-collapse: collapse; font-size: .68rem; }
-.contact-table { min-width: 42rem; }
-.payer-table th { background: #f1f5f9; color: #475569; font-size: .61rem; letter-spacing: .04em; text-align: left; text-transform: uppercase; }
-.payer-table th, .payer-table td { border: 1px solid #d8e0ea; padding: .55rem .65rem; vertical-align: middle; }
-.payer-table tbody tr:hover { background: #f8fafc; }
-.table-action { min-height: 1.8rem; border: 1px solid transparent; border-radius: .3rem; background: transparent; color: #087f78; cursor: pointer; font-size: .67rem; font-weight: 650; padding: .35rem .55rem; white-space: nowrap; }
-.table-action:hover { background: #f0fdfa; }
-.table-action.danger { color: #b91c1c; }
-.table-action.danger:hover { background: #fef2f2; }
-.empty-state { color: #64748b; padding: 1.25rem !important; text-align: center; }
-.mt-3 { margin-top: .75rem; }
-.mt-4 { margin-top: 1rem; }
-.mt-5 { margin-top: 1.5rem; }
-.flex { display: flex; }
-.justify-end { justify-content: flex-end; }
-.gap-2 { gap: .5rem; }
-.overflow-x-auto { overflow-x: auto; }
-.compact { padding: .4rem .7rem; font-size: .67rem; }
-.span-two { grid-column: span 2; }
-.align-end { align-self: end; min-height: 2.35rem; }
-@media (max-width: 760px) { .span-two { grid-column: auto; } }
+.section-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.subsection-heading {
+  border-bottom: 1px solid #d8e0ea;
+  margin-top: 1.25rem;
+  padding-bottom: 0.55rem;
+}
+.subsection-heading h4 {
+  color: #0f172a;
+  font-size: 0.78rem;
+  margin: 0 0 0.2rem;
+}
+.payer-table {
+  width: 100%;
+  min-width: 60rem;
+  border-collapse: collapse;
+  font-size: 0.68rem;
+}
+.contact-table {
+  min-width: 42rem;
+}
+.payer-table th {
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.61rem;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+}
+.payer-table th,
+.payer-table td {
+  border: 1px solid #d8e0ea;
+  padding: 0.55rem 0.65rem;
+  vertical-align: middle;
+}
+.payer-table tbody tr:hover {
+  background: #f8fafc;
+}
+.table-action {
+  min-height: 1.8rem;
+  border: 1px solid transparent;
+  border-radius: 0.3rem;
+  background: transparent;
+  color: #087f78;
+  cursor: pointer;
+  font-size: 0.67rem;
+  font-weight: 650;
+  padding: 0.35rem 0.55rem;
+  white-space: nowrap;
+}
+.table-action:hover {
+  background: #f0fdfa;
+}
+.table-action.danger {
+  color: #b91c1c;
+}
+.table-action.danger:hover {
+  background: #fef2f2;
+}
+.empty-state {
+  color: #64748b;
+  padding: 1.25rem !important;
+  text-align: center;
+}
+.mt-3 {
+  margin-top: 0.75rem;
+}
+.mt-4 {
+  margin-top: 1rem;
+}
+.mt-5 {
+  margin-top: 1.5rem;
+}
+.flex {
+  display: flex;
+}
+.justify-end {
+  justify-content: flex-end;
+}
+.gap-2 {
+  gap: 0.5rem;
+}
+.overflow-x-auto {
+  overflow-x: auto;
+}
+.compact {
+  padding: 0.4rem 0.7rem;
+  font-size: 0.67rem;
+}
+.span-two {
+  grid-column: span 2;
+}
+.align-end {
+  align-self: end;
+  min-height: 2.35rem;
+}
+@media (max-width: 760px) {
+  .span-two {
+    grid-column: auto;
+  }
+}

@@ -39,9 +39,7 @@
     aria-labelledby="user-directory-title"
     class="mt-section overflow-hidden rounded-surface border border-border bg-surface shadow-sm"
   >
-    <h2 id="user-directory-title" class="sr-only">
-      User directory
-    </h2>
+    <h2 id="user-directory-title" class="sr-only">User directory</h2>
 
     <app-user-filters
       [query]="query()"
@@ -61,9 +59,7 @@
             class="mx-auto block size-6 animate-spin rounded-full border-2 border-border border-t-primary"
           ></span>
 
-          <p class="mt-3 text-body text-text-secondary">
-            Loading users…
-          </p>
+          <p class="mt-3 text-body text-text-secondary">Loading users…</p>
         </div>
       </div>
     } @else if (loadFailed()) {
@@ -88,9 +84,7 @@
             </svg>
           </div>
 
-          <h3 class="mt-3 text-card-title text-text-primary">
-            Users could not be loaded
-          </h3>
+          <h3 class="mt-3 text-card-title text-text-primary">Users could not be loaded</h3>
 
           <p class="mt-1 text-small leading-5 text-text-secondary">
             Try again. If the problem continues, contact your administrator.
@@ -148,22 +142,14 @@
         class="flex flex-col gap-3 border-t border-border bg-surface px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
       >
         <p class="text-small text-text-secondary">
-          {{ ((userPage.pageNumber - 1) * userPage.pageSize) + 1 }}
+          {{ (userPage.pageNumber - 1) * userPage.pageSize + 1 }}
           –
-          {{
-            Math.min(
-              userPage.pageNumber * userPage.pageSize,
-              userPage.totalCount
-            )
-          }}
+          {{ Math.min(userPage.pageNumber * userPage.pageSize, userPage.totalCount) }}
           of {{ userPage.totalCount }} users
         </p>
 
         <div class="flex flex-wrap items-center gap-2">
-          <label
-            for="user-page-size"
-            class="text-small font-medium text-text-secondary"
-          >
+          <label for="user-page-size" class="text-small font-medium text-text-secondary">
             Rows per page
           </label>
 
@@ -200,9 +186,7 @@
             </svg>
           </button>
 
-          <span
-            class="min-w-16 text-center text-small font-medium text-text-secondary"
-          >
+          <span class="min-w-16 text-center text-small font-medium text-text-secondary">
             {{ userPage.pageNumber }} / {{ totalPages() }}
           </span>
 

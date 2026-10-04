@@ -67,9 +67,4 @@ export interface ReplaceRolePermissionsRequest {
 }
 
 export type RoleEditorError =
-  | 'notFound'
-  | 'conflict'
-  | 'duplicateName'
-  | 'invalidPermission'
-  | 'lastRoleManager'
-  | 'failed';
+  'notFound' | 'conflict' | 'duplicateName' | 'invalidPermission' | 'lastRoleManager' | 'failed';

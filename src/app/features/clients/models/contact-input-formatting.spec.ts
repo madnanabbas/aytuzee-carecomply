@@ -1,10 +1,15 @@
-import { formatContactPhone, isValidContactPhone, isValidContactEmail } from './contact-input-formatting';
+import {
+  formatContactPhone,
+  isValidContactPhone,
+  isValidContactEmail,
+} from '../../../shared/formatting/contact-input-formatting';
 
 describe('client contact input formatting', () => {
-  it('formats a US phone number including a pasted country code', () => {
-    expect(formatContactPhone('1 (612) 555-0101')).toBe('(612) 555-0101');
+  it('formats ten digits and preserves an unsupported country code as invalid input', () => {
+    expect(formatContactPhone('1 (612) 555-0101')).toBe('16125550101');
     expect(formatContactPhone('612 abc 555 0101')).toBe('(612) 555-0101');
     expect(isValidContactPhone('(612) 555-0101', true)).toBe(true);
+    expect(isValidContactPhone('1 (612) 555-0101', true)).toBe(false);
     expect(isValidContactPhone('612', true)).toBe(false);
     expect(isValidContactPhone('')).toBe(true);
   });

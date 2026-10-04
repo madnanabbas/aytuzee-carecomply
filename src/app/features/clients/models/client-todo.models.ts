@@ -1,7 +1,10 @@
 export type ClientTodoPriority = 'Low' | 'Normal' | 'High' | 'Urgent';
 export type ClientTodoStatus = 'Open' | 'InProgress' | 'Completed' | 'Cancelled';
 
-export interface ClientTodoUser { readonly id: string; readonly displayName: string; }
+export interface ClientTodoUser {
+  readonly id: string;
+  readonly displayName: string;
+}
 export interface ClientTodo {
   readonly id: string;
   readonly title: string;

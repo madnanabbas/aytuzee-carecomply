@@ -1,31 +1,27 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { API_BASE_URL } from '../../../core/config/app-config';
-
-export interface EmployeeSummary { id: string; companyId: string | null; firstName: string; lastName: string; preferredName: string; email: string; phone: string; jobTitle: string; isActive: boolean; hireDate: string | null; locations: readonly string[]; }
-export interface EmployeePreviousAddress { street: string; postalCode: string; city: string; county: string; state: string; }
-export interface EmployeePayerAffiliation { company: string; payer: string; payerId: string; applicationFaxedDate: string; affiliationDate: string; affiliationEndDate: string; }
-export interface EmployeeBackgroundCheck { checkDate: string; receivedDate: string; licenseType: string; studyType: string; received: boolean; }
-export interface EmployeeBackgroundInformation { checks: EmployeeBackgroundCheck[]; mantouxGivenDate: string; mantouxCheckedDate: string; mantouxReceived: boolean; medicalTestingDate: string; medicalTestingReceived: boolean; }
-export interface EmployeeCourse { courseName: string; qualifyingPoints: number | null; completedOn: string; obtainedPoints: number | null; notes: string; }
-export interface EmployeeTrainingSkill { trainingName: string; jobTitle: string; qualifyingPoints: number | null; completedOn: string; expiresOn: string; obtainedPoints: number | null; notes: string; allowedTraining: boolean; }
-export interface EmployeeTrainingInformation { courses: EmployeeCourse[]; trainings: EmployeeTrainingSkill[]; }
-export interface EmployeeContact { name: string; phone: string; relationship: string; }
-export interface EmployeeFormModel {
-  companyId: string | null; locationIds: string[]; firstName: string; middleName: string; lastName: string; preferredName: string; email: string; phone: string; secondaryPhone: string; jobTitle: string; secondaryJobTitle: string; isActive: boolean; hireDate: string; startOfServiceDate: string; inactiveDate: string; dateOfBirth: string; gender: string; ssn: string; hasSsn?: boolean; languages: string[]; hoursPerMonth: number | null; umpi: string; npi: string; licenseId: string; driverLicenseExpiresOn: string; streetAddress: string; apartment: string; city: string; state: string; postalCode: string; county: string; notes: string; careProgram: string; hasUsedDifferentName: boolean; previousName: string; heightInches: number | null; weightPounds: number | null; hairColor: string; eyeColor: string; birthPlace: string; cfssCertificationNumber: string; hasWorkingHourRestrictions: boolean; availableDays: string[]; availableStartTime: string; availableEndTime: string; previousAddresses: EmployeePreviousAddress[]; maritalStatus: string; ethnicity: string; qualifications: string[]; canWorkWithSmokers: boolean; smokerRestrictionExplanation: string; isUnionMember: boolean; isMilitaryVeteran: boolean; militaryServiceExplanation: string; race: string; demographicDescription: string; canWorkWithPets: boolean; petRestrictionExplanation: string; clientTypes: string[]; hasOtherJob: boolean; otherEmployerName: string; otherEmploymentDuration: string; canDriveForWork: boolean; previousWorkExperience: string; emergencyContactName: string; emergencyContactRelationship: string; emergencyContactPhone: string; emergencyContactEmail: string; emergencyContactAddress: string; trainingName: string; trainingProvider: string; trainingCompletedOn: string; trainingExpiresOn: string; trainingCertificateNumber: string; payerName: string; payerMemberId: string; payerGroupNumber: string; payerPlanName: string; payerEffectiveFrom: string; payerEffectiveTo: string; payerPhone: string; allowAggregator: boolean; overrideRestriction: boolean; evvOnly: boolean; restrictDateAndTime: boolean; evvEmail: string; evvPassword: string; evvPasswordConfirm: string; hasEvvPassword?: boolean; ivrPin: string; hasIvrPin?: boolean; evvIvrAuthorization: string; employeeTier: string; tierEffectiveDate: string; isOnboarding: boolean; allowVisitScreen: boolean; allowTravelTime: boolean; allowManualEntry: boolean; allowOneTimeLogin: boolean;
-}
-export interface EmployeeFormModel { insuranceAffiliationRequired?: boolean; payerAffiliations?: EmployeePayerAffiliation[]; }
-export interface EmployeeFormModel { backgroundInformation?: EmployeeBackgroundInformation; }
-export interface EmployeeFormModel { trainingInformation?: EmployeeTrainingInformation; }
-export interface EmployeeFormModel { contacts?: EmployeeContact[]; }
-export const emptyEmployee = (): EmployeeFormModel => ({ companyId: null, locationIds: [], firstName: '', middleName: '', lastName: '', preferredName: '', email: '', phone: '', secondaryPhone: '', jobTitle: '', secondaryJobTitle: '', isActive: true, hireDate: '', startOfServiceDate: '', inactiveDate: '', dateOfBirth: '', gender: '', ssn: '', languages: ['English'], hoursPerMonth: null, umpi: '', npi: '', licenseId: '', driverLicenseExpiresOn: '', streetAddress: '', apartment: '', city: '', state: 'MN', postalCode: '', county: '', notes: '', careProgram: 'PCA Traditional', hasUsedDifferentName: false, previousName: '', heightInches: null, weightPounds: null, hairColor: '', eyeColor: '', birthPlace: '', cfssCertificationNumber: '', hasWorkingHourRestrictions: false, availableDays: ['Monday','Tuesday','Wednesday','Thursday','Friday'], availableStartTime: '', availableEndTime: '', previousAddresses: [], maritalStatus: '', ethnicity: '', qualifications: [], canWorkWithSmokers: true, smokerRestrictionExplanation: '', isUnionMember: false, isMilitaryVeteran: false, militaryServiceExplanation: '', race: '', demographicDescription: '', canWorkWithPets: true, petRestrictionExplanation: '', clientTypes: [], hasOtherJob: false, otherEmployerName: '', otherEmploymentDuration: '', canDriveForWork: false, previousWorkExperience: '', emergencyContactName: '', emergencyContactRelationship: '', emergencyContactPhone: '', emergencyContactEmail: '', emergencyContactAddress: '', trainingName: '', trainingProvider: '', trainingCompletedOn: '', trainingExpiresOn: '', trainingCertificateNumber: '', payerName: '', payerMemberId: '', payerGroupNumber: '', payerPlanName: '', payerEffectiveFrom: '', payerEffectiveTo: '', payerPhone: '', allowAggregator: false, overrideRestriction: false, evvOnly: false, restrictDateAndTime: false, evvEmail: '', evvPassword: '', evvPasswordConfirm: '', ivrPin: '', evvIvrAuthorization: '', employeeTier: '', tierEffectiveDate: '', isOnboarding: false, allowVisitScreen: false, allowTravelTime: false, allowManualEntry: false, allowOneTimeLogin: false });
+import { employeeFormToRequest } from '../models/employee-form.mapper';
+import { EmployeeDto, EmployeeFormModel, EmployeeListResponse } from '../models/employee.models';
 
 @Injectable({ providedIn: 'root' })
 export class EmployeeApiService {
-  private readonly http = inject(HttpClient); private readonly base = `${inject(API_BASE_URL)}/employees`;
-  list(search = '') { return this.http.get<readonly EmployeeSummary[]>(this.base, { params: search ? new HttpParams().set('search', search) : undefined }); }
-  get(id: string) { return this.http.get<EmployeeFormModel & { id: string }>(`${this.base}/${id}`); }
-  create(value: EmployeeFormModel) { return this.http.post<EmployeeFormModel & { id: string }>(this.base, this.payload(value)); }
-  update(id: string, value: EmployeeFormModel) { return this.http.put<EmployeeFormModel & { id: string }>(`${this.base}/${id}`, this.payload(value)); }
-  private payload(value: EmployeeFormModel) { const nullableDates = ['hireDate','startOfServiceDate','inactiveDate','dateOfBirth','driverLicenseExpiresOn','trainingCompletedOn','trainingExpiresOn','payerEffectiveFrom','payerEffectiveTo','tierEffectiveDate'] as const; const body: Record<string, unknown> = { ...value }; delete body['evvPasswordConfirm']; for (const key of nullableDates) body[key] = value[key] || null; body['availableStartTime']=value.availableStartTime||null; body['availableEndTime']=value.availableEndTime||null; body['payerAffiliations']=(value.payerAffiliations??[]).map(x=>({...x,applicationFaxedDate:x.applicationFaxedDate||null,affiliationDate:x.affiliationDate||null,affiliationEndDate:x.affiliationEndDate||null})); const background=value.backgroundInformation; body['backgroundInformation']=background?{...background,mantouxGivenDate:background.mantouxGivenDate||null,mantouxCheckedDate:background.mantouxCheckedDate||null,medicalTestingDate:background.medicalTestingDate||null,checks:background.checks.map(x=>({...x,checkDate:x.checkDate||null,receivedDate:x.receivedDate||null}))}:null; const training=value.trainingInformation; body['trainingInformation']=training?{courses:training.courses.map(x=>({...x,completedOn:x.completedOn||null})),trainings:training.trainings.map(x=>({...x,completedOn:x.completedOn||null,expiresOn:x.expiresOn||null}))}:null; return body; }
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = `${inject(API_BASE_URL)}/employees`;
+
+  list(search = '', page = 1, pageSize = 25) {
+    let params = new HttpParams().set('page', page).set('pageSize', pageSize);
+    if (search) params = params.set('search', search);
+    return this.http.get<EmployeeListResponse>(this.baseUrl, { params });
+  }
+
+  get(id: string) {
+    return this.http.get<EmployeeDto>(`${this.baseUrl}/${id}`);
+  }
+  create(value: EmployeeFormModel) {
+    return this.http.post<EmployeeDto>(this.baseUrl, employeeFormToRequest(value));
+  }
+  update(id: string, value: EmployeeFormModel) {
+    return this.http.put<EmployeeDto>(`${this.baseUrl}/${id}`, employeeFormToRequest(value));
+  }
 }

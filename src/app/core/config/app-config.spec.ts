@@ -24,7 +24,11 @@ describe('provideAppConfig', () => {
 
   it('should allow the application configuration to be overridden in tests', () => {
     TestBed.overrideProvider(APP_CONFIG, {
-      useValue: { apiBaseUrl: '/test-api', postalLookupBaseUrl: 'https://postal.example.test', geographyBaseUrl: 'https://geography.example.test' } satisfies AppConfig,
+      useValue: {
+        apiBaseUrl: '/test-api',
+        postalLookupBaseUrl: 'https://postal.example.test',
+        geographyBaseUrl: 'https://geography.example.test',
+      } satisfies AppConfig,
     });
 
     expect(TestBed.inject(API_BASE_URL)).toBe('/test-api');

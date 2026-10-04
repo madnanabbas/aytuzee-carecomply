@@ -20,7 +20,10 @@ describe('MfaChallengePageComponent', () => {
       providers: [
         provideRouter([]),
         { provide: AuthSessionService, useValue: session },
-        { provide: AuthenticatedLandingService, useValue: { firstAllowedPath: () => '/dashboard' } },
+        {
+          provide: AuthenticatedLandingService,
+          useValue: { firstAllowedPath: () => '/dashboard' },
+        },
       ],
     }).compileComponents();
 

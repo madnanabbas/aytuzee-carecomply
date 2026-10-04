@@ -22,9 +22,7 @@ export class RoleListPage {
   readonly loading = signal(true);
   readonly loadFailed = signal(false);
   readonly allRoles = signal<readonly RoleListItem[]>([]);
-  readonly canManage = computed(() =>
-    this.authorization.hasPermission(Permissions.Role.Manage),
-  );
+  readonly canManage = computed(() => this.authorization.hasPermission(Permissions.Role.Manage));
 
   readonly roles = computed(() => {
     const search = this.search().trim().toLowerCase();
@@ -36,8 +34,7 @@ export class RoleListPage {
 
     return roles.filter(
       (role) =>
-        role.name.toLowerCase().includes(search) ||
-        role.description.toLowerCase().includes(search),
+        role.name.toLowerCase().includes(search) || role.description.toLowerCase().includes(search),
     );
   });
 

@@ -37,8 +37,7 @@ describe('UserManagementApiService', () => {
 
     api.listUsers(query).subscribe();
 
-    const request = http.expectOne((candidate) =>
-      candidate.url === '/api/access-management/users');
+    const request = http.expectOne((candidate) => candidate.url === '/api/access-management/users');
     expect(request.request.method).toBe('GET');
     expect(request.request.params.get('search')).toBe('Ada');
     expect(request.request.params.get('isActive')).toBe('false');
@@ -52,19 +51,20 @@ describe('UserManagementApiService', () => {
   });
 
   it('should omit optional all-filter values', () => {
-    api.listUsers({
-      search: '',
-      status: 'all',
-      roleId: '',
-      mfaStatus: 'all',
-      sortBy: 'name',
-      sortDirection: 'asc',
-      pageNumber: 1,
-      pageSize: 25,
-    }).subscribe();
+    api
+      .listUsers({
+        search: '',
+        status: 'all',
+        roleId: '',
+        mfaStatus: 'all',
+        sortBy: 'name',
+        sortDirection: 'asc',
+        pageNumber: 1,
+        pageSize: 25,
+      })
+      .subscribe();
 
-    const request = http.expectOne((candidate) =>
-      candidate.url === '/api/access-management/users');
+    const request = http.expectOne((candidate) => candidate.url === '/api/access-management/users');
     expect(request.request.params.has('search')).toBe(false);
     expect(request.request.params.has('isActive')).toBe(false);
     expect(request.request.params.has('roleId')).toBe(false);
@@ -78,10 +78,15 @@ describe('UserManagementApiService', () => {
     expect(detail.request.method).toBe('GET');
     detail.flush({});
 
-    api.updateGeneral('user-1', {
-      firstName: 'Ada', lastName: 'Lovelace', email: 'ada@example.test',
-      phoneNumber: null, editorVersion: 'version',
-    }).subscribe();
+    api
+      .updateGeneral('user-1', {
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+        email: 'ada@example.test',
+        phoneNumber: null,
+        editorVersion: 'version',
+      })
+      .subscribe();
     const update = http.expectOne('/api/access-management/users/user-1/general');
     expect(update.request.method).toBe('PUT');
     expect(update.request.body).toEqual(expect.objectContaining({ editorVersion: 'version' }));
@@ -103,10 +108,12 @@ describe('UserManagementApiService', () => {
     });
     mfa.flush({});
 
-    api.replaceRoles('user-1', {
-      roleIds: ['role-2'],
-      editorVersion: 'role-version',
-    }).subscribe();
+    api
+      .replaceRoles('user-1', {
+        roleIds: ['role-2'],
+        editorVersion: 'role-version',
+      })
+      .subscribe();
     const roleUpdate = http.expectOne('/api/access-management/users/user-1/roles');
     expect(roleUpdate.request.method).toBe('PUT');
     expect(roleUpdate.request.body).toEqual({
@@ -122,17 +129,19 @@ describe('UserManagementApiService', () => {
     expect(roles.request.method).toBe('GET');
     roles.flush([]);
 
-    api.createUser({
-      firstName: 'Ada',
-      lastName: 'Lovelace',
-      email: 'ada@example.test',
-      password: 'StrongPassword123!',
-      phoneNumber: null,
-      isActive: true,
-      requiresMfa: true,
-      mfaMethod: 'Authenticator',
-      roleIds: ['role-1', 'role-2'],
-    }).subscribe();
+    api
+      .createUser({
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+        email: 'ada@example.test',
+        password: 'StrongPassword123!',
+        phoneNumber: null,
+        isActive: true,
+        requiresMfa: true,
+        mfaMethod: 'Authenticator',
+        roleIds: ['role-1', 'role-2'],
+      })
+      .subscribe();
     const create = http.expectOne('/api/access-management/users');
     expect(create.request.method).toBe('POST');
     expect(create.request.body).toEqual({

@@ -1,0 +1,1520 @@
+<main class="public-intake-page client-form-control-scope">
+  <div class="public-intake-wrap">
+    <header class="public-header">
+      <div class="brand"><app-brand-logo /></div>
+      <div class="public-header-copy">
+        <span class="secure-label">Secure form</span>
+        <h1>Client Intake</h1>
+        <p>
+          @if (intake.context()?.clientDisplayName; as displayName) {
+            Client intake for {{ displayName }}
+          } @else {
+            CareComply secure client intake
+          }
+        </p>
+      </div>
+    </header>
+    <section class="intake-card" aria-live="polite">
+      @switch (intake.viewState()) {
+        @case ('validating') {
+          <div class="state-panel" data-testid="validating-state">
+            <span class="spinner" aria-hidden="true"></span>
+            <h1>Checking your invitation</h1>
+            <p>Please wait while we securely validate your link.</p>
+          </div>
+        }
+        @case ('ready') {
+          <div class="state-panel" data-testid="ready-state">
+            <span class="status-icon success" aria-hidden="true">&#10003;</span>
+            <h1>Complete your client intake</h1>
+            <p>
+              This secure form will guide you through the information needed to set up your
+              CareComply client profile.
+            </p>
+            <dl class="invitation-details">
+              <div>
+                <dt>Invitation for</dt>
+                <dd>{{ intake.context()?.clientDisplayName }}</dd>
+              </div>
+              <div>
+                <dt>Link expires</dt>
+                <dd data-testid="invitation-expiry">
+                  {{ intake.context()?.expiresAtUtc | date: 'dd MMM yyyy, h:mm a' }}
+                </dd>
+              </div>
+            </dl>
+            @if (started()) {
+              <app-client-wizard-stepper
+                class="guest-client-stepper"
+                [steps]="stepPresentations"
+                [activeIndex]="currentStep() - 1"
+                ariaLabel="Client intake progress"
+              />
+            }
+            @if (currentStep() === 10) {
+              <div class="wizard" data-testid="guest-step-ten">
+                <div class="form-heading">
+                  <div>
+                    <span>Step 10</span>
+                    <h2>Hospitalizations</h2>
+                  </div>
+                </div>
+                @if (submitError()) {
+                  <p class="form-alert" role="alert">{{ submitError() }}</p>
+                }
+                <section class="guest-form" data-testid="hospitalization-inline-form">
+                  <label
+                    >Hospital name *<input
+                      [(ngModel)]="hospitalizationDraft.hospitalName"
+                      (ngModelChange)="clearError('hospitalName')"
+                      [attr.aria-invalid]="!!fieldError('hospitalName')"
+                      maxlength="200"
+                    />
+                    @if (fieldError('hospitalName'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Admission date/time *<input
+                      type="datetime-local"
+                      [(ngModel)]="hospitalizationDraft.admittedAt"
+                      (ngModelChange)="clearError('admittedAt')"
+                      [attr.aria-invalid]="!!fieldError('admittedAt')"
+                    />
+                    @if (fieldError('admittedAt'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Discharge date/time<input
+                      type="datetime-local"
+                      [(ngModel)]="hospitalizationDraft.dischargedAt"
+                      (ngModelChange)="clearError('dischargedAt')"
+                      [attr.aria-invalid]="!!fieldError('dischargedAt')"
+                    />
+                    @if (fieldError('dischargedAt'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Reason *<textarea
+                      [(ngModel)]="hospitalizationDraft.reason"
+                      (ngModelChange)="clearError('reason')"
+                      [attr.aria-invalid]="!!fieldError('reason')"
+                      maxlength="1000"
+                    ></textarea>
+                    @if (fieldError('reason'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Diagnosis<textarea
+                      [(ngModel)]="hospitalizationDraft.diagnosis"
+                      maxlength="2000"
+                    ></textarea>
+                  </label>
+                  <label
+                    >Discharge instructions / follow-up<textarea
+                      [(ngModel)]="hospitalizationDraft.dischargeInstructions"
+                      maxlength="2000"
+                    ></textarea>
+                  </label>
+                  <div class="form-actions">
+                    @if (editingHospitalization()) {
+                      <button
+                        type="button"
+                        class="secondary-button"
+                        (click)="resetHospitalization()"
+                      >
+                        Cancel edit
+                      </button>
+                    }
+                    <button
+                      type="button"
+                      class="primary-button"
+                      [disabled]="saving()"
+                      (click)="saveHospitalization()"
+                    >
+                      {{
+                        editingHospitalization() ? 'Update hospitalization' : 'Add hospitalization'
+                      }}
+                    </button>
+                  </div>
+                </section>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Hospital</th>
+                        <th>Admission</th>
+                        <th>Discharge</th>
+                        <th>Reason</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (item of hospitalizations(); track item.id) {
+                        <tr>
+                          <td>{{ item.hospitalName }}</td>
+                          <td>{{ item.admittedAtUtc }}</td>
+                          <td>{{ item.dischargedAtUtc || '—' }}</td>
+                          <td>{{ item.reason }}</td>
+                          <td>
+                            <button
+                              type="button"
+                              class="link-button"
+                              (click)="editHospitalization(item)"
+                            >
+                              Edit
+                            </button>
+                          </td>
+                        </tr>
+                      } @empty {
+                        <tr>
+                          <td colspan="5" class="empty-cell">No hospitalizations added.</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+                <div class="wizard-actions">
+                  <button type="button" class="secondary-button" (click)="enterStepNine()">
+                    Back
+                  </button>
+                  <div>
+                    <button
+                      type="button"
+                      class="primary-button"
+                      [disabled]="saving() || hospitalizationDraftDirty()"
+                      data-testid="finish-client-setup"
+                      (click)="finishClientSetup()"
+                    >
+                      {{ saving() ? 'Finishing…' : 'Finish client setup' }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            } @else if (currentStep() === 9) {
+              <div class="wizard" data-testid="guest-step-nine">
+                <div class="form-heading">
+                  <div>
+                    <span>Step 9</span>
+                    <h2>Responsible parties</h2>
+                  </div>
+                </div>
+                @if (submitError()) {
+                  <p class="form-alert" role="alert">{{ submitError() }}</p>
+                }
+                <section class="guest-form" data-testid="responsible-party-inline-form">
+                  <label
+                    >Name *<input
+                      [(ngModel)]="responsiblePartyDraft.name"
+                      (ngModelChange)="clearError('responsiblePartyName')"
+                      [attr.aria-invalid]="!!fieldError('responsiblePartyName')"
+                    />
+                    @if (fieldError('responsiblePartyName'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Relationship *<input
+                      [(ngModel)]="responsiblePartyDraft.relationship"
+                      (ngModelChange)="clearError('responsiblePartyRelationship')"
+                      [attr.aria-invalid]="!!fieldError('responsiblePartyRelationship')"
+                    />
+                    @if (fieldError('responsiblePartyRelationship'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Phone *<input
+                      [ngModel]="responsiblePartyDraft.phone"
+                      (ngModelChange)="normalizeResponsiblePartyPhone($event)"
+                      [attr.aria-invalid]="!!fieldError('responsiblePartyPhone')"
+                    />
+                    @if (fieldError('responsiblePartyPhone'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Email<input
+                      type="email"
+                      [(ngModel)]="responsiblePartyDraft.email"
+                      (ngModelChange)="clearError('responsiblePartyEmail')"
+                      [attr.aria-invalid]="!!fieldError('responsiblePartyEmail')"
+                    />
+                    @if (fieldError('responsiblePartyEmail'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label>Address<input [(ngModel)]="responsiblePartyDraft.address" /></label>
+                  <label
+                    >Lives with client *<select
+                      [(ngModel)]="responsiblePartyDraft.livesWithClient"
+                      (ngModelChange)="clearError('responsiblePartyLivesWithClient')"
+                      [attr.aria-invalid]="!!fieldError('responsiblePartyLivesWithClient')"
+                    >
+                      <option [ngValue]="null">Select</option>
+                      <option [ngValue]="true">Yes</option>
+                      <option [ngValue]="false">No</option>
+                    </select>
+                    @if (fieldError('responsiblePartyLivesWithClient'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Spenddown responsibility *<select
+                      [(ngModel)]="responsiblePartyDraft.hasSpenddown"
+                      (ngModelChange)="clearError('responsiblePartySpenddown')"
+                      [attr.aria-invalid]="!!fieldError('responsiblePartySpenddown')"
+                    >
+                      <option [ngValue]="null">Select</option>
+                      <option [ngValue]="true">Yes</option>
+                      <option [ngValue]="false">No</option>
+                    </select>
+                    @if (fieldError('responsiblePartySpenddown'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Status<select [(ngModel)]="responsiblePartyDraft.isActive">
+                      <option [ngValue]="true">Active</option>
+                      <option [ngValue]="false">Inactive</option>
+                    </select></label
+                  >
+                  <div class="form-actions">
+                    @if (editingResponsibleParty()) {
+                      <button
+                        type="button"
+                        class="secondary-button"
+                        (click)="resetResponsibleParty()"
+                      >
+                        Cancel edit
+                      </button>
+                    }
+                    <button
+                      type="button"
+                      class="primary-button"
+                      [disabled]="saving()"
+                      (click)="saveResponsibleParty()"
+                    >
+                      {{
+                        editingResponsibleParty()
+                          ? 'Update responsible party'
+                          : 'Add responsible party'
+                      }}
+                    </button>
+                  </div>
+                </section>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Relationship</th>
+                        <th>Phone</th>
+                        <th>Email</th>
+                        <th>Lives with client</th>
+                        <th>Spenddown</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (item of responsibleParties(); track item.id) {
+                        <tr>
+                          <td>{{ item.name }}</td>
+                          <td>{{ item.relationship }}</td>
+                          <td>{{ item.phone }}</td>
+                          <td>{{ item.email }}</td>
+                          <td>{{ item.livesWithClient ? 'Yes' : 'No' }}</td>
+                          <td>{{ item.hasSpenddown ? 'Yes' : 'No' }}</td>
+                          <td>{{ item.isActive ? 'Active' : 'Inactive' }}</td>
+                          <td>
+                            <button
+                              type="button"
+                              class="link-button"
+                              (click)="editResponsibleParty(item)"
+                            >
+                              Edit
+                            </button>
+                          </td>
+                        </tr>
+                      } @empty {
+                        <tr>
+                          <td colspan="8" class="empty-cell">No responsible parties added.</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+                <div class="wizard-actions">
+                  <button type="button" class="secondary-button" (click)="enterStepEight()">
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    class="primary-button"
+                    (click)="continueFromResponsibleParties()"
+                  >
+                    Continue
+                  </button>
+                </div>
+              </div>
+            } @else if (currentStep() === 8) {
+              <div class="wizard" data-testid="guest-step-eight">
+                <div class="form-heading">
+                  <div>
+                    <span>Step 8</span>
+                    <h2>Doctors</h2>
+                  </div>
+                </div>
+                @if (submitError()) {
+                  <p class="form-alert" role="alert">{{ submitError() }}</p>
+                }
+                <section class="guest-form" data-testid="physician-inline-form">
+                  <label
+                    >Physician name *<input
+                      [(ngModel)]="physicianDraft.name"
+                      (ngModelChange)="clearError('physicianName')"
+                      [attr.aria-invalid]="!!fieldError('physicianName')"
+                    />
+                    @if (fieldError('physicianName'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >NPI<input
+                      inputmode="numeric"
+                      maxlength="10"
+                      [(ngModel)]="physicianDraft.npi"
+                      (ngModelChange)="clearError('physicianNpi')"
+                      [attr.aria-invalid]="!!fieldError('physicianNpi')"
+                    />
+                    @if (fieldError('physicianNpi'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Phone<input
+                      [ngModel]="physicianDraft.phone"
+                      (ngModelChange)="normalizePhysicianPhone('phone', $event)"
+                      [attr.aria-invalid]="!!fieldError('physicianPhone')"
+                    />
+                    @if (fieldError('physicianPhone'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Fax<input
+                      [ngModel]="physicianDraft.fax"
+                      (ngModelChange)="normalizePhysicianPhone('fax', $event)"
+                      [attr.aria-invalid]="!!fieldError('physicianFax')"
+                    />
+                    @if (fieldError('physicianFax'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label>Address<input [(ngModel)]="physicianDraft.address" /></label>
+                  <label
+                    >ZIP code<input
+                      autocomplete="postal-code"
+                      maxlength="10"
+                      [(ngModel)]="physicianDraft.zipCode"
+                  /></label>
+                  <label>City<input [(ngModel)]="physicianDraft.city" /></label>
+                  <label>State<input maxlength="50" [(ngModel)]="physicianDraft.state" /></label>
+                  <label
+                    >Status<select [(ngModel)]="physicianDraft.isActive">
+                      <option [ngValue]="true">Active</option>
+                      <option [ngValue]="false">Inactive</option>
+                    </select></label
+                  >
+                  <div class="form-actions">
+                    @if (editingPhysician()) {
+                      <button type="button" class="secondary-button" (click)="resetPhysician()">
+                        Cancel edit
+                      </button>
+                    }
+                    <button
+                      type="button"
+                      class="primary-button"
+                      [disabled]="saving()"
+                      (click)="savePhysician()"
+                    >
+                      {{ editingPhysician() ? 'Update doctor' : 'Add doctor' }}
+                    </button>
+                  </div>
+                </section>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Physician</th>
+                        <th>NPI</th>
+                        <th>Phone</th>
+                        <th>Fax</th>
+                        <th>Address</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (item of physicians(); track item.id) {
+                        <tr>
+                          <td>{{ item.name }}</td>
+                          <td>{{ item.npi }}</td>
+                          <td>{{ item.phone }}</td>
+                          <td>{{ item.fax }}</td>
+                          <td>
+                            {{ item.address }} {{ item.city }} {{ item.state }} {{ item.zipCode }}
+                          </td>
+                          <td>{{ item.isActive ? 'Active' : 'Inactive' }}</td>
+                          <td>
+                            <button type="button" class="link-button" (click)="editPhysician(item)">
+                              Edit
+                            </button>
+                          </td>
+                        </tr>
+                      } @empty {
+                        <tr>
+                          <td colspan="7" class="empty-cell">No doctors added.</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+                <div class="wizard-actions">
+                  <button type="button" class="secondary-button" (click)="enterStepSeven()">
+                    Back
+                  </button>
+                  <button type="button" class="primary-button" (click)="continueFromPhysicians()">
+                    Continue
+                  </button>
+                </div>
+              </div>
+            } @else if (currentStep() === 7) {
+              <div class="wizard" data-testid="guest-step-seven">
+                <div class="form-heading">
+                  <div>
+                    <span>Step 7</span>
+                    <h2>Consultation providers</h2>
+                  </div>
+                </div>
+                @if (submitError()) {
+                  <p class="form-alert" role="alert">{{ submitError() }}</p>
+                }
+                <section class="guest-form" data-testid="consultation-provider-inline-form">
+                  <label
+                    >Consultation provider name *<input
+                      [(ngModel)]="consultationProviderDraft.name"
+                      (ngModelChange)="clearError('providerName')"
+                      [attr.aria-invalid]="!!fieldError('providerName')"
+                    />
+                    @if (fieldError('providerName'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Phone<input
+                      [ngModel]="consultationProviderDraft.phone"
+                      (ngModelChange)="normalizeProviderPhone('phone', $event)"
+                      [attr.aria-invalid]="!!fieldError('providerPhone')"
+                    />
+                    @if (fieldError('providerPhone'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Email<input
+                      type="email"
+                      [(ngModel)]="consultationProviderDraft.email"
+                      (ngModelChange)="clearError('providerEmail')"
+                      [attr.aria-invalid]="!!fieldError('providerEmail')"
+                    />
+                    @if (fieldError('providerEmail'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Status<select [(ngModel)]="consultationProviderDraft.isActive">
+                      <option [ngValue]="true">Active</option>
+                      <option [ngValue]="false">Inactive</option>
+                    </select></label
+                  >
+                  <label
+                    >Support provider name<input
+                      [(ngModel)]="consultationProviderDraft.supportProviderName"
+                  /></label>
+                  <label
+                    >Support provider phone<input
+                      [ngModel]="consultationProviderDraft.supportProviderPhone"
+                      (ngModelChange)="normalizeProviderPhone('supportProviderPhone', $event)"
+                      [attr.aria-invalid]="!!fieldError('supportProviderPhone')"
+                    />
+                    @if (fieldError('supportProviderPhone'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Support provider address<input
+                      [(ngModel)]="consultationProviderDraft.supportProviderAddress"
+                  /></label>
+                  <div class="form-actions">
+                    @if (editingConsultationProvider()) {
+                      <button
+                        type="button"
+                        class="secondary-button"
+                        (click)="resetConsultationProvider()"
+                      >
+                        Cancel edit
+                      </button>
+                    }
+                    <button
+                      type="button"
+                      class="primary-button"
+                      [disabled]="saving()"
+                      (click)="saveConsultationProvider()"
+                    >
+                      {{ editingConsultationProvider() ? 'Update provider' : 'Add provider' }}
+                    </button>
+                  </div>
+                </section>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Consultation provider</th>
+                        <th>Phone</th>
+                        <th>Email</th>
+                        <th>Support provider</th>
+                        <th>Support phone</th>
+                        <th>Support address</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (item of consultationProviders(); track item.id) {
+                        <tr>
+                          <td>{{ item.name }}</td>
+                          <td>{{ item.phone }}</td>
+                          <td>{{ item.email }}</td>
+                          <td>{{ item.supportProviderName }}</td>
+                          <td>{{ item.supportProviderPhone }}</td>
+                          <td>{{ item.supportProviderAddress }}</td>
+                          <td>{{ item.isActive ? 'Active' : 'Inactive' }}</td>
+                          <td>
+                            <button
+                              type="button"
+                              class="link-button"
+                              (click)="editConsultationProvider(item)"
+                            >
+                              Edit
+                            </button>
+                          </td>
+                        </tr>
+                      } @empty {
+                        <tr>
+                          <td colspan="8" class="empty-cell">No consultation providers added.</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+                <div class="wizard-actions">
+                  <button type="button" class="secondary-button" (click)="enterStepSix()">
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    class="primary-button"
+                    (click)="continueFromConsultationProviders()"
+                  >
+                    Continue
+                  </button>
+                </div>
+              </div>
+            } @else if (currentStep() === 6) {
+              <div class="wizard" data-testid="guest-step-six">
+                <div class="form-heading">
+                  <div>
+                    <span>Step 6</span>
+                    <h2>Care coordinators</h2>
+                  </div>
+                </div>
+                @if (submitError()) {
+                  <p class="form-alert" role="alert">{{ submitError() }}</p>
+                }
+                <section class="guest-form" data-testid="care-coordinator-inline-form">
+                  <label
+                    >Coordinator name *<input
+                      [(ngModel)]="careCoordinatorDraft.name"
+                      (ngModelChange)="clearError('coordinatorName')"
+                      [attr.aria-invalid]="!!fieldError('coordinatorName')"
+                    />
+                    @if (fieldError('coordinatorName'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Company / agency<input [(ngModel)]="careCoordinatorDraft.companyName"
+                  /></label>
+                  <label
+                    >Phone<input
+                      [ngModel]="careCoordinatorDraft.phone"
+                      (ngModelChange)="normalizeCoordinatorPhone('phone', $event)"
+                      [attr.aria-invalid]="!!fieldError('coordinatorPhone')"
+                    />
+                    @if (fieldError('coordinatorPhone'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Extension<input
+                      [(ngModel)]="careCoordinatorDraft.phoneExtension"
+                      (ngModelChange)="clearError('coordinatorExtension')"
+                      [attr.aria-invalid]="!!fieldError('coordinatorExtension')"
+                      maxlength="15"
+                    />
+                    @if (fieldError('coordinatorExtension'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Fax<input
+                      [ngModel]="careCoordinatorDraft.fax"
+                      (ngModelChange)="normalizeCoordinatorPhone('fax', $event)"
+                      [attr.aria-invalid]="!!fieldError('coordinatorFax')"
+                    />
+                    @if (fieldError('coordinatorFax'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Email<input
+                      type="email"
+                      [(ngModel)]="careCoordinatorDraft.email"
+                      (ngModelChange)="clearError('coordinatorEmail')"
+                      [attr.aria-invalid]="!!fieldError('coordinatorEmail')"
+                    />
+                    @if (fieldError('coordinatorEmail'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Status<select [(ngModel)]="careCoordinatorDraft.isActive">
+                      <option [ngValue]="true">Active</option>
+                      <option [ngValue]="false">Inactive</option>
+                    </select></label
+                  >
+                  <div class="form-actions">
+                    @if (editingCareCoordinator()) {
+                      <button
+                        type="button"
+                        class="secondary-button"
+                        (click)="resetCareCoordinator()"
+                      >
+                        Cancel edit
+                      </button>
+                    }
+                    <button
+                      type="button"
+                      class="primary-button"
+                      [disabled]="saving()"
+                      (click)="saveCareCoordinator()"
+                    >
+                      {{ editingCareCoordinator() ? 'Update coordinator' : 'Add coordinator' }}
+                    </button>
+                  </div>
+                </section>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Company</th>
+                        <th>Phone</th>
+                        <th>Extension</th>
+                        <th>Fax</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (item of careCoordinators(); track item.id) {
+                        <tr>
+                          <td>{{ item.name }}</td>
+                          <td>{{ item.companyName }}</td>
+                          <td>{{ item.phone }}</td>
+                          <td>{{ item.phoneExtension }}</td>
+                          <td>{{ item.fax }}</td>
+                          <td>{{ item.email }}</td>
+                          <td>{{ item.isActive ? 'Active' : 'Inactive' }}</td>
+                          <td>
+                            <button
+                              type="button"
+                              class="link-button"
+                              (click)="editCareCoordinator(item)"
+                            >
+                              Edit
+                            </button>
+                          </td>
+                        </tr>
+                      } @empty {
+                        <tr>
+                          <td colspan="8" class="empty-cell">No care coordinators added.</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+                <div class="wizard-actions">
+                  <button type="button" class="secondary-button" (click)="enterStepFive()">
+                    Back</button
+                  ><button
+                    type="button"
+                    class="primary-button"
+                    (click)="continueFromCareCoordinators()"
+                  >
+                    Continue
+                  </button>
+                </div>
+              </div>
+            } @else if (currentStep() === 5) {
+              <div class="wizard" data-testid="guest-step-five">
+                <ol class="step-indicator" aria-label="Client intake progress">
+                  @for (step of steps; track step; let index = $index) {
+                    <li [class.active]="index === 4">
+                      <span>{{ index + 1 }}</span
+                      ><small>{{ step }}</small>
+                    </li>
+                  }
+                </ol>
+                <div class="form-heading">
+                  <div>
+                    <span>Step 5</span>
+                    <h2>Contacts</h2>
+                  </div>
+                </div>
+                @if (submitError()) {
+                  <p class="form-alert" role="alert">{{ submitError() }}</p>
+                }
+                <section class="guest-form" data-testid="contact-inline-form">
+                  <label
+                    >Contact type *<select
+                      [(ngModel)]="contactDraft.type"
+                      [disabled]="!!editingContact()"
+                    >
+                      <option>General</option>
+                      <option>Emergency</option>
+                    </select></label
+                  >
+                  <label
+                    >Full name *<input
+                      [(ngModel)]="contactDraft.name"
+                      (ngModelChange)="clearError('contactName')"
+                      [attr.aria-invalid]="!!fieldError('contactName')"
+                    />
+                    @if (fieldError('contactName'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Relationship *<input
+                      [(ngModel)]="contactDraft.relationship"
+                      (ngModelChange)="clearError('contactRelationship')"
+                      [attr.aria-invalid]="!!fieldError('contactRelationship')"
+                    />
+                    @if (fieldError('contactRelationship'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Phone *<input
+                      [ngModel]="contactDraft.phone"
+                      (ngModelChange)="normalizeGuestContactPhone($event)"
+                      placeholder="(612) 555-0100"
+                      [attr.aria-invalid]="!!fieldError('contactPhone')"
+                    />
+                    @if (fieldError('contactPhone'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Email<input
+                      type="email"
+                      [(ngModel)]="contactDraft.email"
+                      (ngModelChange)="clearError('contactEmail')"
+                      [attr.aria-invalid]="!!fieldError('contactEmail')"
+                    />
+                    @if (fieldError('contactEmail'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label class="wide">Address<input [(ngModel)]="contactDraft.address" /></label>
+                  <label
+                    >Status<select [(ngModel)]="contactDraft.isActive">
+                      <option [ngValue]="true">Active</option>
+                      <option [ngValue]="false">Inactive</option>
+                    </select></label
+                  >
+                  <div class="form-actions">
+                    @if (editingContact()) {
+                      <button type="button" class="secondary-button" (click)="resetContact()">
+                        Cancel edit
+                      </button>
+                    }
+                    <button
+                      type="button"
+                      class="primary-button"
+                      [disabled]="saving()"
+                      (click)="saveContact()"
+                    >
+                      {{ editingContact() ? 'Update contact' : 'Add contact' }}
+                    </button>
+                  </div>
+                </section>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Name / address</th>
+                        <th>Type</th>
+                        <th>Relationship</th>
+                        <th>Phone</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (contact of contacts(); track contact.id) {
+                        <tr>
+                          <td>
+                            <strong>{{ contact.name }}</strong
+                            ><small>{{ contact.address }}</small>
+                          </td>
+                          <td>{{ contact.type }}</td>
+                          <td>{{ contact.relationship }}</td>
+                          <td>{{ contact.phone }}</td>
+                          <td>{{ contact.email }}</td>
+                          <td>{{ contact.isActive ? 'Active' : 'Inactive' }}</td>
+                          <td>
+                            <button
+                              type="button"
+                              class="link-button"
+                              (click)="editContact(contact)"
+                            >
+                              Edit
+                            </button>
+                          </td>
+                        </tr>
+                      } @empty {
+                        <tr>
+                          <td colspan="7" class="empty-cell">No contacts added.</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+                <div class="wizard-actions">
+                  <button type="button" class="secondary-button" (click)="enterStepFour(false)">
+                    Back</button
+                  ><button
+                    type="button"
+                    class="primary-button"
+                    [disabled]="saving()"
+                    (click)="continueFromContacts()"
+                  >
+                    Continue
+                  </button>
+                </div>
+              </div>
+            } @else if (currentStep() === 4) {
+              <div class="wizard" data-testid="guest-step-four">
+                <ol class="step-indicator" aria-label="Client intake progress">
+                  @for (step of steps; track step; let index = $index) {
+                    <li [class.active]="index === 3">
+                      <span>{{ index + 1 }}</span
+                      ><small>{{ step }}</small>
+                    </li>
+                  }
+                </ol>
+                <div class="form-heading">
+                  <div>
+                    <span>Step 4</span>
+                    <h2>Primary caregivers</h2>
+                  </div>
+                </div>
+                @if (submitError()) {
+                  <p class="form-alert" role="alert">{{ submitError() }}</p>
+                }
+                <section class="guest-form" data-testid="caregiver-inline-form">
+                  <label
+                    >Caregiver *
+                    <select
+                      [(ngModel)]="caregiverDraft.caregiverUserId"
+                      (ngModelChange)="clearError('caregiver')"
+                      [attr.aria-invalid]="!!fieldError('caregiver')"
+                      [disabled]="!!editingCaregiver()"
+                    >
+                      <option value="">Select caregiver</option>
+                      @for (person of caregiverCandidates(); track person.id) {
+                        <option [value]="person.id">
+                          {{ person.displayName }} — {{ person.jobTitle }}
+                        </option>
+                      }
+                    </select>
+                    @if (fieldError('caregiver'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Assignment type *<select [(ngModel)]="caregiverDraft.assignmentType">
+                      <option>Primary</option>
+                      <option>Backup</option>
+                    </select></label
+                  >
+                  <label
+                    >Start date *<input
+                      type="date"
+                      [(ngModel)]="caregiverDraft.startDate"
+                      (ngModelChange)="clearError('startDate')"
+                      [attr.aria-invalid]="!!fieldError('startDate')"
+                    />
+                    @if (fieldError('startDate'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >End date<input
+                      type="date"
+                      [min]="caregiverDraft.startDate"
+                      [(ngModel)]="caregiverDraft.endDate"
+                      (ngModelChange)="clearError('endDate')"
+                      [attr.aria-invalid]="!!fieldError('endDate')"
+                    />
+                    @if (fieldError('endDate'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Relationship *<input
+                      [(ngModel)]="caregiverDraft.relationship"
+                      (ngModelChange)="clearError('relationship')"
+                      [attr.aria-invalid]="!!fieldError('relationship')"
+                    />
+                    @if (fieldError('relationship'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Lives with client? *<select
+                      [(ngModel)]="caregiverDraft.livesWithClient"
+                      (ngModelChange)="clearError('livesWithClient')"
+                      [attr.aria-invalid]="!!fieldError('livesWithClient')"
+                    >
+                      <option [ngValue]="null">Select</option>
+                      <option [ngValue]="true">Yes</option>
+                      <option [ngValue]="false">No</option>
+                    </select>
+                    @if (fieldError('livesWithClient'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <fieldset class="services">
+                    <legend>Assigned services</legend>
+                    @for (service of caregiverServices(); track service) {
+                      <label
+                        ><input
+                          type="checkbox"
+                          [checked]="caregiverDraft.assignedServices.includes(service)"
+                          (change)="toggleCaregiverService(service, $any($event.target).checked)"
+                        />{{ service }}</label
+                      >
+                    }
+                  </fieldset>
+                  <label>Notes<textarea [(ngModel)]="caregiverDraft.notes"></textarea></label>
+                  <label
+                    ><input type="checkbox" [(ngModel)]="caregiverDraft.clientPreference" /> Client
+                    preference</label
+                  >
+                  <div class="form-actions">
+                    @if (editingCaregiver()) {
+                      <button type="button" class="secondary-button" (click)="resetCaregiver()">
+                        Cancel edit
+                      </button>
+                    }
+                    <button
+                      type="button"
+                      class="primary-button"
+                      [disabled]="saving()"
+                      (click)="saveCaregiver()"
+                    >
+                      {{ editingCaregiver() ? 'Update caregiver' : 'Add caregiver' }}
+                    </button>
+                  </div>
+                </section>
+                <div class="overflow-x-auto">
+                  <table class="compact-table">
+                    <thead>
+                      <tr>
+                        <th>Caregiver and relationship</th>
+                        <th>Job title</th>
+                        <th>Assignment</th>
+                        <th>Services</th>
+                        <th>Effective dates</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (row of caregiverAssignments(); track row.assignmentId) {
+                        <tr>
+                          <td>
+                            <strong>{{ row.caregiverDisplayName }}</strong>
+                            <div>{{ row.relationship }}</div>
+                          </td>
+                          <td>{{ row.jobTitle }}</td>
+                          <td>{{ row.assignmentType }}</td>
+                          <td>{{ row.assignedServices || '—' }}</td>
+                          <td>{{ row.startDate }} – {{ row.endDate || '—' }}</td>
+                          <td>{{ row.status }}</td>
+                          <td>
+                            <button type="button" (click)="editCaregiver(row)">Edit</button>
+                            @if (row.status === 'Active') {
+                              <button type="button" (click)="endCaregiver(row)">End</button>
+                            }
+                          </td>
+                        </tr>
+                      } @empty {
+                        <tr>
+                          <td colspan="7">No caregiver assignments recorded.</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+                <div class="form-actions">
+                  <button type="button" class="secondary-button" (click)="enterStepThree(false)">
+                    Back</button
+                  ><button
+                    type="button"
+                    class="primary-button"
+                    [disabled]="saving()"
+                    (click)="continueFromCaregivers()"
+                  >
+                    Continue
+                  </button>
+                </div>
+              </div>
+            } @else if (currentStep() === 3) {
+              <div class="wizard" data-testid="guest-step-three">
+                <ol class="step-indicator" aria-label="Client intake progress">
+                  @for (step of steps; track step; let index = $index) {
+                    <li [class.active]="index === 2">
+                      <span>{{ index + 1 }}</span
+                      ><small>{{ step }}</small>
+                    </li>
+                  }
+                </ol>
+                <div class="form-heading">
+                  <div>
+                    <span>Step 3</span>
+                    <h2>Contact information</h2>
+                  </div>
+                </div>
+                @if (submitError()) {
+                  <p class="form-alert" role="alert">{{ submitError() }}</p>
+                }
+                <form class="guest-form" (ngSubmit)="saveContactInformation()">
+                  <label
+                    >Email<input
+                      name="email"
+                      type="email"
+                      [(ngModel)]="draft.email"
+                      (ngModelChange)="clearError('email')"
+                      [attr.aria-invalid]="!!fieldError('email')"
+                    />
+                    @if (fieldError('email'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Primary phone *<input
+                      name="phone1"
+                      [ngModel]="draft.phone1"
+                      (ngModelChange)="normalizeContactPhone('phone1', $event)"
+                      placeholder="(555) 555-1234"
+                      [attr.aria-invalid]="!!fieldError('phone1')"
+                    />
+                    @if (fieldError('phone1'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Secondary phone<input
+                      name="phone2"
+                      [ngModel]="draft.phone2"
+                      (ngModelChange)="normalizeContactPhone('phone2', $event)"
+                      [attr.aria-invalid]="!!fieldError('phone2')"
+                    />
+                    @if (fieldError('phone2'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Street address *<input
+                      name="street"
+                      [(ngModel)]="draft.street"
+                      (ngModelChange)="clearError('street')"
+                      [attr.aria-invalid]="!!fieldError('street')"
+                    />
+                    @if (fieldError('street'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Apartment / unit<input name="apartment" [(ngModel)]="draft.apartment"
+                  /></label>
+                  <label
+                    >Postal code<input
+                      name="zip"
+                      inputmode="numeric"
+                      maxlength="5"
+                      [(ngModel)]="draft.zip"
+                      (blur)="lookupContactPostalCode()"
+                  /></label>
+                  @if (postalLookupLoading()) {
+                    <p class="field-help">Looking up address…</p>
+                  } @else if (postalLookupMessage()) {
+                    <p class="field-help" aria-live="polite">{{ postalLookupMessage() }}</p>
+                  }
+                  <label>City<input name="city" [(ngModel)]="draft.city" /></label>
+                  <label>State<input name="state" [(ngModel)]="draft.state" /></label>
+                  <label>County<input name="county" [(ngModel)]="draft.county" /></label>
+                  <label>Country<input name="country" value="United States" readonly /></label>
+                  <fieldset class="services">
+                    <legend>Preferred languages *</legend>
+                    @for (language of languageOptions; track language) {
+                      <label
+                        ><input
+                          type="checkbox"
+                          [checked]="draft.languages.includes(language)"
+                          (change)="toggleLanguage(language, $any($event.target).checked)"
+                        />{{ language }}</label
+                      >
+                    }
+                    @if (fieldError('languages'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </fieldset>
+                  <div class="form-actions">
+                    <button
+                      class="secondary-button"
+                      type="button"
+                      [disabled]="saving()"
+                      (click)="enterStepTwo(false)"
+                    >
+                      Back
+                    </button>
+                    <button class="primary-button" type="submit" [disabled]="saving()">
+                      {{ saving() ? 'Saving…' : 'Save & continue' }}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            } @else if (currentStep() === 2) {
+              <div class="wizard" data-testid="guest-step-two">
+                <ol class="step-indicator" aria-label="Client intake progress">
+                  @for (step of steps; track step; let index = $index) {
+                    <li [class.active]="index === 1">
+                      <span>{{ index + 1 }}</span
+                      ><small>{{ step }}</small>
+                    </li>
+                  }
+                </ol>
+                <div class="form-heading">
+                  <div>
+                    <span>Step 2</span>
+                    <h2>Additional information</h2>
+                  </div>
+                </div>
+                @if (submitError()) {
+                  <p class="form-alert" role="alert">{{ submitError() }}</p>
+                }
+                <app-client-create-additional-section
+                  [draft]="draft"
+                  [dietOptions]="dietOptions"
+                  (phoneChanged)="normalizeAdditionalPhone($event)"
+                  (arrayToggled)="toggleAdditionalArray($event)"
+                />
+                <div class="form-actions step-two-actions">
+                  <button
+                    type="button"
+                    class="primary-button"
+                    [disabled]="saving() || !editorVersion()"
+                    (click)="saveAdditionalInformation()"
+                  >
+                    {{ saving() ? 'Saving…' : 'Save & continue' }}
+                  </button>
+                </div>
+              </div>
+            } @else if (started()) {
+              <div class="wizard" data-testid="guest-step-one">
+                <ol class="step-indicator" aria-label="Client intake progress">
+                  @for (step of steps; track step; let index = $index) {
+                    <li [class.active]="index === 0">
+                      <span>{{ index + 1 }}</span
+                      ><small>{{ step }}</small>
+                    </li>
+                  }
+                </ol>
+                <div class="form-heading">
+                  <div>
+                    <span>Step 1</span>
+                    <h2>Basic details</h2>
+                  </div>
+                  <small>Fields marked * are required</small>
+                </div>
+                @if (submitError()) {
+                  <p class="form-alert" role="alert">{{ submitError() }}</p>
+                }
+                <form class="guest-form" (ngSubmit)="submit()" novalidate>
+                  <label
+                    >First name *<input
+                      name="firstName"
+                      [(ngModel)]="draft.firstName"
+                      (ngModelChange)="clearError('firstName')"
+                      [attr.aria-invalid]="!!fieldError('firstName')"
+                    />
+                    @if (fieldError('firstName'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Middle name<input name="middleName" [(ngModel)]="draft.middleName"
+                  /></label>
+                  <label
+                    >Last name *<input
+                      name="lastName"
+                      [(ngModel)]="draft.lastName"
+                      (ngModelChange)="clearError('lastName')"
+                      [attr.aria-invalid]="!!fieldError('lastName')"
+                    />
+                    @if (fieldError('lastName'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label>Preferred name<input name="goesBy" [(ngModel)]="draft.goesBy" /></label>
+                  <label
+                    >Date of birth *<input
+                      name="dob"
+                      type="date"
+                      [(ngModel)]="draft.dob"
+                      (ngModelChange)="clearError('dob')"
+                      [attr.aria-invalid]="!!fieldError('dob')"
+                    />
+                    @if (fieldError('dob'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Gender *<select
+                      name="gender"
+                      [(ngModel)]="draft.gender"
+                      (ngModelChange)="clearError('gender')"
+                      [attr.aria-invalid]="!!fieldError('gender')"
+                    >
+                      <option value="">Select gender</option>
+                      <option>Female</option>
+                      <option>Male</option>
+                      <option>Non-binary</option>
+                      <option>Unknown</option>
+                    </select>
+                    @if (fieldError('gender'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >PMI *<input
+                      name="pmi"
+                      inputmode="numeric"
+                      maxlength="8"
+                      [value]="draft.pmi"
+                      (input)="normalizePmi($event)"
+                      [attr.aria-invalid]="!!fieldError('pmi')"
+                    />
+                    @if (fieldError('pmi'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >SSN<input
+                      name="ssn"
+                      inputmode="numeric"
+                      autocomplete="off"
+                      [ngModel]="draft.ssn"
+                      (ngModelChange)="normalizeSsn($event)"
+                      placeholder="XXX-XX-XXXX"
+                      [attr.aria-invalid]="!!fieldError('ssn')"
+                    />
+                    @if (fieldError('ssn'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Insurance provider<input name="insurance" [(ngModel)]="draft.insurance"
+                  /></label>
+                  <label
+                    >Intake date<input name="intakeDate" type="date" [(ngModel)]="draft.intakeDate"
+                  /></label>
+                  <label
+                    >SOC date *<input
+                      name="socDate"
+                      type="date"
+                      [(ngModel)]="draft.socDate"
+                      (ngModelChange)="clearError('socDate')"
+                      [attr.aria-invalid]="!!fieldError('socDate')"
+                    />
+                    @if (fieldError('socDate'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Referral source<input name="referralSource" [(ngModel)]="draft.referralSource"
+                  /></label>
+                  <label
+                    >Location *<select
+                      name="locationId"
+                      [ngModel]="draft.locationId"
+                      (ngModelChange)="selectLocation($event)"
+                      [attr.aria-invalid]="!!fieldError('locationId')"
+                    >
+                      <option value="">Select location</option>
+                      @for (location of locations(); track location.id) {
+                        <option [value]="location.id">{{ location.displayName }}</option>
+                      }
+                    </select>
+                    @if (fieldError('locationId'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <label
+                    >Supervisor<select
+                      name="supervisor"
+                      [(ngModel)]="draft.supervisor"
+                      [disabled]="!draft.locationId"
+                    >
+                      <option value="">No supervisor</option>
+                      @for (supervisor of supervisors(); track supervisor.id) {
+                        <option [value]="supervisor.id">
+                          {{ supervisor.displayName
+                          }}{{ supervisor.jobTitle ? ' — ' + supervisor.jobTitle : '' }}
+                        </option>
+                      }
+                    </select></label
+                  >
+                  <label
+                    >EVV authorized hours per week<input
+                      name="evvHours"
+                      type="number"
+                      min="0"
+                      max="168"
+                      step="0.25"
+                      [(ngModel)]="draft.evvHours"
+                      [attr.aria-invalid]="!!fieldError('evvHours')"
+                    />
+                    @if (fieldError('evvHours'); as error) {
+                      <small class="field-error">{{ error }}</small>
+                    }
+                  </label>
+                  <fieldset class="services">
+                    <legend>Initial services</legend>
+                    @for (service of serviceOptions; track service) {
+                      <label
+                        ><input
+                          type="checkbox"
+                          [checked]="draft.services.includes(service)"
+                          (change)="toggleService(service, $any($event.target).checked)"
+                        />{{ service }}</label
+                      >
+                    }
+                  </fieldset>
+                  <div class="form-actions">
+                    <button type="submit" class="primary-button" [disabled]="saving()">
+                      {{ saving() ? 'Saving…' : 'Save and continue' }}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            } @else {
+              <div class="welcome-actions">
+                <button type="button" class="primary-button" (click)="start()">Start</button>
+              </div>
+            }
+          </div>
+        }
+        @case ('expired') {
+          <app-public-intake-message
+            testId="expired-state"
+            title="Invitation expired"
+            message="This invitation link has expired."
+          />
+        }
+        @case ('completed') {
+          <app-public-intake-message
+            testId="completed-state"
+            title="Client intake completed"
+            message="Thank you. Your information has been submitted successfully. You may now close this page."
+          />
+        }
+        @case ('used') {
+          <app-public-intake-message
+            testId="used-state"
+            title="Invitation link already used"
+            message="This invitation link has already been used. Please contact the care provider if you need a new invitation."
+          />
+        }
+        @case ('sessionExpired') {
+          <app-public-intake-message
+            testId="session-expired-state"
+            title="Your secure session has expired"
+            message="Your secure session has expired. Please contact the care provider for a new invitation link."
+          />
+        }
+        @case ('missing') {
+          <app-public-intake-message
+            testId="missing-state"
+            title="Link unavailable"
+            message="This invitation link is incomplete or unavailable."
+          />
+        }
+        @case ('unavailable') {
+          <app-public-intake-message
+            testId="unavailable-state"
+            title="Link unavailable"
+            message="This invitation link is no longer available."
+          />
+        }
+        @case ('invalid') {
+          <app-public-intake-message
+            testId="invalid-state"
+            title="Invalid invitation"
+            message="This invitation link is invalid or no longer available."
+          />
+        }
+        @default {
+          <app-public-intake-message
+            testId="error-state"
+            title="Unable to validate link"
+            message="We could not validate this invitation right now. Please try again later."
+          />
+        }
+      }
+    </section>
+    <p class="security-note">Secure client intake &middot; Aytuzee Care Comply</p>
+  </div>
+</main>

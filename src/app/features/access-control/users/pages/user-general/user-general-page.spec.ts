@@ -4,8 +4,8 @@ import { of } from 'rxjs';
 import { AuthorizationService } from '../../../../../core/authorization/authorization.service';
 import { Permissions } from '../../../../../core/authorization/permissions';
 import { AuthSessionService } from '../../../../../core/auth/auth-session.service';
-import { CompanyService } from '../../../companies/company.service';
-import { LocationService } from '../../../companies/location.service';
+import { CompanyLookupService } from '../../../../../core/lookups/company-lookup.service';
+import { LocationLookupService } from '../../../../../core/lookups/location-lookup.service';
 import { UserEditorStore } from '../../data-access/user-editor.store';
 import { UserGeneralPageComponent } from './user-general-page';
 
@@ -28,7 +28,14 @@ describe('UserGeneralPageComponent', () => {
   };
   const store = {
     isCreateMode: signal(false),
-    createGeneral: signal({ firstName: '', lastName: '', email: '', password: '', phoneNumber: '', isActive: true }),
+    createGeneral: signal({
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      phoneNumber: '',
+      isActive: true,
+    }),
     roles: signal([{ id: 'role-1', name: 'Database Role', permissions: [], requiresMfa: false }]),
     selectedRoleIds: signal<readonly string[]>([]),
     createRequiresMfa: signal(false),
@@ -65,11 +72,14 @@ describe('UserGeneralPageComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: UserEditorStore, useValue: store },
-        { provide: AuthSessionService, useValue: {
-          currentUser: signal({ companyId: 'company-1', isPlatformAdministrator: false }),
-        } },
-        { provide: CompanyService, useValue: { list: vi.fn().mockReturnValue(of([])) } },
-        { provide: LocationService, useValue: { list: vi.fn().mockReturnValue(of([])) } },
+        {
+          provide: AuthSessionService,
+          useValue: {
+            currentUser: signal({ companyId: 'company-1', isPlatformAdministrator: false }),
+          },
+        },
+        { provide: CompanyLookupService, useValue: { list: vi.fn().mockReturnValue(of([])) } },
+        { provide: LocationLookupService, useValue: { list: vi.fn().mockReturnValue(of([])) } },
       ],
     });
     TestBed.inject(AuthorizationService).setPermissions([Permissions.User.Manage]);
@@ -82,10 +92,14 @@ describe('UserGeneralPageComponent', () => {
     const form = (fixture.nativeElement as HTMLElement).querySelector('form');
     expect(form).not.toBeNull();
     expect(form?.querySelectorAll('[formcontrolname]')).toHaveLength(6);
-    expect(Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('#user-account-status option'))
-      .map((option) => option.textContent?.trim())).toEqual(['Active', 'Inactive']);
-    expect((fixture.nativeElement as HTMLElement).querySelectorAll('input[type="radio"]'))
-      .toHaveLength(2);
+    expect(
+      Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll('#user-account-status option'),
+      ).map((option) => option.textContent?.trim()),
+    ).toEqual(['Active', 'Inactive']);
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('input[type="radio"]'),
+    ).toHaveLength(2);
   });
 
   it('keeps MFA changes local until Save changes is selected', () => {
@@ -132,22 +146,28 @@ describe('UserGeneralPageComponent', () => {
     });
     fixture.detectChanges();
 
-    expect(store.updateCreateGeneral).toHaveBeenLastCalledWith({
-      companyId: 'company-1',
-      firstName: 'Ada',
-      lastName: 'Lovelace',
-      email: 'ada@example.test',
-      password: 'StrongPassword123!',
-      phoneNumber: '+1 555 0100',
-      isActive: false,
-      locationIds: ['location-1'],
-    }, true);
-    expect((fixture.nativeElement as HTMLElement).querySelector('[formcontrolname="isActive"]'))
-      .not.toBeNull();
-    expect((fixture.nativeElement as HTMLElement).querySelector('input[type="password"]'))
-      .not.toBeNull();
-    expect((fixture.nativeElement as HTMLElement).querySelectorAll('input[name="mfa-method"]'))
-      .toHaveLength(0);
+    expect(store.updateCreateGeneral).toHaveBeenLastCalledWith(
+      {
+        companyId: 'company-1',
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+        email: 'ada@example.test',
+        password: 'StrongPassword123!',
+        phoneNumber: '+1 555 0100',
+        isActive: false,
+        locationIds: ['location-1'],
+      },
+      true,
+    );
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('[formcontrolname="isActive"]'),
+    ).not.toBeNull();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('input[type="password"]'),
+    ).not.toBeNull();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('input[name="mfa-method"]'),
+    ).toHaveLength(0);
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('Database Role');
   });
 
@@ -171,8 +191,9 @@ describe('UserGeneralPageComponent', () => {
   it('shows the assigned database role and submits an approved replacement', () => {
     const fixture = TestBed.createComponent(UserGeneralPageComponent);
     fixture.detectChanges();
-    const select = (fixture.nativeElement as HTMLElement)
-      .querySelector<HTMLSelectElement>('#user-role');
+    const select = (fixture.nativeElement as HTMLElement).querySelector<HTMLSelectElement>(
+      '#user-role',
+    );
 
     expect(select?.value).toBe('role-1');
     expect(select?.disabled).toBe(false);
@@ -194,8 +215,10 @@ describe('UserGeneralPageComponent', () => {
     const fixture = TestBed.createComponent(UserGeneralPageComponent);
     fixture.detectChanges();
 
-    expect((fixture.nativeElement as HTMLElement)
-      .querySelector<HTMLSelectElement>('#user-role')?.disabled).toBe(true);
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector<HTMLSelectElement>('#user-role')
+        ?.disabled,
+    ).toBe(true);
   });
 
   it('preserves ambiguous multiple-role assignments instead of choosing a primary role', () => {
@@ -219,9 +242,11 @@ describe('UserGeneralPageComponent', () => {
     const fixture = TestBed.createComponent(UserGeneralPageComponent);
     fixture.detectChanges();
 
-    const labels = Array.from((fixture.nativeElement as HTMLElement)
-      .querySelectorAll<HTMLInputElement>('input[name="mfa-method"]'))
-      .map((input) => input.closest('label'));
+    const labels = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLInputElement>(
+        'input[name="mfa-method"]',
+      ),
+    ).map((input) => input.closest('label'));
     expect(labels).toHaveLength(2);
     for (const label of labels) {
       expect(label?.classList.contains('border')).toBe(false);

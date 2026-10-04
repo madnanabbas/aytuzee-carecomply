@@ -1,5 +1,4 @@
 <div class="space-y-5">
-
   <!-- =====================================================
        VIEW-ONLY NOTICE
        ===================================================== -->
@@ -31,8 +30,7 @@
       role="alert"
       class="rounded-control border border-warning/30 bg-warning/5 px-4 py-3 text-small text-text-primary"
     >
-      This user was changed after you opened the page. Reload the user and try
-      again.
+      This user was changed after you opened the page. Reload the user and try again.
     </div>
   } @else if (store.error() === 'failed') {
     <div
@@ -48,26 +46,17 @@
       role="alert"
       class="rounded-control border border-warning/30 bg-warning/5 px-4 py-3 text-small text-text-primary"
     >
-      Multi-factor authentication cannot be disabled because this user's
-      permissions require it.
+      Multi-factor authentication cannot be disabled because this user's permissions require it.
     </div>
   }
 
-  <form
-    [formGroup]="form"
-    (ngSubmit)="save()"
-    novalidate
-  >
-
+  <form [formGroup]="form" (ngSubmit)="save()" novalidate>
     <!-- =====================================================
          GENERAL INFORMATION
          ===================================================== -->
     <section class="pb-6">
-
       <div class="mb-5">
-        <h2 class="text-section-title text-text-primary">
-          General information
-        </h2>
+        <h2 class="text-section-title text-text-primary">General information</h2>
 
         <p class="mt-1 text-small text-text-secondary">
           {{
@@ -79,40 +68,75 @@
       </div>
 
       <div class="grid gap-x-5 gap-y-4 md:grid-cols-2">
-
         @if (isPlatformAdministrator() && !store.user()?.isPlatformAdministrator) {
           <div>
-            <label for="user-company" class="block text-label font-medium text-text-primary">Company <span class="text-danger">*</span></label>
-            <select id="user-company" formControlName="companyId" class="mt-1.5 h-control w-full rounded-control border border-border-strong bg-surface px-3 text-body" (change)="changeCompany()">
+            <label for="user-company" class="block text-label font-medium text-text-primary"
+              >Company <span class="text-danger">*</span></label
+            >
+            <select
+              id="user-company"
+              formControlName="companyId"
+              class="mt-1.5 h-control w-full rounded-control border border-border-strong bg-surface px-3 text-body"
+              (change)="changeCompany()"
+            >
               <option value="" disabled>Select company</option>
-              @for (company of companies(); track company.id) { <option [value]="company.id">{{ company.name }}</option> }
+              @for (company of companies(); track company.id) {
+                <option [value]="company.id">{{ company.name }}</option>
+              }
             </select>
-            <p class="mt-1.5 text-helper text-text-muted">The user and assigned roles will belong to this company.</p>
+            <p class="mt-1.5 text-helper text-text-muted">
+              The user and assigned roles will belong to this company.
+            </p>
           </div>
         } @else {
           <div>
             <span class="block text-label font-medium text-text-primary">Company</span>
-            <p class="mt-2 text-body text-text-primary">{{ store.user()?.isPlatformAdministrator ? 'Platform administration' : (session.currentUser()?.companyName ?? store.user()?.companyName) }}</p>
+            <p class="mt-2 text-body text-text-primary">
+              {{
+                store.user()?.isPlatformAdministrator
+                  ? 'Platform administration'
+                  : (session.currentUser()?.companyName ?? store.user()?.companyName)
+              }}
+            </p>
           </div>
         }
 
         @if (!store.user()?.isPlatformAdministrator) {
           <fieldset class="md:col-span-2">
-            <legend class="block text-label font-medium text-text-primary">Locations <span class="text-danger">*</span></legend>
-            <p class="mt-1 text-helper text-text-muted">This user can access clients assigned to the selected locations.</p>
+            <legend class="block text-label font-medium text-text-primary">
+              Locations <span class="text-danger">*</span>
+            </legend>
+            <p class="mt-1 text-helper text-text-muted">
+              This user can access clients assigned to the selected locations.
+            </p>
             <details class="relative mt-2">
-              <summary class="flex h-control cursor-pointer list-none items-center justify-between rounded-control border border-border-strong bg-surface px-3.5 text-body text-text-primary">
-                <span class="truncate">{{ selectedLocationsLabel() }}</span><span aria-hidden="true">⌄</span>
+              <summary
+                class="flex h-control cursor-pointer list-none items-center justify-between rounded-control border border-border-strong bg-surface px-3.5 text-body text-text-primary"
+              >
+                <span class="truncate">{{ selectedLocationsLabel() }}</span
+                ><span aria-hidden="true">⌄</span>
               </summary>
-              <div class="absolute z-30 mt-1 max-h-56 w-full overflow-y-auto rounded-control border border-border bg-surface p-1.5 shadow-lg">
+              <div
+                class="absolute z-30 mt-1 max-h-56 w-full overflow-y-auto rounded-control border border-border bg-surface p-1.5 shadow-lg"
+              >
                 @for (location of locations(); track location.id) {
-                  <label class="flex cursor-pointer items-center gap-2 rounded px-2 py-2 text-body hover:bg-surface-muted">
-                    <input type="checkbox" [checked]="form.controls.locationIds.value.includes(location.id)" (change)="toggleLocation(location.id, $any($event.target).checked)" />
+                  <label
+                    class="flex cursor-pointer items-center gap-2 rounded px-2 py-2 text-body hover:bg-surface-muted"
+                  >
+                    <input
+                      type="checkbox"
+                      [checked]="form.controls.locationIds.value.includes(location.id)"
+                      (change)="toggleLocation(location.id, $any($event.target).checked)"
+                    />
                     <span>{{ location.name }}</span>
-                    @if (location.isMain) { <span class="text-helper text-text-muted">Main</span> }
+                    @if (location.isMain) {
+                      <span class="text-helper text-text-muted">Main</span>
+                    }
                   </label>
                 } @empty {
-                  <span class="block px-2 py-2 text-small text-text-muted">Select a company to load its locations.</span>
+                  <span class="block px-2 py-2 text-small text-text-muted"
+                    >Select a company to load its locations.</span
+                  >
                 }
               </div>
             </details>
@@ -124,10 +148,7 @@
 
         <!-- First name -->
         <div>
-          <label
-            for="user-first-name"
-            class="block text-label font-medium text-text-primary"
-          >
+          <label for="user-first-name" class="block text-label font-medium text-text-primary">
             First name
             <span class="text-danger">*</span>
           </label>
@@ -140,22 +161,14 @@
             class="mt-1.5 h-control w-full rounded-control border border-border-strong bg-surface px-3.5 text-body text-text-primary transition-colors placeholder:text-text-muted hover:border-text-muted focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/15"
           />
 
-          @if (
-            form.controls.firstName.touched &&
-            form.controls.firstName.invalid
-          ) {
-            <p class="mt-1.5 text-helper text-danger">
-              Enter a valid first name.
-            </p>
+          @if (form.controls.firstName.touched && form.controls.firstName.invalid) {
+            <p class="mt-1.5 text-helper text-danger">Enter a valid first name.</p>
           }
         </div>
 
         <!-- Last name -->
         <div>
-          <label
-            for="user-last-name"
-            class="block text-label font-medium text-text-primary"
-          >
+          <label for="user-last-name" class="block text-label font-medium text-text-primary">
             Last name
             <span class="text-danger">*</span>
           </label>
@@ -168,22 +181,14 @@
             class="mt-1.5 h-control w-full rounded-control border border-border-strong bg-surface px-3.5 text-body text-text-primary transition-colors placeholder:text-text-muted hover:border-text-muted focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/15"
           />
 
-          @if (
-            form.controls.lastName.touched &&
-            form.controls.lastName.invalid
-          ) {
-            <p class="mt-1.5 text-helper text-danger">
-              Enter a valid last name.
-            </p>
+          @if (form.controls.lastName.touched && form.controls.lastName.invalid) {
+            <p class="mt-1.5 text-helper text-danger">Enter a valid last name.</p>
           }
         </div>
 
         <!-- Email -->
         <div>
-          <label
-            for="user-email"
-            class="block text-label font-medium text-text-primary"
-          >
+          <label for="user-email" class="block text-label font-medium text-text-primary">
             Email address
             <span class="text-danger">*</span>
           </label>
@@ -196,22 +201,14 @@
             class="mt-1.5 h-control w-full rounded-control border border-border-strong bg-surface px-3.5 text-body text-text-primary transition-colors placeholder:text-text-muted hover:border-text-muted focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/15"
           />
 
-          @if (
-            form.controls.email.touched &&
-            form.controls.email.invalid
-          ) {
-            <p class="mt-1.5 text-helper text-danger">
-              Enter a valid email address.
-            </p>
+          @if (form.controls.email.touched && form.controls.email.invalid) {
+            <p class="mt-1.5 text-helper text-danger">Enter a valid email address.</p>
           }
         </div>
 
         <!-- Password -->
         <div>
-          <label
-            for="user-password"
-            class="block text-label font-medium text-text-primary"
-          >
+          <label for="user-password" class="block text-label font-medium text-text-primary">
             {{ store.isCreateMode() ? 'Password' : 'New password' }}
             @if (store.isCreateMode()) {
               <span class="text-danger">*</span>
@@ -223,7 +220,11 @@
             type="password"
             formControlName="password"
             [attr.autocomplete]="store.isCreateMode() ? 'new-password' : 'off'"
-            [placeholder]="store.isCreateMode() ? 'Enter initial password' : 'Leave blank to keep current password'"
+            [placeholder]="
+              store.isCreateMode()
+                ? 'Enter initial password'
+                : 'Leave blank to keep current password'
+            "
             class="mt-1.5 h-control w-full rounded-control border border-border-strong bg-surface px-3.5 text-body text-text-primary transition-colors placeholder:text-text-muted hover:border-text-muted focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/15"
           />
 
@@ -236,22 +237,19 @@
           </p>
 
           @if (form.controls.password.touched && form.controls.password.hasError('required')) {
-            <p class="mt-1.5 text-helper text-danger">
-              Enter a password for the new user.
-            </p>
-          } @else if (form.controls.password.touched && form.controls.password.value && form.controls.password.value.length < 15) {
-            <p class="mt-1.5 text-helper text-danger">
-              Password must be at least 15 characters.
-            </p>
+            <p class="mt-1.5 text-helper text-danger">Enter a password for the new user.</p>
+          } @else if (
+            form.controls.password.touched &&
+            form.controls.password.value &&
+            form.controls.password.value.length < 15
+          ) {
+            <p class="mt-1.5 text-helper text-danger">Password must be at least 15 characters.</p>
           }
         </div>
 
         <!-- Phone -->
         <div>
-          <label
-            for="user-phone"
-            class="block text-label font-medium text-text-primary"
-          >
+          <label for="user-phone" class="block text-label font-medium text-text-primary">
             Phone number
           </label>
 
@@ -264,296 +262,37 @@
             class="mt-1.5 h-control w-full rounded-control border border-border-strong bg-surface px-3.5 text-body text-text-primary transition-colors placeholder:text-text-muted hover:border-text-muted focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/15"
           />
 
-          @if (
-            form.controls.phoneNumber.touched &&
-            form.controls.phoneNumber.invalid
-          ) {
-            <p class="mt-1.5 text-helper text-danger">
-              Enter a valid phone number.
-            </p>
+          @if (form.controls.phoneNumber.touched && form.controls.phoneNumber.invalid) {
+            <p class="mt-1.5 text-helper text-danger">Enter a valid phone number.</p>
           }
         </div>
-
       </div>
     </section>
 
-
-    <!-- =====================================================
-         ACCOUNT ACCESS
-         ===================================================== -->
-    <section class="border-t border-border py-6">
-
-      <div class="mb-5">
-        <h2 class="text-section-title text-text-primary">
-          Account access
-        </h2>
-
-        <p class="mt-1 text-small text-text-secondary">
-          Configure the user's account access and sign-in security.
-        </p>
-      </div>
-
-      <div class="grid gap-x-5 gap-y-4 md:grid-cols-2">
-
-        <!-- =================================================
-             ACCOUNT STATUS
-             ================================================= -->
-        <div>
-          <label
-            for="user-account-status"
-            class="block text-label font-medium text-text-primary"
-          >
-            Account status
-          </label>
-
-          <select
-            id="user-account-status"
-            formControlName="isActive"
-            [disabled]="!store.isCreateMode() && (!canManage() || store.saving())"
-            class="mt-1.5 h-control w-full rounded-control border border-border-strong bg-surface px-3 text-body text-text-primary transition-colors hover:border-text-muted focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/15 disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-text-muted"
-          >
-            <option [ngValue]="true">Active</option>
-            <option [ngValue]="false">Inactive</option>
-          </select>
-
-          <p class="mt-1.5 text-helper text-text-muted">
-            Inactive users cannot sign in to CareComply.
-          </p>
-        </div>
-
-
-        <!-- =================================================
-             ROLE
-             ================================================= -->
-        <div>
-          <label
-            for="user-role"
-            class="block text-label font-medium text-text-primary"
-          >
-            Role
-            @if (store.isCreateMode()) {
-              <span class="text-danger">*</span>
-            }
-          </label>
-
-          @if (hasMultipleAssignedRoles()) {
-            <select
-              id="user-role"
-              disabled
-              class="mt-1.5 h-control w-full cursor-not-allowed rounded-control border border-border-strong bg-surface-muted px-3 text-body text-text-muted"
-            >
-              <option>Multiple roles assigned</option>
-            </select>
-            <p class="mt-1.5 text-helper text-text-muted">
-              This account has multiple roles. They are preserved unchanged because this editor does not define a primary role.
-            </p>
-          } @else {
-            <select
-              id="user-role"
-              [value]="store.isCreateMode() ? (store.selectedRoleIds().at(0) ?? '') : editRoleId()"
-              [disabled]="
-                store.loading() ||
-                store.saving() ||
-                (!store.isCreateMode() && !canManage())
-              "
-              class="mt-1.5 h-control w-full rounded-control border border-border-strong bg-surface px-3 text-body text-text-primary transition-colors hover:border-text-muted focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/15 disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-text-muted"
-              (change)="store.isCreateMode() ? changeCreateRole($event) : changeEditRole($event)"
-            >
-              <option value="" disabled>Select role</option>
-              @for (role of availableRoles(); track role.id) {
-                <option [value]="role.id">{{ role.name }}</option>
-              }
-            </select>
-
-            <p class="mt-1.5 text-helper text-text-muted">
-              @if (store.isCreateMode()) {
-                Select the initial access role for this user.
-              } @else if (!canManage()) {
-                Role assignment is read-only.
-              } @else {
-                Role changes are applied only when you select Save changes.
-              }
-            </p>
-          }
-        </div>
-
-
-        <!-- =================================================
-             MFA - COMPACT FIELD
-             ================================================= -->
-        <div>
-          <label
-            class="block text-label font-medium text-text-primary"
-          >
-            Multi-factor authentication
-          </label>
-
-          <div class="mt-2 flex min-h-7 items-center gap-2.5">
-
-            <!-- CREATE MODE SWITCH -->
-            @if (store.isCreateMode()) {
-              <button
-                type="button"
-                role="switch"
-                aria-label="Require multi-factor authentication"
-                [attr.aria-checked]="store.createRequiresMfa()"
-                [disabled]="store.saving()"
-                class="relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-                [class.bg-primary]="store.createRequiresMfa()"
-                [class.bg-border-strong]="!store.createRequiresMfa()"
-                (click)="
-                  changeCreateMfa(
-                    !store.createRequiresMfa()
-                  )
-                "
-              >
-                <span
-                  aria-hidden="true"
-                  class="pointer-events-none absolute left-0.5 top-0.5 size-4 rounded-full bg-white shadow-sm transition-transform duration-200"
-                  [class.translate-x-4]="store.createRequiresMfa()"
-                  [class.translate-x-0]="!store.createRequiresMfa()"
-                ></span>
-              </button>
-
-              <span class="text-small text-text-primary">
-                Require MFA
-              </span>
-            }
-
-            <!-- EDIT MODE SWITCH -->
-            @if (!store.isCreateMode()) {
-              <button
-                type="button"
-                role="switch"
-                aria-label="Require multi-factor authentication"
-                [attr.aria-checked]="
-                  editMfaEnabled()
-                "
-                [disabled]="!canManage() || store.saving()"
-                class="relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-                [class.bg-primary]="
-                  editMfaEnabled()
-                "
-                [class.bg-border-strong]="
-                  !editMfaEnabled()
-                "
-                (click)="
-                  changeMfa(
-                    !editMfaEnabled()
-                  )
-                "
-              >
-                <span
-                  aria-hidden="true"
-                  class="pointer-events-none absolute left-0.5 top-0.5 size-4 rounded-full bg-white shadow-sm transition-transform duration-200"
-                  [class.translate-x-4]="editMfaEnabled()"
-                  [class.translate-x-0]="!editMfaEnabled()"
-                ></span>
-              </button>
-
-              <span class="text-small text-text-primary">
-                Require MFA
-              </span>
-
-              @if (store.user()!.isMfaEnabled && editMfaEnabled()) {
-                <span
-                  class="rounded-status bg-primary-subtle px-2 py-0.5 text-helper font-medium text-primary"
-                >
-                  Enrolled
-                </span>
-              }
-            }
-
-          </div>
-
-          @if (store.isCreateMode()) {
-            <p class="mt-1.5 text-helper text-text-muted">
-              Require additional verification during sign in.
-            </p>
-          }
-
-          @if (!store.isCreateMode()) {
-            <p class="mt-1.5 text-helper text-text-muted">
-              Require additional verification during sign in.
-            </p>
-          }
-
-          @if (
-            (store.isCreateMode() && store.createRequiresMfa()) ||
-            (!store.isCreateMode() && editMfaEnabled())
-          ) {
-            <fieldset class="mt-4 space-y-2" aria-label="MFA method">
-              <legend class="text-label font-medium text-text-primary">
-                Verification method
-              </legend>
-
-              <label
-                class="flex cursor-pointer items-start gap-3 py-1"
-              >
-                <input
-                  type="radio"
-                  name="mfa-method"
-                  value="Authenticator"
-                  class="mt-0.5 size-4 shrink-0 accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                  [checked]="store.isCreateMode()
-                    ? store.createMfaMethod() === 'Authenticator'
-                    : editMfaMethod() === 'Authenticator'"
-                  [disabled]="store.saving() || (!store.isCreateMode() && !canManage())"
-                  (change)="store.isCreateMode()
-                    ? changeCreateMfaMethod('Authenticator')
-                    : changeEditMfaMethod('Authenticator')"
-                />
-                <span>
-                  <span class="block text-label font-medium text-text-primary">
-                    Authenticator app
-                  </span>
-                  <span class="mt-0.5 block text-helper text-text-secondary">
-                    Use Microsoft Authenticator to verify sign-in.
-                  </span>
-                </span>
-              </label>
-
-              <label
-                class="flex cursor-pointer items-start gap-3 py-1"
-              >
-                <input
-                  type="radio"
-                  name="mfa-method"
-                  value="Email"
-                  class="mt-0.5 size-4 shrink-0 accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                  [checked]="store.isCreateMode()
-                    ? store.createMfaMethod() === 'Email'
-                    : editMfaMethod() === 'Email'"
-                  [disabled]="store.saving() || (!store.isCreateMode() && !canManage())"
-                  (change)="store.isCreateMode()
-                    ? changeCreateMfaMethod('Email')
-                    : changeEditMfaMethod('Email')"
-                />
-                <span>
-                  <span class="block text-label font-medium text-text-primary">
-                    Email verification code
-                  </span>
-                  <span class="mt-0.5 block text-helper text-text-secondary">
-                    Send a one-time verification code to the user's registered email.
-                  </span>
-                </span>
-              </label>
-            </fieldset>
-          }
-        </div>
-
-      </div>
-    </section>
-
-
+    <app-user-account-access-section
+      [form]="form"
+      [isCreateMode]="store.isCreateMode()"
+      [canManage]="canManage()"
+      [loading]="store.loading()"
+      [saving]="store.saving()"
+      [hasMultipleAssignedRoles]="hasMultipleAssignedRoles()"
+      [roles]="availableRoles()"
+      [selectedRoleId]="store.isCreateMode() ? (store.selectedRoleIds().at(0) ?? '') : editRoleId()"
+      [mfaEnabled]="store.isCreateMode() ? store.createRequiresMfa() : editMfaEnabled()"
+      [mfaMethod]="store.isCreateMode() ? store.createMfaMethod() : editMfaMethod()"
+      [mfaEnrolled]="store.user()?.isMfaEnabled === true"
+      (roleChanged)="store.isCreateMode() ? changeCreateRole($event) : changeEditRole($event)"
+      (mfaEnabledChanged)="store.isCreateMode() ? changeCreateMfa($event) : changeMfa($event)"
+      (mfaMethodChanged)="
+        store.isCreateMode() ? changeCreateMfaMethod($event) : changeEditMfaMethod($event)
+      "
+    />
     @if (!store.isCreateMode() && hasPendingChanges()) {
       <div
         class="mb-5 rounded-control border border-primary/20 bg-primary-subtle/40 px-4 py-3"
         role="status"
       >
-        <p class="text-small font-medium text-text-primary">
-          You have unsaved changes.
-        </p>
+        <p class="text-small font-medium text-text-primary">You have unsaved changes.</p>
         <p class="mt-0.5 text-helper text-text-secondary">
           Account, role, password, and MFA changes are applied only when you select Save changes.
         </p>
@@ -564,10 +303,7 @@
          EDIT MODE ACTIONS
          ===================================================== -->
     @if (!store.isCreateMode() && canManage()) {
-      <footer
-        class="flex flex-wrap justify-end gap-2 border-t border-border pt-4"
-      >
-
+      <footer class="flex flex-wrap justify-end gap-2 border-t border-border pt-4">
         <button
           type="button"
           class="h-control rounded-control border border-border-strong bg-surface px-4 text-button font-medium text-text-secondary transition-colors hover:bg-surface-muted hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
@@ -579,21 +315,11 @@
         <button
           type="submit"
           class="h-control rounded-control bg-primary px-5 text-button font-semibold text-on-primary transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-          [disabled]="
-            form.invalid ||
-            !hasPendingChanges() ||
-            store.saving()
-          "
+          [disabled]="form.invalid || !hasPendingChanges() || store.saving()"
         >
-          {{
-            store.saving()
-              ? 'Saving…'
-              : 'Save changes'
-          }}
+          {{ store.saving() ? 'Saving…' : 'Save changes' }}
         </button>
-
       </footer>
     }
-
   </form>
 </div>

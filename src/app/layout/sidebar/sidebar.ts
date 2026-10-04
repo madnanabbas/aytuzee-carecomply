@@ -9,16 +9,8 @@ import {
   viewChild,
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import {
-  Router,
-  RouterLink,
-  RouterLinkActive,
-} from '@angular/router';
-import {
-  LucideChevronDown,
-  LucideDynamicIcon,
-  LucideX,
-} from '@lucide/angular';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { LucideChevronDown, LucideDynamicIcon, LucideX } from '@lucide/angular';
 
 import { NavigationItem } from '../../core/navigation/navigation.models';
 import { NavigationService } from '../../core/navigation/navigation.service';
@@ -43,10 +35,7 @@ export class SidebarComponent {
   private readonly navigation = inject(NavigationService);
   private readonly router = inject(Router);
 
-  private readonly closeButton =
-    viewChild<ElementRef<HTMLButtonElement>>(
-      'closeButton',
-    );
+  private readonly closeButton = viewChild<ElementRef<HTMLButtonElement>>('closeButton');
 
   readonly mobileOpen = input(false);
 
@@ -54,9 +43,7 @@ export class SidebarComponent {
 
   readonly collapsed = signal(false);
 
-  readonly expandedModules = signal<
-    ReadonlySet<string>
-  >(new Set<string>());
+  readonly expandedModules = signal<ReadonlySet<string>>(new Set<string>());
 
   readonly groups = this.navigation.groups;
   readonly navigationStatus = this.navigation.status;
@@ -74,68 +61,43 @@ export class SidebarComponent {
   }
 
   toggleCollapsed(): void {
-    this.collapsed.update(
-      (collapsed) => !collapsed,
-    );
+    this.collapsed.update((collapsed) => !collapsed);
   }
 
-  toggleModule(
-    itemId: string,
-  ): void {
-    this.expandedModules.update(
-      (current) => {
-        const next = new Set(current);
+  toggleModule(itemId: string): void {
+    this.expandedModules.update((current) => {
+      const next = new Set(current);
 
-        if (next.has(itemId)) {
-          next.delete(itemId);
-        } else {
-          next.add(itemId);
-        }
+      if (next.has(itemId)) {
+        next.delete(itemId);
+      } else {
+        next.add(itemId);
+      }
 
-        return next;
-      },
-    );
+      return next;
+    });
   }
 
-  isModuleExpanded(
-    itemId: string,
-  ): boolean {
-    return this.expandedModules().has(
-      itemId,
-    );
+  isModuleExpanded(itemId: string): boolean {
+    return this.expandedModules().has(itemId);
   }
 
-  isChildRouteActive(
-    item: NavigationItem,
-  ): boolean {
+  isChildRouteActive(item: NavigationItem): boolean {
     if (!item.children.length) {
       return false;
     }
 
-    const currentUrl =
-      this.normalizeUrl(
-        this.router.url,
-      );
+    const currentUrl = this.normalizeUrl(this.router.url);
 
-    return item.children.some(
-      (child) => {
-        if (!child.route) {
-          return false;
-        }
+    return item.children.some((child) => {
+      if (!child.route) {
+        return false;
+      }
 
-        const childRoute =
-          this.normalizeUrl(
-            child.route,
-          );
+      const childRoute = this.normalizeUrl(child.route);
 
-        return (
-          currentUrl === childRoute ||
-          currentUrl.startsWith(
-            `${childRoute}/`,
-          )
-        );
-      },
-    );
+      return currentUrl === childRoute || currentUrl.startsWith(`${childRoute}/`);
+    });
   }
 
   close(): void {
@@ -152,24 +114,13 @@ export class SidebarComponent {
     }
   }
 
-  private normalizeUrl(
-    url: string,
-  ): string {
-    const withoutQuery =
-      url.split('?')[0] ?? url;
+  private normalizeUrl(url: string): string {
+    const withoutQuery = url.split('?')[0] ?? url;
 
-    const withoutFragment =
-      withoutQuery.split('#')[0] ??
-      withoutQuery;
+    const withoutFragment = withoutQuery.split('#')[0] ?? withoutQuery;
 
-    if (
-      withoutFragment.length > 1 &&
-      withoutFragment.endsWith('/')
-    ) {
-      return withoutFragment.slice(
-        0,
-        -1,
-      );
+    if (withoutFragment.length > 1 && withoutFragment.endsWith('/')) {
+      return withoutFragment.slice(0, -1);
     }
 
     return withoutFragment;

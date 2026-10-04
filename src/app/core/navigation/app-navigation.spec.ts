@@ -33,11 +33,9 @@ describe('application route metadata', () => {
     const authorization = TestBed.inject(AuthorizationService);
     authorization.setPermissions([Permissions.Company.View]);
 
-    expect(canAccessNavigationRoute(
-      authorization,
-      'companies',
-      '/access-control/companies',
-    )).toBe(true);
+    expect(canAccessNavigationRoute(authorization, 'companies', '/access-control/companies')).toBe(
+      true,
+    );
     expect(canAccessNavigationRoute(authorization, 'companies', '/access-control')).toBe(false);
   });
 });

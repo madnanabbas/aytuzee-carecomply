@@ -6,11 +6,15 @@ import { APP_ROUTE_METADATA } from './core/navigation/app-navigation';
 
 export const routes: Routes = [
   {
-    path: 'auth',
-    loadChildren: () =>
-      import('./features/auth/auth.routes').then(
-        (module) => module.authRoutes,
+    path: 'client-intake',
+    loadComponent: () =>
+      import('./features/public-client-intake/public-client-intake-page').then(
+        (module) => module.PublicClientIntakePageComponent,
       ),
+  },
+  {
+    path: 'auth',
+    loadChildren: () => import('./features/auth/auth.routes').then((module) => module.authRoutes),
   },
   {
     path: '',

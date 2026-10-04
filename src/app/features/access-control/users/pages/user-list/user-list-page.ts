@@ -44,24 +44,18 @@ export class UserListPageComponent {
   readonly hasFilters = computed(() => {
     const query = this.query();
     return Boolean(
-      query.search
-      || query.roleId
-      || query.status !== 'all'
-      || query.mfaStatus !== 'all'
+      query.search || query.roleId || query.status !== 'all' || query.mfaStatus !== 'all',
     );
   });
 
   readonly Math = Math;
 
   readonly canManageUsers = computed(() =>
-    this.authorization.hasPermission(Permissions.User.Manage)
+    this.authorization.hasPermission(Permissions.User.Manage),
   );
 
   constructor() {
-    combineLatest([
-      this.route.queryParamMap,
-      this.reloadRequested.pipe(startWith(undefined)),
-    ])
+    combineLatest([this.route.queryParamMap, this.reloadRequested.pipe(startWith(undefined))])
       .pipe(
         map(([params]) => this.parseQuery(params)),
         tap((query) => {
@@ -69,13 +63,17 @@ export class UserListPageComponent {
           this.loading.set(true);
           this.loadFailed.set(false);
         }),
-        switchMap((query) => this.api.listUsers(query).pipe(
-          map((response) => ({ response, failed: false })),
-          catchError(() => of({
-            response: null,
-            failed: true,
-          })),
-        )),
+        switchMap((query) =>
+          this.api.listUsers(query).pipe(
+            map((response) => ({ response, failed: false })),
+            catchError(() =>
+              of({
+                response: null,
+                failed: true,
+              }),
+            ),
+          ),
+        ),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((result) => {

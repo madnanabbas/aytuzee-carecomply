@@ -38,7 +38,12 @@ describe('AuthApiService', () => {
     api.getCurrentUser().subscribe();
     const meRequest = http.expectOne('/api/auth/me');
     expect(meRequest.request.method).toBe('GET');
-    meRequest.flush({ id: 'user-id', email: 'user@example.com', displayName: 'User', permissions: [] });
+    meRequest.flush({
+      id: 'user-id',
+      email: 'user@example.com',
+      displayName: 'User',
+      permissions: [],
+    });
 
     api.getCsrfToken().subscribe();
     const csrfRequest = http.expectOne('/api/auth/csrf');

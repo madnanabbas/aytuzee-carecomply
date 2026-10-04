@@ -30,8 +30,15 @@ export class ClientResponsiblePartyApiService {
     return this.http.post<ResponsibleParty>(this.url(clientId), request);
   }
 
-  update(clientId: string, partyId: string, request: SaveResponsibleParty): Observable<ResponsibleParty> {
-    return this.http.put<ResponsibleParty>(`${this.url(clientId)}/${encodeURIComponent(partyId)}`, request);
+  update(
+    clientId: string,
+    partyId: string,
+    request: SaveResponsibleParty,
+  ): Observable<ResponsibleParty> {
+    return this.http.put<ResponsibleParty>(
+      `${this.url(clientId)}/${encodeURIComponent(partyId)}`,
+      request,
+    );
   }
 
   private url(clientId: string): string {

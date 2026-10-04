@@ -21,25 +21,23 @@ describe('NavigationService', () => {
       Permissions.Dashboard.View,
       Permissions.User.View,
     ]);
-    api.getNavigation.mockReturnValue(of([
-      module('administration', 'Administration', 20, [
-        feature('access-management', 'Access Management', '/access-control', 10, [
-          feature('users', 'Users', '/access-control/users', 10),
+    api.getNavigation.mockReturnValue(
+      of([
+        module('administration', 'Administration', 20, [
+          feature('access-management', 'Access Management', '/access-control', 10, [
+            feature('users', 'Users', '/access-control/users', 10),
+          ]),
         ]),
+        module('overview', 'Overview', 10, [feature('dashboard', 'Dashboard', '/dashboard', 10)]),
       ]),
-      module('overview', 'Overview', 10, [
-        feature('dashboard', 'Dashboard', '/dashboard', 10),
-      ]),
-    ]));
+    );
     const navigation = TestBed.inject(NavigationService);
 
     await navigation.loadForSession('user-1');
     await navigation.loadForSession('user-1');
 
     expect(api.getNavigation).toHaveBeenCalledOnce();
-    expect(navigation.groups().map((group) => group.label)).toEqual([
-      'Overview', 'Administration',
-    ]);
+    expect(navigation.groups().map((group) => group.label)).toEqual(['Overview', 'Administration']);
     expect(navigation.groups()[1]?.items[0]?.children[0]?.label).toBe('Users');
     expect(navigation.firstAllowedPath()).toBe('/dashboard');
     expect(navigation.findByUrl('/access-control/users/record')?.label).toBe('Users');
@@ -47,14 +45,16 @@ describe('NavigationService', () => {
 
   it('fails closed for unauthorized, unregistered, and unsafe route metadata', async () => {
     TestBed.inject(AuthorizationService).setPermissions([Permissions.Dashboard.View]);
-    api.getNavigation.mockReturnValue(of([
-      module('overview', 'Overview', 10, [
-        feature('dashboard', 'Dashboard', '/dashboard', 10),
-        feature('clients', 'Clients', '/clients', 20),
-        feature('unknown', 'Unknown', '/unknown', 30),
-        feature('unsafe', 'Unsafe', 'javascript:alert(1)', 40),
+    api.getNavigation.mockReturnValue(
+      of([
+        module('overview', 'Overview', 10, [
+          feature('dashboard', 'Dashboard', '/dashboard', 10),
+          feature('clients', 'Clients', '/clients', 20),
+          feature('unknown', 'Unknown', '/unknown', 30),
+          feature('unsafe', 'Unsafe', 'javascript:alert(1)', 40),
+        ]),
       ]),
-    ]));
+    );
     const navigation = TestBed.inject(NavigationService);
 
     await navigation.loadForSession('user-1');
@@ -64,11 +64,13 @@ describe('NavigationService', () => {
 
   it('renders Companies when the API returns it for a user with Company.View', async () => {
     TestBed.inject(AuthorizationService).setPermissions([Permissions.Company.View]);
-    api.getNavigation.mockReturnValue(of([
-      module('administration', 'Administration', 20, [
-        feature('companies', 'Companies', '/access-control/companies', 5),
+    api.getNavigation.mockReturnValue(
+      of([
+        module('administration', 'Administration', 20, [
+          feature('companies', 'Companies', '/access-control/companies', 5),
+        ]),
       ]),
-    ]));
+    );
     const navigation = TestBed.inject(NavigationService);
 
     await navigation.loadForSession('user-1');
@@ -80,11 +82,9 @@ describe('NavigationService', () => {
   it('refreshes Employees navigation when the same user gains Employee.View', async () => {
     const authorization = TestBed.inject(AuthorizationService);
     authorization.setPermissions([Permissions.Dashboard.View]);
-    api.getNavigation.mockReturnValue(of([
-      module('people', 'People', 20, [
-        feature('employees', 'Employees', '/employees', 10),
-      ]),
-    ]));
+    api.getNavigation.mockReturnValue(
+      of([module('people', 'People', 20, [feature('employees', 'Employees', '/employees', 10)])]),
+    );
     const navigation = TestBed.inject(NavigationService);
 
     await navigation.loadForSession('user-1');

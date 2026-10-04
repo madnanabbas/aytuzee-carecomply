@@ -44,10 +44,12 @@ describe('SidebarComponent', () => {
   });
 
   it('should set aria-current and the restrained indicator on the active route', async () => {
-    groups.set([group('overview', 'Overview', [
-      item('dashboard', 'Dashboard', '/dashboard'),
-      item('employees', 'Employees', '/employees'),
-    ])]);
+    groups.set([
+      group('overview', 'Overview', [
+        item('dashboard', 'Dashboard', '/dashboard'),
+        item('employees', 'Employees', '/employees'),
+      ]),
+    ]);
     const router = TestBed.inject(Router);
     const fixture = TestBed.createComponent(SidebarComponent);
     await router.navigateByUrl('/employees');
@@ -60,7 +62,9 @@ describe('SidebarComponent', () => {
     );
     expect(active?.textContent).toContain('Employees');
     expect(active?.classList.contains('bg-white/15')).toBe(true);
-    expect(active?.querySelector('[aria-hidden="true"]')?.classList.contains('opacity-100')).toBe(true);
+    expect(active?.querySelector('[aria-hidden="true"]')?.classList.contains('opacity-100')).toBe(
+      true,
+    );
   });
 
   it('should focus the mobile close button and close with Escape, overlay, and route selection', async () => {
@@ -81,10 +85,14 @@ describe('SidebarComponent', () => {
   });
 
   it('should preserve nested navigation and collapse behavior', () => {
-    groups.set([group('administration', 'Administration', [{
-      ...item('access-management', 'Access Management', '/access-control'),
-      children: [item('users', 'Users', '/access-control/users')],
-    }])]);
+    groups.set([
+      group('administration', 'Administration', [
+        {
+          ...item('access-management', 'Access Management', '/access-control'),
+          children: [item('users', 'Users', '/access-control/users')],
+        },
+      ]),
+    ]);
     const fixture = TestBed.createComponent(SidebarComponent);
     fixture.detectChanges();
 

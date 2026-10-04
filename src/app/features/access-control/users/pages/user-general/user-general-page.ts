@@ -4,15 +4,19 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { AuthorizationService } from '../../../../../core/authorization/authorization.service';
 import { Permissions } from '../../../../../core/authorization/permissions';
 import { AuthSessionService } from '../../../../../core/auth/auth-session.service';
-import { Company, CompanyService } from '../../../companies/company.service';
-import { CompanyLocation, LocationService } from '../../../companies/location.service';
+import { Company, CompanyLookupService } from '../../../../../core/lookups/company-lookup.service';
+import {
+  CompanyLocation,
+  LocationLookupService,
+} from '../../../../../core/lookups/location-lookup.service';
 import { UserEditorStore } from '../../data-access/user-editor.store';
 import { UserMfaMethod } from '../../models/user-management.models';
+import { UserAccountAccessSectionComponent } from './user-account-access-section';
 
 @Component({
   selector: 'app-user-general-page',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, UserAccountAccessSectionComponent],
   templateUrl: './user-general-page.html',
   styleUrls: ['../../user-density.css'],
 })
@@ -22,11 +26,13 @@ export class UserGeneralPageComponent {
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   readonly session = inject(AuthSessionService);
-  private readonly companyApi = inject(CompanyService);
-  private readonly locationApi = inject(LocationService);
+  private readonly companyApi = inject(CompanyLookupService);
+  private readonly locationApi = inject(LocationLookupService);
   readonly companies = signal<readonly Company[]>([]);
   readonly locations = signal<readonly CompanyLocation[]>([]);
-  readonly isPlatformAdministrator = computed(() => this.session.currentUser()?.isPlatformAdministrator === true);
+  readonly isPlatformAdministrator = computed(
+    () => this.session.currentUser()?.isPlatformAdministrator === true,
+  );
 
   readonly canManage = computed(() => this.authorization.hasPermission(Permissions.User.Manage));
 
@@ -78,15 +84,22 @@ export class UserGeneralPageComponent {
 
   constructor() {
     if (this.isPlatformAdministrator()) {
-      if (this.store.isCreateMode()) this.form.controls.companyId.addValidators(Validators.required);
-      this.companyApi.list().subscribe((companies) => this.companies.set(companies.filter(company => company.isActive)));
+      if (this.store.isCreateMode())
+        this.form.controls.companyId.addValidators(Validators.required);
+      this.companyApi
+        .list()
+        .subscribe((companies) =>
+          this.companies.set(companies.filter((company) => company.isActive)),
+        );
     }
     if (this.store.isCreateMode()) {
       this.form.controls.password.addValidators(Validators.required);
       this.form.controls.password.updateValueAndValidity({ emitEvent: false });
       this.form.reset(this.store.createGeneral(), { emitEvent: false });
       if (!this.isPlatformAdministrator()) {
-        this.form.controls.companyId.setValue(this.session.currentUser()?.companyId ?? '', { emitEvent: false });
+        this.form.controls.companyId.setValue(this.session.currentUser()?.companyId ?? '', {
+          emitEvent: false,
+        });
       }
       this.loadLocations(this.form.controls.companyId.value);
       this.syncCreateDraft();
@@ -207,14 +220,17 @@ export class UserGeneralPageComponent {
 
   toggleLocation(locationId: string, selected: boolean): void {
     const next = new Set(this.form.controls.locationIds.value);
-    if (selected) next.add(locationId); else next.delete(locationId);
+    if (selected) next.add(locationId);
+    else next.delete(locationId);
     this.form.controls.locationIds.setValue([...next]);
     this.form.controls.locationIds.markAsDirty();
   }
 
   selectedLocationsLabel(): string {
     const selected = new Set(this.form.controls.locationIds.value);
-    const names = this.locations().filter(location => selected.has(location.id)).map(location => location.name);
+    const names = this.locations()
+      .filter((location) => selected.has(location.id))
+      .map((location) => location.name);
     return names.length ? names.join(', ') : 'Select locations';
   }
 
@@ -222,8 +238,12 @@ export class UserGeneralPageComponent {
     if (!this.isPlatformAdministrator()) return this.store.roles();
     const companyId = this.form.controls.companyId.value;
     const assignedRoleIds = new Set(this.store.user()?.roles.map((role) => role.id) ?? []);
-    return this.store.roles().filter((role) =>
-      assignedRoleIds.has(role.id) || (companyId !== '' && role.companyId === companyId));
+    return this.store
+      .roles()
+      .filter(
+        (role) =>
+          assignedRoleIds.has(role.id) || (companyId !== '' && role.companyId === companyId),
+      );
   }
 
   changeEditRole(event: Event): void {
@@ -302,14 +322,18 @@ export class UserGeneralPageComponent {
   }
 
   private loadLocations(companyId: string | null | undefined, selected?: readonly string[]): void {
-    if (!companyId) { this.locations.set([]); return; }
-    this.locationApi.list(this.isPlatformAdministrator() ? companyId : null)
+    if (!companyId) {
+      this.locations.set([]);
+      return;
+    }
+    this.locationApi
+      .list(this.isPlatformAdministrator() ? companyId : null)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((locations) => {
         this.locations.set(locations);
         if (selected) this.form.controls.locationIds.setValue([...selected], { emitEvent: false });
         else if (!this.form.controls.locationIds.value.length) {
-          const main = locations.find(location => location.isMain);
+          const main = locations.find((location) => location.isMain);
           if (main) this.form.controls.locationIds.setValue([main.id]);
         }
       });
@@ -317,5 +341,5 @@ export class UserGeneralPageComponent {
 }
 
 function sameIds(left: readonly string[], right: readonly string[]): boolean {
-  return left.length === right.length && left.every(id => right.includes(id));
+  return left.length === right.length && left.every((id) => right.includes(id));
 }

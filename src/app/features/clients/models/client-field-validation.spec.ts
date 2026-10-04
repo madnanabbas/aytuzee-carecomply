@@ -4,6 +4,7 @@ import {
   formatUsPostalCode,
   formatUsSsn,
   isValidPmi,
+  isValidEmail,
   isValidUsPhone,
   isValidUsPostalCode,
   isValidUsSsn,
@@ -16,10 +17,20 @@ describe('client field validation', () => {
     expect(isValidPmi('2459138')).toBe(false);
   });
 
-  it('formats and validates US phone numbers', () => {
+  it('accepts exactly ten US phone digits and rejects country-code or incomplete values', () => {
     expect(formatUsPhone('6125550142')).toBe('(612) 555-0142');
+    expect(formatUsPhone('+1 612 555 0142')).toBe('16125550142');
     expect(isValidUsPhone('(612) 555-0142')).toBe(true);
+    expect(isValidUsPhone('+1 612 555 0142')).toBe(false);
     expect(isValidUsPhone('612-555')).toBe(false);
+    expect(isValidUsPhone('612555014299')).toBe(false);
+  });
+
+  it('validates optional email addresses consistently', () => {
+    expect(isValidEmail('person@example.com')).toBe(true);
+    expect(isValidEmail('not an email')).toBe(false);
+    expect(isValidEmail('')).toBe(true);
+    expect(isValidEmail('', true)).toBe(false);
   });
 
   it('formats and validates ZIP and ZIP+4 values', () => {

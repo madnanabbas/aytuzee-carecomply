@@ -1,0 +1,167 @@
+<div class="fixed inset-0 z-40 bg-black/25" (click)="closeRequested.emit()"></div>
+<aside
+  class="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-border bg-surface shadow-xl"
+>
+  <div class="flex items-start justify-between border-b border-border px-5 py-4">
+    <div>
+      <h2 class="text-section-title text-text-primary">
+        {{ state.mode === 'create' ? 'Add' : 'Edit' }}
+        {{ state.kind === 'module' ? 'module' : 'feature' }}
+      </h2>
+      <p class="mt-1 text-small text-text-secondary">
+        {{
+          state.kind === 'module'
+            ? 'Configure the module used to group
+          related features.'
+            : 'Configure this feature and its navigation metadata.'
+        }}
+      </p>
+    </div>
+    <button
+      type="button"
+      class="rounded-control px-2 py-1 text-text-muted"
+      aria-label="Close"
+      (click)="closeRequested.emit()"
+    >
+      ✕
+    </button>
+  </div>
+  <div class="flex-1 overflow-y-auto p-5">
+    @if (saveError) {
+      <div
+        class="mb-4 rounded-control border border-danger/30 bg-danger/5 px-3 py-2 text-small text-danger"
+      >
+        {{ saveError }}
+      </div>
+    }
+    @if (state.kind === 'module') {
+      <form class="space-y-4" [formGroup]="moduleForm">
+        <div>
+          <label class="block text-label font-medium text-text-primary">Module name *</label
+          ><input
+            formControlName="name"
+            class="mt-1.5 h-control w-full rounded-control border border-border-strong px-3 text-body"
+          />
+        </div>
+        <div>
+          <label class="block text-label font-medium text-text-primary">Key *</label
+          ><input
+            formControlName="key"
+            class="mt-1.5 h-control w-full rounded-control border border-border-strong px-3 text-body"
+          />
+        </div>
+        <div>
+          <label class="block text-label font-medium text-text-primary">Display order</label
+          ><input
+            type="number"
+            formControlName="sortOrder"
+            class="mt-1.5 h-control w-full rounded-control border border-border-strong px-3 text-body"
+          />
+        </div>
+        <label class="flex items-center gap-2 text-small text-text-primary"
+          ><input type="checkbox" formControlName="isActive" class="size-4 accent-primary" />
+          Active</label
+        >
+      </form>
+    } @else {
+      <form class="space-y-4" [formGroup]="featureForm">
+        <div>
+          <label class="block text-label font-medium text-text-primary">Module *</label>
+          <select
+            formControlName="moduleId"
+            class="mt-1.5 h-control w-full rounded-control border border-border-strong bg-surface px-3 text-body"
+            (change)="resetParentFeature()"
+          >
+            @for (module of modules; track module.id) {
+              <option [ngValue]="module.id">{{ module.name }}</option>
+            }
+          </select>
+          <p class="mt-1 text-helper text-text-muted">
+            Changing the module moves this feature and its permission groups together.
+          </p>
+        </div>
+        <div>
+          <label class="block text-label font-medium text-text-primary">Feature name *</label
+          ><input
+            formControlName="name"
+            class="mt-1.5 h-control w-full rounded-control border border-border-strong px-3 text-body"
+          />
+        </div>
+        <div>
+          <label class="block text-label font-medium text-text-primary">Key *</label
+          ><input
+            formControlName="key"
+            class="mt-1.5 h-control w-full rounded-control border border-border-strong px-3 text-body"
+          />
+        </div>
+        <div>
+          <label class="block text-label font-medium text-text-primary">Route *</label
+          ><input
+            formControlName="route"
+            class="mt-1.5 h-control w-full rounded-control border border-border-strong px-3 text-body"
+            placeholder="/feature-route"
+          />
+        </div>
+        <div>
+          <label class="block text-label font-medium text-text-primary">Parent feature</label
+          ><select
+            formControlName="parentFeatureId"
+            class="mt-1.5 h-control w-full rounded-control border border-border-strong px-3 text-body"
+          >
+            <option [ngValue]="null">None</option>
+            @for (parent of featureModule?.features ?? []; track parent.id) {
+              @if (parent.id !== state.feature?.id) {
+                <option [ngValue]="parent.id">{{ parent.name }}</option>
+              }
+            }
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-label font-medium text-text-primary">Icon key *</label
+            ><input
+              formControlName="iconKey"
+              class="mt-1.5 h-control w-full rounded-control border border-border-strong px-3 text-body"
+            />
+          </div>
+          <div>
+            <label class="block text-label font-medium text-text-primary">Display order</label
+            ><input
+              type="number"
+              formControlName="sortOrder"
+              class="mt-1.5 h-control w-full rounded-control border border-border-strong px-3 text-body"
+            />
+          </div>
+        </div>
+        <label class="flex items-center gap-2 text-small text-text-primary"
+          ><input type="checkbox" formControlName="isActive" class="size-4 accent-primary" />
+          Active</label
+        >
+      </form>
+    }
+  </div>
+  <footer class="flex justify-end gap-2 border-t border-border bg-surface px-5 py-4">
+    <button
+      type="button"
+      class="h-control rounded-control border border-border-strong bg-surface px-4 text-button font-medium text-text-secondary"
+      [disabled]="saving"
+      (click)="closeRequested.emit()"
+    >
+      Cancel</button
+    ><button
+      type="button"
+      class="h-control rounded-control bg-primary px-4 text-button font-semibold text-on-primary disabled:opacity-60"
+      [disabled]="saving"
+      (click)="saveRequested.emit()"
+    >
+      {{
+        saving
+          ? 'Saving…'
+          : state.mode === 'create'
+            ? 'Add'
+            : 'Save
+        changes'
+      }}
+    </button>
+  </footer>
+</aside>

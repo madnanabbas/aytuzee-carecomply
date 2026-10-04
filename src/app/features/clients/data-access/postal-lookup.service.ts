@@ -32,11 +32,14 @@ export class PostalLookupService {
   private readonly baseUrl = inject(POSTAL_LOOKUP_BASE_URL);
 
   lookupPostalCode(countryCode: string, postalCode: string): Observable<PostalAddressMatch | null> {
-    const normalizedPostalCode = countryCode.toUpperCase() === 'US'
-      ? postalCode.replace(/\D/g, '').slice(0, 5)
-      : postalCode.trim();
+    const normalizedPostalCode =
+      countryCode.toUpperCase() === 'US'
+        ? postalCode.replace(/\D/g, '').slice(0, 5)
+        : postalCode.trim();
     return this.http
-      .get<ZippopotamResponse>(`${this.baseUrl}/${encodeURIComponent(countryCode.toLowerCase())}/${encodeURIComponent(normalizedPostalCode)}`)
+      .get<ZippopotamResponse>(
+        `${this.baseUrl}/${encodeURIComponent(countryCode.toLowerCase())}/${encodeURIComponent(normalizedPostalCode)}`,
+      )
       .pipe(map((response) => mapPostalResponse(response)));
   }
 }
@@ -50,5 +53,7 @@ function mapPostalResponse(response: ZippopotamResponse): PostalAddressMatch | n
   const country = response.country?.trim();
   const countryCode = response['country abbreviation']?.trim().toUpperCase();
   const area = (place.county || place.district || place.region)?.trim() || null;
-  return city && state && country && countryCode ? { city, state, country, countryCode, area } : null;
+  return city && state && country && countryCode
+    ? { city, state, country, countryCode, area }
+    : null;
 }

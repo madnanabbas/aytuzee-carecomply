@@ -69,15 +69,11 @@
        ===================================================== -->
   <div class="mt-4 space-y-3">
     @for (module of filteredModules(); track module.id) {
-      <section
-        class="overflow-hidden rounded-control border border-border bg-surface"
-      >
+      <section class="overflow-hidden rounded-control border border-border bg-surface">
         <!-- ===============================================
              CLICKABLE ACCORDION HEADER
              =============================================== -->
-        <div
-          class="flex min-h-12 items-center justify-between gap-4 bg-surface-muted/65 px-4"
-        >
+        <div class="flex min-h-12 items-center justify-between gap-4 bg-surface-muted/65 px-4">
           <button
             type="button"
             class="flex min-w-0 flex-1 items-center gap-3 py-3 text-left focus-visible:outline-none"
@@ -103,12 +99,9 @@
             </span>
 
             <div class="min-w-0">
-              <span
-                class="block text-label font-semibold text-text-primary"
-              >
+              <span class="block text-label font-semibold text-text-primary">
                 {{ module.name }}
               </span>
-
             </div>
           </button>
 
@@ -135,23 +128,13 @@
           <div class="border-t border-border">
             <!-- Desktop heading -->
 
-            @for (
-              feature of module.features;
-              track feature.id;
-              let last = $last
-            ) {
-              <div
-                class="px-4 py-3"
-                [class.border-b]="!last"
-                [class.border-border]="!last"
-              >
+            @for (feature of module.features; track feature.id; let last = $last) {
+              <div class="px-4 py-3" [class.border-b]="!last" [class.border-border]="!last">
                 <!-- =======================================
                      FEATURE
                      ======================================= -->
                 <div class="mb-3">
-                  <label
-                    class="inline-flex cursor-pointer items-center gap-2.5"
-                  >
+                  <label class="inline-flex cursor-pointer items-center gap-2.5">
                     <input
                       type="checkbox"
                       class="size-4 shrink-0 accent-primary"
@@ -160,9 +143,7 @@
                       (change)="toggleFeature(feature)"
                     />
 
-                    <span
-                      class="text-small font-semibold text-text-primary"
-                    >
+                    <span class="text-small font-semibold text-text-primary">
                       {{ feature.name }}
                     </span>
                   </label>
@@ -172,24 +153,41 @@
                      PERMISSIONS
                      ======================================= -->
                 <div class="overflow-hidden rounded-control border border-border bg-surface">
-                  <div class="hidden grid-cols-[minmax(12rem,16rem)_minmax(0,1fr)] border-b border-border bg-surface-muted/70 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-text-secondary md:grid">
+                  <div
+                    class="hidden grid-cols-[minmax(12rem,16rem)_minmax(0,1fr)] border-b border-border bg-surface-muted/70 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-text-secondary md:grid"
+                  >
                     <span>Resource</span><span>Allowed actions</span>
                   </div>
                   <div class="divide-y divide-border">
                     @for (group of permissionGroups(feature); track group.key) {
-                      <div class="grid gap-3 px-3 py-2.5 transition-colors hover:bg-surface-muted/35 md:grid-cols-[minmax(12rem,16rem)_minmax(0,1fr)] md:items-center">
+                      <div
+                        class="grid gap-3 px-3 py-2.5 transition-colors hover:bg-surface-muted/35 md:grid-cols-[minmax(12rem,16rem)_minmax(0,1fr)] md:items-center"
+                      >
                         <label class="flex cursor-pointer items-center gap-2.5">
-                          <input type="checkbox" class="size-4 shrink-0 accent-primary"
-                            [checked]="groupSelected(group)" [disabled]="disabled()" (change)="toggleGroup(group)" />
-                          <span class="text-small font-semibold text-text-primary">{{ group.name }}</span>
+                          <input
+                            type="checkbox"
+                            class="size-4 shrink-0 accent-primary"
+                            [checked]="groupSelected(group)"
+                            [disabled]="disabled()"
+                            (change)="toggleGroup(group)"
+                          />
+                          <span class="text-small font-semibold text-text-primary">{{
+                            group.name
+                          }}</span>
                         </label>
                         <div class="flex flex-wrap items-center gap-x-7 gap-y-2">
                           @for (permission of group.permissions; track permission.id) {
                             <label class="flex min-w-[7rem] cursor-pointer items-center gap-2">
-                              <input type="checkbox" class="size-4 shrink-0 accent-primary"
+                              <input
+                                type="checkbox"
+                                class="size-4 shrink-0 accent-primary"
                                 [checked]="selectedPermissionIds().has(permission.id)"
-                                [disabled]="disabled()" (change)="togglePermission(permission.id)" />
-                              <span class="text-small font-medium text-text-primary">{{ permission.action }}</span>
+                                [disabled]="disabled()"
+                                (change)="togglePermission(permission.id)"
+                              />
+                              <span class="text-small font-medium text-text-primary">{{
+                                permission.action
+                              }}</span>
                             </label>
                           }
                         </div>
@@ -207,16 +205,10 @@
         }
       </section>
     } @empty {
-      <div
-        class="rounded-control border border-border bg-surface px-6 py-10 text-center"
-      >
-        <p class="text-label font-semibold text-text-primary">
-          No permissions found
-        </p>
+      <div class="rounded-control border border-border bg-surface px-6 py-10 text-center">
+        <p class="text-label font-semibold text-text-primary">No permissions found</p>
 
-        <p class="mt-1 text-small text-text-secondary">
-          Try another search.
-        </p>
+        <p class="mt-1 text-small text-text-secondary">Try another search.</p>
       </div>
     }
   </div>

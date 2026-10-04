@@ -31,8 +31,15 @@ export class ClientContactsApiService {
     return this.http.post<ClientContact>(this.url(clientId), request);
   }
 
-  update(clientId: string, contactId: string, request: SaveClientContact): Observable<ClientContact> {
-    return this.http.put<ClientContact>(`${this.url(clientId)}/${encodeURIComponent(contactId)}`, request);
+  update(
+    clientId: string,
+    contactId: string,
+    request: SaveClientContact,
+  ): Observable<ClientContact> {
+    return this.http.put<ClientContact>(
+      `${this.url(clientId)}/${encodeURIComponent(contactId)}`,
+      request,
+    );
   }
 
   private url(clientId: string): string {

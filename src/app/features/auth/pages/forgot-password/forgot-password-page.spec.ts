@@ -13,10 +13,7 @@ describe('ForgotPasswordPageComponent', () => {
     api = new AuthApiStub();
     await TestBed.configureTestingModule({
       imports: [ForgotPasswordPageComponent],
-      providers: [
-        provideRouter([]),
-        { provide: AuthApiService, useValue: api },
-      ],
+      providers: [provideRouter([]), { provide: AuthApiService, useValue: api }],
     }).compileComponents();
     fixture = TestBed.createComponent(ForgotPasswordPageComponent);
     fixture.detectChanges();

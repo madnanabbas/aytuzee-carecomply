@@ -12,8 +12,16 @@
     </div>
   } @else if (!isCreateMode && !store.user()) {
     <div class="rounded-card border border-danger bg-surface p-card">
-      <h1 id="user-editor-title" class="text-section-title text-text-primary">Unable to load user</h1>
-      <button type="button" class="mt-4 h-control rounded-control bg-primary px-4 text-button text-on-primary" (click)="store.load(userId)">Try again</button>
+      <h1 id="user-editor-title" class="text-section-title text-text-primary">
+        Unable to load user
+      </h1>
+      <button
+        type="button"
+        class="mt-4 h-control rounded-control bg-primary px-4 text-button text-on-primary"
+        (click)="store.load(userId)"
+      >
+        Try again
+      </button>
     </div>
   } @else {
     <header class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -22,24 +30,52 @@
           {{ isCreateMode ? 'Add User' : store.user()!.displayName }}
         </h1>
         <p class="mt-1 text-body text-text-secondary">
-          {{ isCreateMode ? 'Create a new CareComply user and assign their system access.' : store.user()!.email }}
+          {{
+            isCreateMode
+              ? 'Create a new CareComply user and assign their system access.'
+              : store.user()!.email
+          }}
         </p>
       </div>
       @if (!isCreateMode) {
-        <span class="w-fit rounded-status px-2.5 py-1 text-label text-on-primary" [class.bg-active]="store.user()!.isActive" [class.bg-inactive]="!store.user()!.isActive">
+        <span
+          class="w-fit rounded-status px-2.5 py-1 text-label text-on-primary"
+          [class.bg-active]="store.user()!.isActive"
+          [class.bg-inactive]="!store.user()!.isActive"
+        >
           {{ store.user()!.isActive ? 'Active' : 'Inactive' }}
         </span>
       }
     </header>
 
     @if (isCreateMode && store.error() === 'duplicateEmail') {
-      <p class="rounded-control border border-warning bg-surface-muted p-3 text-small text-text-primary" role="alert">That email address is already in use.</p>
+      <p
+        class="rounded-control border border-warning bg-surface-muted p-3 text-small text-text-primary"
+        role="alert"
+      >
+        That email address is already in use.
+      </p>
     } @else if (isCreateMode && store.error() === 'invalidGeneral') {
-      <p class="rounded-control border border-warning bg-surface-muted p-3 text-small text-text-primary" role="alert">Complete the required General fields before creating the user.</p>
+      <p
+        class="rounded-control border border-warning bg-surface-muted p-3 text-small text-text-primary"
+        role="alert"
+      >
+        Complete the required General fields before creating the user.
+      </p>
     } @else if (isCreateMode && store.error() === 'invalidRoles') {
-      <p class="rounded-control border border-warning bg-surface-muted p-3 text-small text-text-primary" role="alert">Select at least one available role before creating the user.</p>
+      <p
+        class="rounded-control border border-warning bg-surface-muted p-3 text-small text-text-primary"
+        role="alert"
+      >
+        Select at least one available role before creating the user.
+      </p>
     } @else if (isCreateMode && store.error() === 'failed') {
-      <p class="rounded-control border border-danger bg-surface-muted p-3 text-small text-text-primary" role="alert">The user could not be created. Try again or reload role information.</p>
+      <p
+        class="rounded-control border border-danger bg-surface-muted p-3 text-small text-text-primary"
+        role="alert"
+      >
+        The user could not be created. Try again or reload role information.
+      </p>
     }
 
     <div class="rounded-card border border-border bg-surface">
@@ -47,7 +83,11 @@
 
       @if (isCreateMode) {
         <footer class="flex flex-wrap justify-end gap-3 border-t border-border px-card py-4">
-          <a routerLink="/access-control/users" class="inline-flex h-control items-center rounded-control border border-border px-4 text-button text-text-secondary hover:bg-surface-muted">Cancel</a>
+          <a
+            routerLink="/access-control/users"
+            class="inline-flex h-control items-center rounded-control border border-border px-4 text-button text-text-secondary hover:bg-surface-muted"
+            >Cancel</a
+          >
           <button
             type="button"
             class="h-control rounded-control bg-primary px-5 text-button font-semibold text-on-primary hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"

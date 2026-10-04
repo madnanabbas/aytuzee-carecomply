@@ -111,6 +111,75 @@ export interface CreateClientRequest {
   readonly languages: readonly ClientLanguageInput[];
 }
 
+export interface CreateClientBasicDetailsRequest {
+  readonly identity: CreateClientRequest['identity'];
+  readonly careSetup: CreateClientRequest['careSetup'];
+  readonly insuranceProvider: string | null;
+  readonly services: readonly Pick<ClientServiceInput, 'code' | 'name'>[];
+}
+
+export interface UpdateClientBasicDetailsRequest extends CreateClientBasicDetailsRequest {
+  readonly editorVersion: string;
+}
+
+export interface UpdateClientAdditionalInformationRequest {
+  readonly additionalProfile: ClientAdditionalProfileRequest;
+  readonly editorVersion: string;
+}
+
+export interface UpdateClientContactInformationRequest {
+  readonly email: string | null;
+  readonly primaryPhone: string | null;
+  readonly secondaryPhone: string | null;
+  readonly addressLine1: string | null;
+  readonly addressLine2: string | null;
+  readonly city: string | null;
+  readonly state: string | null;
+  readonly postalCode: string | null;
+  readonly county: string | null;
+  readonly country: string | null;
+  readonly preferredLanguages: readonly ClientLanguageInput[];
+  readonly editorVersion: string;
+}
+
+export interface ClientMutationResponse {
+  readonly id: string;
+  readonly editorVersion: string;
+}
+
+export interface CompleteClientCreationResponse {
+  readonly id: string;
+  readonly status: 'Active';
+  readonly editorVersion: string;
+}
+
+export interface ClientCreationStateApiResponse {
+  readonly id: string;
+  readonly status: string;
+  readonly currentStep: number;
+  readonly editorVersion: string;
+  readonly identity: ClientDetailsApiResponse['identity'];
+  readonly contact: ClientDetailsApiResponse['contact'];
+  readonly careSetup: ClientDetailsApiResponse['careSetup'];
+  readonly additionalProfile: ClientDetailsApiResponse['additionalProfile'];
+  readonly services: ClientDetailsApiResponse['services'];
+  readonly languages: ClientDetailsApiResponse['languages'];
+}
+
+export interface ClientCreationState {
+  readonly id: string;
+  readonly status: string;
+  readonly currentStep: number;
+  readonly editorVersion: string;
+  readonly client: ClientDetails;
+}
+
+export interface ClientCreationProgressResponse {
+  readonly id: string;
+  readonly currentStep: number;
+  readonly editorVersion: string;
+}
+
 export interface LegacyClientWriteRequest {
   readonly firstName: string;
   readonly middleName: string | null;
@@ -150,10 +219,13 @@ export interface LegacyClientWriteRequest {
 
 export interface CreateClientResponse {
   readonly id: string;
-  readonly editorVersion?: string;
+  readonly editorVersion: string;
 }
 
-export interface UpdateClientRequest extends Omit<CreateClientRequest, 'initialStatus' | 'dischargeDate' | 'dischargeReason'> {
+export interface UpdateClientRequest extends Omit<
+  CreateClientRequest,
+  'initialStatus' | 'dischargeDate' | 'dischargeReason'
+> {
   readonly editorVersion: string;
   readonly serviceChangeEffectiveDate: string | null;
 }
@@ -354,3 +426,21 @@ export const DEFAULT_CLIENT_LIST_QUERY: ClientListQuery = {
   pageNumber: 1,
   pageSize: 25,
 };
+export interface CreateClientGuestInvitationRequest {
+  readonly clientName: string;
+  readonly email: string;
+  readonly mobileNumber: string | null;
+  readonly companyId?: string;
+}
+
+export interface CreateClientGuestInvitationResponse {
+  readonly invitationId: string;
+  readonly guestLink: string;
+  readonly expiresAtUtc: string;
+}
+
+export interface SendClientGuestInvitationResponse {
+  readonly invitationId: string;
+  readonly sentAtUtc: string;
+  readonly expiresAtUtc: string;
+}

@@ -32,9 +32,11 @@ describe('permissionGuard', () => {
   it('should allow access when any typed permission requirement is present', () => {
     authorization.setPermissions([Permissions.EmployeeDocument.View]);
 
-    expect(runGuard({
-      permissions: [Permissions.ClientDocument.View, Permissions.EmployeeDocument.View],
-    })).toBe(true);
+    expect(
+      runGuard({
+        permissions: [Permissions.ClientDocument.View, Permissions.EmployeeDocument.View],
+      }),
+    ).toBe(true);
   });
 
   it('should return a forbidden UrlTree for unauthorized access', () => {

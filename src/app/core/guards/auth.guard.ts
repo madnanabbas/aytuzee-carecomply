@@ -17,7 +17,5 @@ export const anonymousOnlyGuard: CanActivateFn = async () => {
   const router = inject(Router);
 
   await session.initialize();
-  return session.isAuthenticated()
-    ? router.parseUrl(landing.firstAllowedPath())
-    : true;
+  return session.isAuthenticated() ? router.parseUrl(landing.firstAllowedPath()) : true;
 };

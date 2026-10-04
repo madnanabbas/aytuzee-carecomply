@@ -26,6 +26,17 @@ export const clientsRoutes: Routes = [
       ),
   },
   {
+    path: 'new/:clientId',
+    canActivate: [permissionGuard],
+    data: {
+      permissions: [Permissions.Client.Edit],
+    } satisfies PermissionRouteData,
+    loadComponent: () =>
+      import('./pages/client-create/client-create-page').then(
+        (component) => component.ClientCreatePageComponent,
+      ),
+  },
+  {
     path: ':clientId/edit',
     canActivate: [permissionGuard],
     data: {

@@ -17,9 +17,7 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   // Staging currently hosts Angular and the API on different sites, so every API request
   // must opt in to browser credentials. The backend cookie itself is configured as
   // Secure + SameSite=None for this cross-site staging flow.
-  let preparedRequest = isApiRequest
-    ? request.clone({ withCredentials: true })
-    : request;
+  let preparedRequest = isApiRequest ? request.clone({ withCredentials: true }) : request;
 
   if (isApiRequest && !SAFE_METHODS.has(request.method.toUpperCase()) && csrfToken) {
     preparedRequest = preparedRequest.clone({
@@ -47,7 +45,5 @@ function isLocallyHandledAuthEndpoint(url: string, apiBaseUrl: string): boolean 
     return true;
   }
 
-  return LOCALLY_HANDLED_AUTH_ENDPOINTS.some(
-    (endpoint) => url === `${apiBaseUrl}${endpoint}`,
-  );
+  return LOCALLY_HANDLED_AUTH_ENDPOINTS.some((endpoint) => url === `${apiBaseUrl}${endpoint}`);
 }

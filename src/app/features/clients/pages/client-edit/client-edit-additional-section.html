@@ -1,0 +1,196 @@
+<section class="form-section">
+  <header>
+    <h2>Program & demographics</h2>
+    <p>Additional program and client profile information.</p>
+  </header>
+  <div class="form-grid">
+    <label
+      ><span class="form-label">Program type</span
+      ><select class="form-control" [(ngModel)]="model.programType">
+        <option value="">None</option>
+        <option>PCA Traditional</option>
+        <option>PCA Choice</option>
+        <option>245D</option>
+        <option>CFSS Agency</option>
+        <option>CFSS Budget</option>
+      </select></label
+    >
+    <label
+      ><span class="form-label">Home care rating</span
+      ><input class="form-control" [(ngModel)]="model.homeCareRatingStatus"
+    /></label>
+    <label
+      ><span class="form-label">Medical equipment</span
+      ><input class="form-control" [(ngModel)]="model.medicalEquipment"
+    /></label>
+    <label
+      ><span class="form-label">PCA complexity</span
+      ><input class="form-control" [(ngModel)]="model.pcaComplexity"
+    /></label>
+    <label
+      ><span class="form-label">Marital status</span
+      ><input class="form-control" [(ngModel)]="model.maritalStatus"
+    /></label>
+    <label
+      ><span class="form-label">Ethnicity</span
+      ><input class="form-control" [(ngModel)]="model.ethnicity"
+    /></label>
+    <label
+      ><span class="form-label">Race</span><input class="form-control" [(ngModel)]="model.race"
+    /></label>
+    <label
+      ><span class="form-label">Smoking</span
+      ><select class="form-control" [(ngModel)]="model.smoking">
+        <option value="">Unknown</option>
+        <option>No</option>
+        <option>Yes</option>
+      </select></label
+    >
+    <label
+      ><span class="form-label">US Military Veteran</span
+      ><select class="form-control" [(ngModel)]="model.veteran">
+        <option value="">Unknown</option>
+        <option>No</option>
+        <option>Yes</option>
+      </select></label
+    >
+    @if (model.veteran === 'Yes') {
+      <label class="xl:col-span-2"
+        ><span class="form-label">Veteran details</span
+        ><input class="form-control" [(ngModel)]="model.veteranDetails"
+      /></label>
+    }
+    <label
+      ><span class="form-label">Pets</span
+      ><select class="form-control" [(ngModel)]="model.pets">
+        <option value="">Unknown</option>
+        <option>No</option>
+        <option>Yes</option>
+      </select></label
+    >
+    @if (model.pets === 'Yes') {
+      <label class="xl:col-span-2"
+        ><span class="form-label">Pet details</span
+        ><input class="form-control" [(ngModel)]="model.petsDetails"
+      /></label>
+    }
+    <label
+      ><span class="form-label">Living arrangement</span
+      ><input class="form-control" [(ngModel)]="model.livingArrangement"
+    /></label>
+    <label class="xl:col-span-2"
+      ><span class="form-label">Living arrangement details</span
+      ><input class="form-control" [(ngModel)]="model.livingArrangementDetails"
+    /></label>
+    <label
+      ><span class="form-label">Caregiver preference</span
+      ><input class="form-control" [(ngModel)]="model.caregiverPreference"
+    /></label>
+  </div>
+</section>
+
+<section class="form-section">
+  <header>
+    <h2>Referral information</h2>
+    <p>Original referral context and referring organization.</p>
+  </header>
+  <div class="form-grid">
+    <label class="flex items-center gap-2 pt-5 text-[11px] text-text-secondary"
+      ><input type="checkbox" [(ngModel)]="model.referringClient" />Referred by another
+      client</label
+    >
+    @if (model.referringClient) {
+      <label
+        ><span class="form-label">Referring client</span
+        ><input class="form-control" [(ngModel)]="model.referringClientName"
+      /></label>
+    }
+    <label
+      ><span class="form-label">Company name</span
+      ><input class="form-control" [(ngModel)]="model.companyName"
+    /></label>
+    <label
+      ><span class="form-label">Company phone</span
+      ><input
+        class="form-control"
+        [ngModel]="model.companyPhone"
+        (ngModelChange)="normalizePhone('companyPhone', $event)"
+        maxlength="14"
+        inputmode="tel"
+    /></label>
+  </div>
+</section>
+
+<section class="form-section">
+  <header>
+    <h2>Provider references</h2>
+    <p>
+      Core stores preferred provider names. Detailed provider contacts will be handled as related
+      contacts.
+    </p>
+  </header>
+  <div class="form-grid">
+    <label
+      ><span class="form-label">Clinic name</span
+      ><input class="form-control" [(ngModel)]="model.clinicName"
+    /></label>
+    <label
+      ><span class="form-label">Preferred hospital</span
+      ><input class="form-control" [(ngModel)]="model.hospitalName"
+    /></label>
+    <label
+      ><span class="form-label">Ambulance company</span
+      ><input class="form-control" [(ngModel)]="model.ambulanceName"
+    /></label>
+  </div>
+</section>
+
+<section class="form-section">
+  <header>
+    <h2>Nutrition & notes</h2>
+    <p>Additional care preferences and contextual information.</p>
+  </header>
+  <div class="form-grid">
+    <label class="xl:col-span-2"
+      ><span class="form-label">Nutritional requirements</span
+      ><input class="form-control" [(ngModel)]="model.nutritionalRequirements"
+    /></label>
+    <div class="xl:col-span-4">
+      <span class="form-label">Current diet</span>
+      <div class="choice-row">
+        @for (value of dietOptions; track value) {
+          <label
+            ><input
+              type="checkbox"
+              [checked]="model.diet.includes(value)"
+              (change)="toggleArray('diet', value, $event)"
+            />{{ value }}</label
+          >
+        }
+      </div>
+    </div>
+    <label
+      ><span class="form-label">Breakfast time</span
+      ><input class="form-control" type="time" [(ngModel)]="model.breakfastTime"
+    /></label>
+    <label
+      ><span class="form-label">Lunch time</span
+      ><input class="form-control" type="time" [(ngModel)]="model.lunchTime"
+    /></label>
+    <label
+      ><span class="form-label">Dinner time</span
+      ><input class="form-control" type="time" [(ngModel)]="model.dinnerTime"
+    /></label>
+    <label class="xl:col-span-4"
+      ><span class="form-label">Notes</span
+      ><textarea class="form-control min-h-[90px] py-2" [(ngModel)]="model.notes"></textarea>
+    </label>
+    <label class="xl:col-span-4"
+      ><span class="form-label">Additional information</span
+      ><textarea
+        class="form-control min-h-[90px] py-2"
+        [(ngModel)]="model.additionalInformation"
+      ></textarea>
+    </label>
+  </div>
+</section>

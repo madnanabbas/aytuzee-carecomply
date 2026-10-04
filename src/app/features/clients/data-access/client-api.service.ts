@@ -4,13 +4,25 @@ import { map, Observable } from 'rxjs';
 import { API_BASE_URL } from '../../../core/config/app-config';
 import {
   ChangeClientStatusRequest,
+  ClientMutationResponse,
   ClientDetails,
   ClientDetailsApiResponse,
   ClientListQuery,
   ClientListResponse,
+  ClientCreationProgressResponse,
+  ClientCreationState,
+  ClientCreationStateApiResponse,
+  CompleteClientCreationResponse,
+  CreateClientGuestInvitationRequest,
+  CreateClientGuestInvitationResponse,
   CreateClientRequest,
+  CreateClientBasicDetailsRequest,
   CreateClientResponse,
   UpdateClientRequest,
+  UpdateClientBasicDetailsRequest,
+  UpdateClientAdditionalInformationRequest,
+  UpdateClientContactInformationRequest,
+  SendClientGuestInvitationResponse,
 } from '../models/client-api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -18,9 +30,13 @@ export class ClientApiService {
   private readonly http = inject(HttpClient);
   private readonly apiBaseUrl = inject(API_BASE_URL);
 
-  supervisorCandidates(locationId: string): Observable<readonly { id: string; name: string; jobTitle: string }[]> {
+  supervisorCandidates(
+    locationId: string,
+  ): Observable<readonly { id: string; name: string; jobTitle: string }[]> {
     return this.http.get<readonly { id: string; name: string; jobTitle: string }[]>(
-      `${this.clientsUrl()}/supervisor-candidates`, { params: new HttpParams().set('locationId', locationId) });
+      `${this.clientsUrl()}/supervisor-candidates`,
+      { params: new HttpParams().set('locationId', locationId) },
+    );
   }
 
   listClients(query: ClientListQuery): Observable<ClientListResponse> {
@@ -41,7 +57,8 @@ export class ClientApiService {
   }
 
   getClient(clientId: string): Observable<ClientDetails> {
-    return this.http.get<ClientDetailsApiResponse>(`${this.clientsUrl()}/${encodeURIComponent(clientId)}`)
+    return this.http
+      .get<ClientDetailsApiResponse>(`${this.clientsUrl()}/${encodeURIComponent(clientId)}`)
       .pipe(map(mapClientDetails));
   }
 
@@ -55,21 +72,129 @@ export class ClientApiService {
     return this.http.post<CreateClientResponse>(this.clientsUrl(), request);
   }
 
-  updateClient(clientId: string, request: UpdateClientRequest): Observable<ClientDetails> {
-    return this.http.put<ClientDetailsApiResponse>(
-      `${this.clientsUrl()}/${encodeURIComponent(clientId)}`,
-      request,
-    ).pipe(map(mapClientDetails));
+  createClientBasicDetails(
+    request: CreateClientBasicDetailsRequest,
+  ): Observable<CreateClientResponse> {
+    return this.http.post<CreateClientResponse>(`${this.clientsUrl()}/basic-details`, request);
   }
 
-  changeStatus(
+  updateClientBasicDetails(
     clientId: string,
-    request: ChangeClientStatusRequest,
-  ): Observable<ClientDetails> {
-    return this.http.put<ClientDetailsApiResponse>(
-      `${this.clientsUrl()}/${encodeURIComponent(clientId)}/status`,
+    request: UpdateClientBasicDetailsRequest,
+  ): Observable<ClientMutationResponse> {
+    return this.http.put<ClientMutationResponse>(
+      `${this.clientsUrl()}/${encodeURIComponent(clientId)}/basic-details`,
       request,
-    ).pipe(map(mapClientDetails));
+    );
+  }
+
+  updateClientAdditionalInformation(
+    clientId: string,
+    request: UpdateClientAdditionalInformationRequest,
+  ): Observable<ClientMutationResponse> {
+    return this.http.put<ClientMutationResponse>(
+      `${this.clientsUrl()}/${encodeURIComponent(clientId)}/additional-information`,
+      request,
+    );
+  }
+
+  updateClientContactInformation(
+    clientId: string,
+    request: UpdateClientContactInformationRequest,
+  ): Observable<ClientMutationResponse> {
+    return this.http.put<ClientMutationResponse>(
+      `${this.clientsUrl()}/${encodeURIComponent(clientId)}/contact-information`,
+      request,
+    );
+  }
+
+  completeClientCreation(
+    clientId: string,
+    editorVersion: string,
+  ): Observable<CompleteClientCreationResponse> {
+    return this.http.post<CompleteClientCreationResponse>(
+      `${this.clientsUrl()}/${encodeURIComponent(clientId)}/complete-creation`,
+      { editorVersion },
+    );
+  }
+
+  getClientCreationState(clientId: string): Observable<ClientCreationState> {
+    return this.http
+      .get<ClientCreationStateApiResponse>(
+        `${this.clientsUrl()}/${encodeURIComponent(clientId)}/creation-state`,
+      )
+      .pipe(
+        map((response) => ({
+          id: response.id,
+          status: response.status,
+          currentStep: response.currentStep,
+          editorVersion: response.editorVersion,
+          client: mapClientDetails({
+            id: response.id,
+            editorVersion: response.editorVersion,
+            identity: response.identity,
+            contact: response.contact,
+            careSetup: response.careSetup,
+            additionalProfile: response.additionalProfile,
+            services: response.services,
+            languages: response.languages,
+            safety: {
+              safetyMeasures: '',
+              specialEquipment: '',
+              allergies: '',
+              otherServices: '',
+            },
+          }),
+        })),
+      );
+  }
+
+  advanceClientCreationProgress(
+    clientId: string,
+    step: number,
+    editorVersion: string,
+  ): Observable<ClientCreationProgressResponse> {
+    return this.http.post<ClientCreationProgressResponse>(
+      `${this.clientsUrl()}/${encodeURIComponent(clientId)}/creation-progress`,
+      { step, editorVersion },
+    );
+  }
+
+  updateClient(clientId: string, request: UpdateClientRequest): Observable<ClientDetails> {
+    return this.http
+      .put<ClientDetailsApiResponse>(
+        `${this.clientsUrl()}/${encodeURIComponent(clientId)}`,
+        request,
+      )
+      .pipe(map(mapClientDetails));
+  }
+
+  changeStatus(clientId: string, request: ChangeClientStatusRequest): Observable<ClientDetails> {
+    return this.http
+      .put<ClientDetailsApiResponse>(
+        `${this.clientsUrl()}/${encodeURIComponent(clientId)}/status`,
+        request,
+      )
+      .pipe(map(mapClientDetails));
+  }
+
+  createGuestInvitation(
+    request: CreateClientGuestInvitationRequest,
+  ): Observable<CreateClientGuestInvitationResponse> {
+    return this.http.post<CreateClientGuestInvitationResponse>(
+      `${this.clientsUrl()}/guest-invitations`,
+      request,
+    );
+  }
+
+  sendGuestInvitation(
+    invitationId: string,
+    token: string,
+  ): Observable<SendClientGuestInvitationResponse> {
+    return this.http.post<SendClientGuestInvitationResponse>(
+      `${this.clientsUrl()}/guest-invitations/${encodeURIComponent(invitationId)}/send`,
+      { token },
+    );
   }
 
   private clientsUrl(): string {

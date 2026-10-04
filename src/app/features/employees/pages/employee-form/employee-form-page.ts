@@ -4,18 +4,18 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, forkJoin, of } from 'rxjs';
 import { AuthSessionService } from '../../../../core/auth/auth-session.service';
-import { Company, CompanyService } from '../../../access-control/companies/company.service';
+import { Company, CompanyLookupService } from '../../../../core/lookups/company-lookup.service';
 import {
   CompanyLocation,
-  LocationService,
-} from '../../../access-control/companies/location.service';
+  LocationLookupService,
+} from '../../../../core/lookups/location-lookup.service';
 import {
   formatContactPhone,
-  isValidContactEmail,
   isValidContactPhone,
-} from '../../../clients/models/contact-input-formatting';
+} from '../../../../shared/formatting/contact-input-formatting';
+import { employeeDtoToForm } from '../../models/employee-form.mapper';
+import { validateEmployeeStep } from '../../models/employee-form.validators';
 import {
-  EmployeeApiService,
   EmployeeBackgroundCheck,
   EmployeeBackgroundInformation,
   EmployeeContact,
@@ -24,13 +24,40 @@ import {
   EmployeePayerAffiliation,
   EmployeeTrainingInformation,
   EmployeeTrainingSkill,
+  emptyBackgroundCheck,
+  emptyBackgroundInformation,
+  emptyContact,
+  emptyCourse,
   emptyEmployee,
-} from '../../data-access/employee-api.service';
+  emptyTraining,
+  emptyTrainingInformation,
+} from '../../models/employee.models';
+import { EmployeeApiService } from '../../data-access/employee-api.service';
+import { EmployeeBackgroundSectionComponent } from './employee-background-section';
+import { EmployeeContactSectionComponent } from './employee-contact-section';
+import { EmployeePayerSectionComponent } from './employee-payer-section';
+import { EmployeeTrainingSectionComponent } from './employee-training-section';
+import {
+  employeeClientTypeOptions,
+  employeeCourseOptions,
+  employeeFormSteps,
+  employeeLanguages,
+  employeeQualificationOptions,
+  employeeTrainingOptions,
+  employeeWeekdays,
+} from './employee-form-options';
 
 @Component({
   selector: 'app-employee-form-page',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [
+    FormsModule,
+    RouterLink,
+    EmployeeBackgroundSectionComponent,
+    EmployeeContactSectionComponent,
+    EmployeePayerSectionComponent,
+    EmployeeTrainingSectionComponent,
+  ],
   templateUrl: './employee-form-page.html',
   styleUrls: [
     './employee-form-page.css',
@@ -42,18 +69,11 @@ export class EmployeeFormPageComponent {
   private readonly api = inject(EmployeeApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly locationsApi = inject(LocationService);
-  private readonly companiesApi = inject(CompanyService);
+  private readonly locationsApi = inject(LocationLookupService);
+  private readonly companiesApi = inject(CompanyLookupService);
   private readonly session = inject(AuthSessionService);
   private readonly destroy = inject(DestroyRef);
-  readonly steps = [
-    'Basic info',
-    'Additional info',
-    'Contact info',
-    'Training info',
-    'Payer info',
-    'Background info',
-  ] as const;
+  readonly steps = employeeFormSteps;
   readonly step = signal(0);
   readonly saving = signal(false);
   readonly loading = signal(false);
@@ -66,7 +86,7 @@ export class EmployeeFormPageComponent {
   private persistedEmployeeId: string | null = this.employeeId;
   readonly editing = !!this.employeeId;
   readonly title = computed(() => (this.editing ? 'Edit employee' : 'Add employee'));
-  readonly languages = ['English', 'Spanish', 'Somali', 'Hmong', 'Arabic'] as const;
+  readonly languages = employeeLanguages;
   readonly payerEditingIndex = signal<number | null>(null);
   readonly payerDraft: EmployeePayerAffiliation = {
     company: '',
@@ -84,50 +104,19 @@ export class EmployeeFormPageComponent {
   readonly trainingDraft: EmployeeTrainingSkill = this.emptyTraining();
   readonly contactEditingIndex = signal<number | null>(null);
   readonly contactDraft: EmployeeContact = this.emptyContact();
-  readonly courseOptions = [
-    'Orientation',
-    'HIPAA and privacy',
-    'CPR / First Aid',
-    'Medication administration',
-    'Infection control',
-    'Person-centered care',
-  ] as const;
-  readonly trainingOptions = [
-    'PCA certification',
-    'CFSS worker training',
-    'CPR certification',
-    'First Aid certification',
-    'Medication administration',
-    'Positive supports',
-  ] as const;
-  readonly weekdays = [
-    'Sunday',
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-  ] as const;
-  readonly qualificationOptions = [
-    'PCA',
-    'CFSS Support Worker',
-    'Home Health Aide',
-    'CNA',
-    'RN',
-    'Medication Administration',
-  ] as const;
-  readonly clientTypeOptions = [
-    'Adults',
-    'Children',
-    'Seniors',
-    'Behavioral health',
-    'Physical disabilities',
-    'Developmental disabilities',
-  ] as const;
+  readonly courseOptions = employeeCourseOptions;
+  readonly trainingOptions = employeeTrainingOptions;
+  readonly weekdays = employeeWeekdays;
+  readonly qualificationOptions = employeeQualificationOptions;
+  readonly clientTypeOptions = employeeClientTypeOptions;
   constructor() {
     const requestedStep = Number(this.route.snapshot.queryParamMap.get('step'));
-    if (this.editing && Number.isInteger(requestedStep) && requestedStep >= 0 && requestedStep < this.steps.length)
+    if (
+      this.editing &&
+      Number.isInteger(requestedStep) &&
+      requestedStep >= 0 &&
+      requestedStep < this.steps.length
+    )
       this.step.set(requestedStep);
     this.draft.insuranceAffiliationRequired = false;
     this.draft.payerAffiliations = [];
@@ -154,7 +143,7 @@ export class EmployeeFormPageComponent {
         .pipe(takeUntilDestroyed(this.destroy))
         .subscribe({
           next: (value) => {
-            Object.assign(this.draft, this.normalize(value));
+            Object.assign(this.draft, employeeDtoToForm(value));
             this.loadLocations(value.companyId);
             this.loading.set(false);
           },
@@ -175,7 +164,13 @@ export class EmployeeFormPageComponent {
     }
   }
   next() {
-    if (this.saving() || this.loading() || this.step() >= this.steps.length - 1 || !this.validateCurrentStep()) return;
+    if (
+      this.saving() ||
+      this.loading() ||
+      this.step() >= this.steps.length - 1 ||
+      !this.validateCurrentStep()
+    )
+      return;
     this.persistEmployee(this.step() + 1);
   }
   back() {
@@ -529,8 +524,15 @@ export class EmployeeFormPageComponent {
     if (!this.validate(current)) return false;
     if (current === 2) return this.validateContacts();
     if (current === 3) return this.validateTraining();
-    if (current === 4 && this.draft.insuranceAffiliationRequired && !this.draft.payerAffiliations?.length) {
-      this.fieldErrors.set({ payerAffiliations: 'Add at least one payer affiliation when insurance affiliation is required.' });
+    if (
+      current === 4 &&
+      this.draft.insuranceAffiliationRequired &&
+      !this.draft.payerAffiliations?.length
+    ) {
+      this.fieldErrors.set({
+        payerAffiliations:
+          'Add at least one payer affiliation when insurance affiliation is required.',
+      });
       return this.invalid('Review the highlighted payer information.');
     }
     return current !== 5 || this.validateBackground();
@@ -548,12 +550,17 @@ export class EmployeeFormPageComponent {
         if (nextStep === null) {
           void this.router.navigate(['/employees', employee.id]);
         } else if (createdNow) {
-          void this.router.navigate(['/employees', employee.id, 'edit'], {
-            queryParams: { step: nextStep },
-            replaceUrl: true,
-          }).then((navigated) => {
-            if (!navigated) this.error.set('Employee was saved, but the next step could not open. Open the employee again to continue.');
-          });
+          void this.router
+            .navigate(['/employees', employee.id, 'edit'], {
+              queryParams: { step: nextStep },
+              replaceUrl: true,
+            })
+            .then((navigated) => {
+              if (!navigated)
+                this.error.set(
+                  'Employee was saved, but the next step could not open. Open the employee again to continue.',
+                );
+            });
         } else {
           this.step.set(nextStep);
           void this.router.navigate([], {
@@ -567,7 +574,9 @@ export class EmployeeFormPageComponent {
       error: (error) => this.handleSaveError(error),
     });
   }
-  private handleSaveError(error: { error?: { errors?: Record<string, string[]>; title?: string } }): void {
+  private handleSaveError(error: {
+    error?: { errors?: Record<string, string[]>; title?: string };
+  }): void {
     const serverErrors = error.error?.errors;
     if (serverErrors) {
       const mapped: Record<string, string> = {};
@@ -575,69 +584,13 @@ export class EmployeeFormPageComponent {
         mapped[key.charAt(0).toLowerCase() + key.slice(1)] = messages[0] ?? 'Invalid value.';
       this.fieldErrors.set(mapped);
     }
-    this.error.set(error.error?.title ?? 'Employee could not be saved. Review the highlighted fields.');
+    this.error.set(
+      error.error?.title ?? 'Employee could not be saved. Review the highlighted fields.',
+    );
     this.saving.set(false);
   }
   private validate(index: number) {
-    const errors: Record<string, string> = {};
-    if (index === 0) {
-      if (!this.draft.hireDate) errors['hireDate'] = 'Hire date is required.';
-      if (!this.draft.locationIds.length) errors['locationIds'] = 'Select at least one location.';
-      if (!this.draft.firstName.trim()) errors['firstName'] = 'First name is required.';
-      if (!this.draft.lastName.trim()) errors['lastName'] = 'Last name is required.';
-      if (!this.draft.jobTitle.trim()) errors['jobTitle'] = 'Primary title is required.';
-      if (!this.draft.email.trim()) errors['email'] = 'Employee email is required.';
-      else if (!isValidContactEmail(this.draft.email))
-        errors['email'] = 'Enter a valid email address.';
-      if (!this.draft.dateOfBirth) errors['dateOfBirth'] = 'Date of birth is required.';
-      if (!this.draft.gender) errors['gender'] = 'Select a gender.';
-      if (!isValidContactPhone(this.draft.phone, true))
-        errors['phone'] = 'Enter a 10-digit US phone number.';
-      if (!this.draft.streetAddress.trim()) errors['streetAddress'] = 'Street address is required.';
-      if (!this.persistedEmployeeId && this.draft.ssn.replace(/\D/g, '').length !== 9)
-        errors['ssn'] = 'Enter a 9-digit SSN.';
-      if (this.draft.npi && this.draft.npi.length !== 10)
-        errors['npi'] = 'NPI must contain 10 digits.';
-      if (this.draft.evvEmail && !isValidContactEmail(this.draft.evvEmail))
-        errors['evvEmail'] = 'Enter a valid EVV email address.';
-      if (this.draft.evvPassword !== this.draft.evvPasswordConfirm)
-        errors['evvPasswordConfirm'] = 'Passwords do not match.';
-    }
-    if (index === 1) {
-      if (this.draft.hasUsedDifferentName && !this.draft.previousName.trim())
-        errors['previousName'] = 'Enter the name previously used.';
-      if (
-        this.draft.heightInches !== null &&
-        (this.draft.heightInches <= 0 || this.draft.heightInches > 120)
-      )
-        errors['heightInches'] = 'Enter a height from 1 to 120 inches.';
-      if (
-        this.draft.weightPounds !== null &&
-        (this.draft.weightPounds <= 0 || this.draft.weightPounds > 1500)
-      )
-        errors['weightPounds'] = 'Enter a weight from 1 to 1,500 pounds.';
-      if (
-        this.draft.hasWorkingHourRestrictions &&
-        (!this.draft.availableStartTime || !this.draft.availableEndTime)
-      )
-        errors['availableStartTime'] = 'Enter both an available start and end time.';
-      else if (
-        this.draft.availableStartTime &&
-        this.draft.availableEndTime &&
-        this.draft.availableStartTime >= this.draft.availableEndTime
-      )
-        errors['availableEndTime'] = 'End time must be after start time.';
-      if (!this.draft.canWorkWithSmokers && !this.draft.smokerRestrictionExplanation.trim())
-        errors['smokerRestrictionExplanation'] = 'Explain the smoking restriction.';
-      if (this.draft.isMilitaryVeteran && !this.draft.militaryServiceExplanation.trim())
-        errors['militaryServiceExplanation'] = 'Provide military service details.';
-      if (!this.draft.canWorkWithPets && !this.draft.petRestrictionExplanation.trim())
-        errors['petRestrictionExplanation'] = 'Explain the pet restriction.';
-      if (this.draft.hasOtherJob && !this.draft.otherEmployerName.trim())
-        errors['otherEmployerName'] = 'Enter the other employer name.';
-    }
-    if (index === 4 && !isValidContactPhone(this.draft.payerPhone))
-      errors['payerPhone'] = 'Enter a 10-digit US phone number.';
+    const errors = validateEmployeeStep(this.draft, index, !!this.persistedEmployeeId);
     this.fieldErrors.set(errors);
     if (Object.keys(errors).length)
       return this.invalid('Review the highlighted fields and correct the messages below them.');
@@ -750,31 +703,16 @@ export class EmployeeFormPageComponent {
     return false;
   }
   private emptyCourse(): EmployeeCourse {
-    return {
-      courseName: '',
-      qualifyingPoints: null,
-      completedOn: '',
-      obtainedPoints: null,
-      notes: '',
-    };
+    return emptyCourse();
   }
   private emptyTraining(): EmployeeTrainingSkill {
-    return {
-      trainingName: '',
-      jobTitle: '',
-      qualifyingPoints: null,
-      completedOn: '',
-      expiresOn: '',
-      obtainedPoints: null,
-      notes: '',
-      allowedTraining: false,
-    };
+    return emptyTraining();
   }
   private emptyTrainingInformation(): EmployeeTrainingInformation {
-    return { courses: [], trainings: [] };
+    return emptyTrainingInformation();
   }
   private emptyContact(): EmployeeContact {
-    return { name: '', phone: '', relationship: '' };
+    return emptyContact();
   }
   private setContactError(message: string) {
     this.fieldErrors.set({ ...this.fieldErrors(), contacts: message });
@@ -789,62 +727,9 @@ export class EmployeeFormPageComponent {
     return true;
   }
   private emptyBackgroundCheck(): EmployeeBackgroundCheck {
-    return { checkDate: '', receivedDate: '', licenseType: '', studyType: '', received: false };
+    return emptyBackgroundCheck();
   }
   private emptyBackgroundInformation(): EmployeeBackgroundInformation {
-    return {
-      checks: [],
-      mantouxGivenDate: '',
-      mantouxCheckedDate: '',
-      mantouxReceived: false,
-      medicalTestingDate: '',
-      medicalTestingReceived: false,
-    };
-  }
-  private normalize(value: EmployeeFormModel) {
-    const v = { ...emptyEmployee(), ...value };
-    for (const key of [
-      'hireDate',
-      'startOfServiceDate',
-      'inactiveDate',
-      'dateOfBirth',
-      'driverLicenseExpiresOn',
-      'trainingCompletedOn',
-      'trainingExpiresOn',
-      'payerEffectiveFrom',
-      'payerEffectiveTo',
-      'tierEffectiveDate',
-    ] as const)
-      v[key] = v[key] ?? '';
-    v.availableStartTime = v.availableStartTime?.slice(0, 5) ?? '';
-    v.availableEndTime = v.availableEndTime?.slice(0, 5) ?? '';
-    v.previousAddresses = v.previousAddresses ?? [];
-    v.contacts = value.contacts ?? [];
-    const background = value.backgroundInformation ?? this.emptyBackgroundInformation();
-    v.backgroundInformation = {
-      ...background,
-      checks: (background.checks ?? []).map((check) => ({
-        ...check,
-        checkDate: check.checkDate ?? '',
-        receivedDate: check.receivedDate ?? '',
-      })),
-      mantouxGivenDate: background.mantouxGivenDate ?? '',
-      mantouxCheckedDate: background.mantouxCheckedDate ?? '',
-      medicalTestingDate: background.medicalTestingDate ?? '',
-    };
-    const training = value.trainingInformation ?? this.emptyTrainingInformation();
-    v.trainingInformation = {
-      courses: (training.courses ?? []).map((x) => ({ ...x, completedOn: x.completedOn ?? '' })),
-      trainings: (training.trainings ?? []).map((x) => ({
-        ...x,
-        completedOn: x.completedOn ?? '',
-        expiresOn: x.expiresOn ?? '',
-      })),
-    };
-    v.ssn = '';
-    v.evvPassword = '';
-    v.evvPasswordConfirm = '';
-    v.ivrPin = '';
-    return v;
+    return emptyBackgroundInformation();
   }
 }

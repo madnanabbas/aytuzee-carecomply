@@ -44,10 +44,9 @@ export class UserManagementApiService {
       params = params.set('mfaStatus', query.mfaStatus);
     }
 
-    return this.http.get<UserListResponse>(
-      `${this.apiBaseUrl}/access-management/users`,
-      { params },
-    );
+    return this.http.get<UserListResponse>(`${this.apiBaseUrl}/access-management/users`, {
+      params,
+    });
   }
 
   getUser(userId: string): Observable<UserDetails> {
@@ -57,9 +56,7 @@ export class UserManagementApiService {
   }
 
   listRoles(): Observable<readonly RoleMetadata[]> {
-    return this.http.get<readonly RoleMetadata[]>(
-      `${this.apiBaseUrl}/access-management/roles`,
-    );
+    return this.http.get<readonly RoleMetadata[]>(`${this.apiBaseUrl}/access-management/roles`);
   }
 
   createUser(request: CreateUserRequest): Observable<CreateUserResponse> {
@@ -69,10 +66,7 @@ export class UserManagementApiService {
     );
   }
 
-  updateGeneral(
-    userId: string,
-    request: UpdateUserGeneralRequest,
-  ): Observable<UserDetails> {
+  updateGeneral(userId: string, request: UpdateUserGeneralRequest): Observable<UserDetails> {
     return this.http.put<UserDetails>(
       `${this.apiBaseUrl}/access-management/users/${encodeURIComponent(userId)}/general`,
       request,
@@ -99,10 +93,7 @@ export class UserManagementApiService {
     );
   }
 
-  replaceRoles(
-    userId: string,
-    request: UpdateUserRolesRequest,
-  ): Observable<UserDetails> {
+  replaceRoles(userId: string, request: UpdateUserRolesRequest): Observable<UserDetails> {
     return this.http.put<UserDetails>(
       `${this.apiBaseUrl}/access-management/users/${encodeURIComponent(userId)}/roles`,
       request,

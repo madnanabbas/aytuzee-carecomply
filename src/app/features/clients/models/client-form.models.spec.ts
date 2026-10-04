@@ -1,4 +1,8 @@
-import { clientFormToCreateRequest, clientFormToUpdateRequest, createEmptyClientForm } from './client-form.models';
+import {
+  clientFormToCreateRequest,
+  clientFormToUpdateRequest,
+  createEmptyClientForm,
+} from './client-form.models';
 
 describe('clientFormToCreateRequest', () => {
   it('maps the Angular form to the nested API create contract', () => {
@@ -46,9 +50,16 @@ describe('clientFormToCreateRequest', () => {
   it('maps edits to the nested API update contract with string enums', () => {
     const form = createEmptyClientForm();
     Object.assign(form, {
-      firstName: 'Marcus', lastName: 'Lee', dob: '1986-02-14', gender: 'Male',
-      pmi: '24591384', socDate: '2026-09-02', phone1: '(612) 555-0100',
-      street: '100 Main Street', programType: 'PCA Traditional', languages: ['English'],
+      firstName: 'Marcus',
+      lastName: 'Lee',
+      dob: '1986-02-14',
+      gender: 'Male',
+      pmi: '24591384',
+      socDate: '2026-09-02',
+      phone1: '(612) 555-0100',
+      street: '100 Main Street',
+      programType: 'PCA Traditional',
+      languages: ['English'],
     });
 
     const request = clientFormToUpdateRequest(form, 'a'.repeat(64));
@@ -64,7 +75,9 @@ describe('clientFormToCreateRequest', () => {
     const form = createEmptyClientForm();
     form.supervisor = '7acb8288-5501-4896-bfe2-c4145e2156fa';
     expect(clientFormToCreateRequest(form).careSetup.supervisorUserId).toBe(form.supervisor);
-    expect(clientFormToUpdateRequest(form, 'version').careSetup.supervisorUserId).toBe(form.supervisor);
+    expect(clientFormToUpdateRequest(form, 'version').careSetup.supervisorUserId).toBe(
+      form.supervisor,
+    );
     form.supervisor = '';
     expect(clientFormToUpdateRequest(form, 'version').careSetup.supervisorUserId).toBeNull();
   });

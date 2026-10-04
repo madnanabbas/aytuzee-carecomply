@@ -34,7 +34,10 @@ describe('authInterceptor', () => {
     client.post('/api/auth/login', {}).subscribe();
     const loginRequest = http.expectOne('/api/auth/login');
     expect(loginRequest.request.withCredentials).toBe(true);
-    loginRequest.flush({ status: 'mfaEnrollmentRequired' }, { status: 202, statusText: 'Accepted' });
+    loginRequest.flush(
+      { status: 'mfaEnrollmentRequired' },
+      { status: 202, statusText: 'Accepted' },
+    );
 
     client.get('/api/auth/mfa/context').subscribe();
     const mfaContextRequest = http.expectOne('/api/auth/mfa/context');

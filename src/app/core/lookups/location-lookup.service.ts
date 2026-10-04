@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { API_BASE_URL } from '../../../core/config/app-config';
+import { API_BASE_URL } from '../config/app-config';
 
 export interface CompanyLocation {
   readonly id: string;
@@ -12,7 +12,7 @@ export interface CompanyLocation {
 }
 
 @Injectable({ providedIn: 'root' })
-export class LocationService {
+export class LocationLookupService {
   private readonly http = inject(HttpClient);
   private readonly apiBaseUrl = inject(API_BASE_URL);
 

@@ -8,12 +8,14 @@ import { UserManagementApiService } from './user-management-api.service';
 import { UserEditorStore } from './user-editor.store';
 
 describe('UserEditorStore create mode', () => {
-  const roles = [{
-    id: 'role-1',
-    name: 'Database Role',
-    permissions: ['Client.View'],
-    requiresMfa: false,
-  }];
+  const roles = [
+    {
+      id: 'role-1',
+      name: 'Database Role',
+      permissions: ['Client.View'],
+      requiresMfa: false,
+    },
+  ];
   const api = {
     listRoles: vi.fn(),
     createUser: vi.fn(),
@@ -36,14 +38,17 @@ describe('UserEditorStore create mode', () => {
   it('loads roles, submits the focused contract once, and waits for success acknowledgement', () => {
     const store = TestBed.inject(UserEditorStore);
     store.initializeCreate();
-    store.updateCreateGeneral({
-      firstName: ' Ada ',
-      lastName: ' Lovelace ',
-      email: ' ada@example.test ',
-      password: 'StrongPassword123!',
-      phoneNumber: ' ',
-      isActive: true,
-    }, true);
+    store.updateCreateGeneral(
+      {
+        firstName: ' Ada ',
+        lastName: ' Lovelace ',
+        email: ' ada@example.test ',
+        password: 'StrongPassword123!',
+        phoneNumber: ' ',
+        isActive: true,
+      },
+      true,
+    );
     store.toggleRole('role-1', true);
 
     store.create();
@@ -78,11 +83,17 @@ describe('UserEditorStore create mode', () => {
     expect(store.error()).toBe('invalidGeneral');
     expect(api.createUser).not.toHaveBeenCalled();
 
-    store.updateCreateGeneral({
-      firstName: 'Ada', lastName: 'Lovelace', email: 'ada@example.test',
-      password: 'StrongPassword123!',
-      phoneNumber: '', isActive: true,
-    }, true);
+    store.updateCreateGeneral(
+      {
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+        email: 'ada@example.test',
+        password: 'StrongPassword123!',
+        phoneNumber: '',
+        isActive: true,
+      },
+      true,
+    );
     store.create();
     expect(store.error()).toBe('invalidRoles');
     expect(api.createUser).not.toHaveBeenCalled();
@@ -93,20 +104,28 @@ describe('UserEditorStore create mode', () => {
     api.createUser.mockReturnValue(pending.asObservable());
     const store = TestBed.inject(UserEditorStore);
     store.initializeCreate();
-    store.updateCreateGeneral({
-      firstName: 'Ada', lastName: 'Lovelace', email: 'ada@example.test',
-      password: 'StrongPassword123!',
-      phoneNumber: '', isActive: true,
-    }, true);
+    store.updateCreateGeneral(
+      {
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+        email: 'ada@example.test',
+        password: 'StrongPassword123!',
+        phoneNumber: '',
+        isActive: true,
+      },
+      true,
+    );
     store.toggleRole('role-1', true);
 
     store.create();
     store.create();
     expect(api.createUser).toHaveBeenCalledOnce();
-    pending.error(new HttpErrorResponse({
-      status: 409,
-      error: { type: 'urn:carecomply:problem:user-duplicate-email' },
-    }));
+    pending.error(
+      new HttpErrorResponse({
+        status: 409,
+        error: { type: 'urn:carecomply:problem:user-duplicate-email' },
+      }),
+    );
     expect(store.error()).toBe('duplicateEmail');
   });
 
@@ -121,9 +140,14 @@ describe('UserEditorStore create mode', () => {
     store.setCreateMfa(false);
     expect(store.createRequiresMfa()).toBe(false);
 
-    store.roles.set([{
-      id: 'mfa-role', name: 'Protected role', permissions: ['User.Manage'], requiresMfa: true,
-    }]);
+    store.roles.set([
+      {
+        id: 'mfa-role',
+        name: 'Protected role',
+        permissions: ['User.Manage'],
+        requiresMfa: true,
+      },
+    ]);
     store.selectCreateRole('mfa-role');
     store.setCreateMfa(false);
     expect(store.createMfaRequiredByRoles()).toBe(false);
@@ -134,7 +158,10 @@ describe('UserEditorStore create mode', () => {
 describe('UserEditorStore existing-user roles', () => {
   const assignedRole = { id: 'role-1', name: 'Assigned Role' };
   const replacementRole = {
-    id: 'role-2', name: 'Replacement Role', permissions: ['User.View'], requiresMfa: false,
+    id: 'role-2',
+    name: 'Replacement Role',
+    permissions: ['User.View'],
+    requiresMfa: false,
   };
   const user = {
     id: 'user-1',
@@ -165,10 +192,11 @@ describe('UserEditorStore existing-user roles', () => {
 
   beforeEach(() => {
     api.getUser.mockReset().mockReturnValue(of(user));
-    api.listRoles.mockReset().mockReturnValue(of([
-      { ...assignedRole, permissions: [], requiresMfa: false },
-      replacementRole,
-    ]));
+    api.listRoles
+      .mockReset()
+      .mockReturnValue(
+        of([{ ...assignedRole, permissions: [], requiresMfa: false }, replacementRole]),
+      );
     api.replaceRoles.mockReset().mockReturnValue(of(updatedUser));
     TestBed.configureTestingModule({
       providers: [
@@ -209,11 +237,13 @@ describe('UserEditorStore existing-user roles', () => {
     store.load(user.id);
 
     expect(api.listRoles).not.toHaveBeenCalled();
-    expect(store.roles()).toEqual([{
-      ...assignedRole,
-      permissions: [],
-      requiresMfa: false,
-    }]);
+    expect(store.roles()).toEqual([
+      {
+        ...assignedRole,
+        permissions: [],
+        requiresMfa: false,
+      },
+    ]);
   });
 
   it('replaces roles with the current editor version and accepts the authoritative response', () => {

@@ -1,20 +1,22 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { AuthorizationService } from '../../../../../core/authorization/authorization.service';
 import { Permissions } from '../../../../../core/authorization/permissions';
 import { ModuleFeatureApiService } from '../../data-access/module-feature-api.service';
-import { ModuleFeatureItem, NavigationFeatureRequest, NavigationModuleItem, NavigationModuleRequest } from '../../models/module-feature.models';
-
-type EditorState =
-  | { readonly kind: 'module'; readonly mode: 'create' | 'edit'; readonly module: NavigationModuleItem | null }
-  | { readonly kind: 'feature'; readonly mode: 'create' | 'edit'; readonly feature: ModuleFeatureItem | null };
+import {
+  ModuleFeatureItem,
+  NavigationFeatureRequest,
+  NavigationModuleItem,
+  NavigationModuleRequest,
+} from '../../models/module-feature.models';
+import { EditorState, ModuleFeatureEditorDrawerComponent } from './module-feature-editor-drawer';
 
 @Component({
   selector: 'app-module-feature-page',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ModuleFeatureEditorDrawerComponent],
   templateUrl: './module-feature-page.html',
   styleUrls: ['../../../users/user-density.css'],
 })
@@ -55,75 +57,133 @@ export class ModuleFeaturePage implements OnInit {
   readonly filteredModules = computed(() => {
     const query = this.moduleSearch().trim().toLowerCase();
     return query
-      ? this.modules().filter((item) => item.name.toLowerCase().includes(query) || item.key.toLowerCase().includes(query))
+      ? this.modules().filter(
+          (item) =>
+            item.name.toLowerCase().includes(query) || item.key.toLowerCase().includes(query),
+        )
       : this.modules();
   });
 
-  readonly selectedModule = computed(() => this.modules().find((item) => item.id === this.selectedModuleId()) ?? null);
+  readonly selectedModule = computed(
+    () => this.modules().find((item) => item.id === this.selectedModuleId()) ?? null,
+  );
   readonly visibleFeatures = computed(() => {
     const module = this.selectedModule();
     const query = this.featureSearch().trim().toLowerCase();
     if (!module) return [];
-    return module.features.filter((item) => !query || item.name.toLowerCase().includes(query) || item.key.toLowerCase().includes(query) || item.route.toLowerCase().includes(query));
+    return module.features.filter(
+      (item) =>
+        !query ||
+        item.name.toLowerCase().includes(query) ||
+        item.key.toLowerCase().includes(query) ||
+        item.route.toLowerCase().includes(query),
+    );
   });
 
-  ngOnInit(): void { this.load(); }
-
-  load(preferredModuleId?: number): void {
-    this.loading.set(true); this.error.set(null);
-    this.api.list().pipe(finalize(() => this.loading.set(false))).subscribe({
-      next: (modules) => {
-        this.modules.set(modules);
-        const current = preferredModuleId ?? this.selectedModuleId();
-        this.selectedModuleId.set(modules.some((m) => m.id === current) ? current : modules[0]?.id ?? null);
-      },
-      error: () => this.error.set('Modules and features could not be loaded. Please try again.'),
-    });
+  ngOnInit(): void {
+    this.load();
   }
 
-  selectModule(id: number): void { this.selectedModuleId.set(id); this.featureSearch.set(''); }
-  updateModuleSearch(event: Event): void { this.moduleSearch.set((event.target as HTMLInputElement).value); }
-  updateFeatureSearch(event: Event): void { this.featureSearch.set((event.target as HTMLInputElement).value); }
+  load(preferredModuleId?: number): void {
+    this.loading.set(true);
+    this.error.set(null);
+    this.api
+      .list()
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (modules) => {
+          this.modules.set(modules);
+          const current = preferredModuleId ?? this.selectedModuleId();
+          this.selectedModuleId.set(
+            modules.some((m) => m.id === current) ? current : (modules[0]?.id ?? null),
+          );
+        },
+        error: () => this.error.set('Modules and features could not be loaded. Please try again.'),
+      });
+  }
+
+  selectModule(id: number): void {
+    this.selectedModuleId.set(id);
+    this.featureSearch.set('');
+  }
+  updateModuleSearch(event: Event): void {
+    this.moduleSearch.set((event.target as HTMLInputElement).value);
+  }
+  updateFeatureSearch(event: Event): void {
+    this.featureSearch.set((event.target as HTMLInputElement).value);
+  }
 
   addModule(): void {
     if (!this.canManage) return;
     this.moduleForm.reset({ name: '', key: '', sortOrder: 10, isActive: true });
-    this.saveError.set(null); this.editor.set({ kind: 'module', mode: 'create', module: null });
+    this.saveError.set(null);
+    this.editor.set({ kind: 'module', mode: 'create', module: null });
   }
 
   editModule(): void {
     if (!this.canManage) return;
-    const module = this.selectedModule(); if (!module) return;
-    this.moduleForm.reset({ name: module.name, key: module.key, sortOrder: module.sortOrder, isActive: module.isActive });
-    this.saveError.set(null); this.editor.set({ kind: 'module', mode: 'edit', module });
+    const module = this.selectedModule();
+    if (!module) return;
+    this.moduleForm.reset({
+      name: module.name,
+      key: module.key,
+      sortOrder: module.sortOrder,
+      isActive: module.isActive,
+    });
+    this.saveError.set(null);
+    this.editor.set({ kind: 'module', mode: 'edit', module });
   }
 
   deleteModule(): void {
     const module = this.selectedModule();
     if (!this.canManage || !module || this.saving()) return;
-    if (!window.confirm(`Permanently delete the "${module.name}" module? This cannot be undone.`)) return;
+    if (!window.confirm(`Permanently delete the "${module.name}" module? This cannot be undone.`))
+      return;
     this.executeDelete(this.api.deleteModule(module.id), null);
   }
 
   addFeature(): void {
     if (!this.canManage || !this.selectedModule()) return;
-    this.featureForm.reset({ moduleId: this.selectedModuleId()!, name: '', key: '', route: '', iconKey: '', parentFeatureId: null, sortOrder: 10, isActive: true });
-    this.saveError.set(null); this.editor.set({ kind: 'feature', mode: 'create', feature: null });
+    this.featureForm.reset({
+      moduleId: this.selectedModuleId()!,
+      name: '',
+      key: '',
+      route: '',
+      iconKey: '',
+      parentFeatureId: null,
+      sortOrder: 10,
+      isActive: true,
+    });
+    this.saveError.set(null);
+    this.editor.set({ kind: 'feature', mode: 'create', feature: null });
   }
 
   editFeature(feature: ModuleFeatureItem): void {
     if (!this.canManage) return;
-    this.featureForm.reset({ moduleId: feature.moduleId, name: feature.name, key: feature.key, route: feature.route, iconKey: feature.iconKey, parentFeatureId: feature.parentFeatureId, sortOrder: feature.sortOrder, isActive: feature.isActive });
-    this.saveError.set(null); this.editor.set({ kind: 'feature', mode: 'edit', feature });
+    this.featureForm.reset({
+      moduleId: feature.moduleId,
+      name: feature.name,
+      key: feature.key,
+      route: feature.route,
+      iconKey: feature.iconKey,
+      parentFeatureId: feature.parentFeatureId,
+      sortOrder: feature.sortOrder,
+      isActive: feature.isActive,
+    });
+    this.saveError.set(null);
+    this.editor.set({ kind: 'feature', mode: 'edit', feature });
   }
 
   deleteFeature(feature: ModuleFeatureItem): void {
     if (!this.canManage || this.saving()) return;
-    if (!window.confirm(`Permanently delete the "${feature.name}" feature? This cannot be undone.`)) return;
+    if (!window.confirm(`Permanently delete the "${feature.name}" feature? This cannot be undone.`))
+      return;
     this.executeDelete(this.api.deleteFeature(feature.id), feature.moduleId);
   }
 
-  closeEditor(): void { if (!this.saving()) this.editor.set(null); }
+  closeEditor(): void {
+    if (!this.saving()) this.editor.set(null);
+  }
 
   save(): void {
     const state = this.editor();
@@ -132,47 +192,70 @@ export class ModuleFeaturePage implements OnInit {
   }
 
   private saveModule(state: Extract<EditorState, { kind: 'module' }>): void {
-    this.moduleForm.markAllAsTouched(); if (this.moduleForm.invalid) return;
+    this.moduleForm.markAllAsTouched();
+    if (this.moduleForm.invalid) return;
     const request: NavigationModuleRequest = this.moduleForm.getRawValue();
-    const operation = state.mode === 'create' ? this.api.createModule(request) : this.api.updateModule(state.module!.id, request);
+    const operation =
+      state.mode === 'create'
+        ? this.api.createModule(request)
+        : this.api.updateModule(state.module!.id, request);
     this.executeSave(operation, state.module?.id ?? null);
   }
 
   private saveFeature(state: Extract<EditorState, { kind: 'feature' }>): void {
-    this.featureForm.markAllAsTouched(); if (this.featureForm.invalid) return;
+    this.featureForm.markAllAsTouched();
+    if (this.featureForm.invalid) return;
     const request: NavigationFeatureRequest = this.featureForm.getRawValue();
-    const operation = state.mode === 'create' ? this.api.createFeature(request) : this.api.updateFeature(state.feature!.id, request);
+    const operation =
+      state.mode === 'create'
+        ? this.api.createFeature(request)
+        : this.api.updateFeature(state.feature!.id, request);
     this.executeSave(operation, request.moduleId);
   }
 
   featureEditorModule(): NavigationModuleItem | null {
     const moduleId = this.featureForm.controls.moduleId.value;
-    return this.modules().find(module => module.id === moduleId) ?? null;
+    return this.modules().find((module) => module.id === moduleId) ?? null;
   }
 
-  private executeSave(operation: ReturnType<ModuleFeatureApiService['createModule']>, moduleId: number | null): void {
-    this.saving.set(true); this.saveError.set(null);
+  private executeSave(
+    operation: ReturnType<ModuleFeatureApiService['createModule']>,
+    moduleId: number | null,
+  ): void {
+    this.saving.set(true);
+    this.saveError.set(null);
     operation.pipe(finalize(() => this.saving.set(false))).subscribe({
-      next: (result) => { this.editor.set(null); this.load(moduleId ?? result.id); },
+      next: (result) => {
+        this.editor.set(null);
+        this.load(moduleId ?? result.id);
+      },
       error: (error: HttpErrorResponse) => this.saveError.set(this.getErrorMessage(error)),
     });
   }
 
-  private executeDelete(operation: ReturnType<ModuleFeatureApiService['deleteModule']>, preferredModuleId: number | null): void {
-    this.saving.set(true); this.saveError.set(null); this.error.set(null);
+  private executeDelete(
+    operation: ReturnType<ModuleFeatureApiService['deleteModule']>,
+    preferredModuleId: number | null,
+  ): void {
+    this.saving.set(true);
+    this.saveError.set(null);
+    this.error.set(null);
     operation.pipe(finalize(() => this.saving.set(false))).subscribe({
       next: () => this.load(preferredModuleId ?? undefined),
-      error: (error: HttpErrorResponse) => this.error.set(
-        error.status === 409
-          ? error.error?.title ?? 'This item still has dependent features or permissions and cannot be deleted.'
-          : this.getErrorMessage(error),
-      ),
+      error: (error: HttpErrorResponse) =>
+        this.error.set(
+          error.status === 409
+            ? (error.error?.title ??
+                'This item still has dependent features or permissions and cannot be deleted.')
+            : this.getErrorMessage(error),
+        ),
     });
   }
 
   private getErrorMessage(error: HttpErrorResponse): string {
     if (error.status === 409) return error.error?.title ?? 'This key or route is already in use.';
-    if (error.status === 400) return error.error?.title ?? 'Check the entered values and try again.';
+    if (error.status === 400)
+      return error.error?.title ?? 'Check the entered values and try again.';
     if (error.status === 403) return 'You do not have permission to make this change.';
     return 'The change could not be saved. Please try again.';
   }

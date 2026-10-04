@@ -52,7 +52,9 @@ export class PermissionMatrixComponent {
         features: module.features.filter(
           (feature) =>
             feature.name.toLowerCase().includes(search) ||
-            this.permissionGroups(feature).some((group) => group.name.toLowerCase().includes(search)) ||
+            this.permissionGroups(feature).some((group) =>
+              group.name.toLowerCase().includes(search),
+            ) ||
             feature.permissions.some(
               (permission) =>
                 permission.action.toLowerCase().includes(search) ||
@@ -60,10 +62,7 @@ export class PermissionMatrixComponent {
             ),
         ),
       }))
-      .filter(
-        (module) =>
-          module.name.toLowerCase().includes(search) || module.features.length > 0,
-      );
+      .filter((module) => module.name.toLowerCase().includes(search) || module.features.length > 0);
   });
 
   constructor() {
@@ -109,9 +108,7 @@ export class PermissionMatrixComponent {
   featureSelected(feature: FeaturePermissionGroup): boolean {
     return (
       feature.permissions.length > 0 &&
-      feature.permissions.every((permission) =>
-        this.selectedPermissionIds().has(permission.id),
-      )
+      feature.permissions.every((permission) => this.selectedPermissionIds().has(permission.id))
     );
   }
 
@@ -148,14 +145,18 @@ export class PermissionMatrixComponent {
   }
 
   groupSelected(group: ResourcePermissionGroup): boolean {
-    return group.permissions.length > 0 && group.permissions.every(({ id }) => this.selectedPermissionIds().has(id));
+    return (
+      group.permissions.length > 0 &&
+      group.permissions.every(({ id }) => this.selectedPermissionIds().has(id))
+    );
   }
 
   toggleGroup(group: ResourcePermissionGroup): void {
     if (this.disabled()) return;
     const next = new Set(this.selectedPermissionIds());
     const allSelected = this.groupSelected(group);
-    for (const permission of group.permissions) allSelected ? next.delete(permission.id) : next.add(permission.id);
+    for (const permission of group.permissions)
+      allSelected ? next.delete(permission.id) : next.add(permission.id);
     this.permissionChanged.emit(next);
   }
 
@@ -168,9 +169,7 @@ export class PermissionMatrixComponent {
 
     return (
       permissions.length > 0 &&
-      permissions.every((permission) =>
-        this.selectedPermissionIds().has(permission.id),
-      )
+      permissions.every((permission) => this.selectedPermissionIds().has(permission.id))
     );
   }
 

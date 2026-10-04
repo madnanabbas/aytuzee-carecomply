@@ -22,7 +22,9 @@ export const APP_ROUTE_METADATA = {
   ]),
   expiryReview: route('expiry-review', '/expiry-review', [Permissions.ExpiryReview.View]),
   training: route('training', '/training', [Permissions.Training.View]),
-  backgroundChecks: route('background-checks', '/background-checks', [Permissions.BackgroundCheck.View]),
+  backgroundChecks: route('background-checks', '/background-checks', [
+    Permissions.BackgroundCheck.View,
+  ]),
   notifications: route('notifications', '/notifications', [Permissions.Notification.View]),
   reports: route('reports', '/reports', [Permissions.FinancialReport.View]),
   companies: route('companies', '/access-control/companies', [Permissions.Company.View]),
@@ -37,7 +39,9 @@ export const APP_ROUTE_METADATA = {
   ]),
   users: route('users', '/access-control/users', [Permissions.User.View]),
   roles: route('roles', '/access-control/roles', [Permissions.Role.View]),
-  modulesFeatures: route('modules-features', '/access-control/modules-features', [Permissions.Permission.View]),
+  modulesFeatures: route('modules-features', '/access-control/modules-features', [
+    Permissions.Permission.View,
+  ]),
   permissions: route('permissions', '/access-control/permissions', [Permissions.Permission.View]),
   auditLogs: route('audit-logs', '/access-control/audit-logs', [Permissions.AuditLog.View]),
 } as const satisfies Record<string, RegisteredNavigationRoute>;

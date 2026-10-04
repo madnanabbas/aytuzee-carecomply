@@ -33,11 +33,8 @@ export const accessControlRoutes: Routes = [
       permissions: [Permissions.User.View],
     } satisfies PermissionRouteData,
     loadComponent: () =>
-      import(
-        './users/pages/user-list/user-list-page'
-      ).then(
-        (component) =>
-          component.UserListPageComponent,
+      import('./users/pages/user-list/user-list-page').then(
+        (component) => component.UserListPageComponent,
       ),
   },
   {
@@ -74,9 +71,7 @@ export const accessControlRoutes: Routes = [
       permissions: [Permissions.Role.View],
     } satisfies PermissionRouteData,
     loadComponent: () =>
-      import(
-        './roles/pages/role-list/role-list-page'
-      ).then((m) => m.RoleListPage),
+      import('./roles/pages/role-list/role-list-page').then((m) => m.RoleListPage),
   },
   {
     path: 'roles/new',
@@ -85,9 +80,7 @@ export const accessControlRoutes: Routes = [
       permissions: [Permissions.Role.Manage],
     } satisfies PermissionRouteData,
     loadComponent: () =>
-      import(
-        './roles/pages/role-editor/role-editor-page'
-      ).then((m) => m.RoleEditorPage),
+      import('./roles/pages/role-editor/role-editor-page').then((m) => m.RoleEditorPage),
   },
   {
     path: 'roles/:roleId',
@@ -96,9 +89,7 @@ export const accessControlRoutes: Routes = [
       permissions: [Permissions.Role.View],
     } satisfies PermissionRouteData,
     loadComponent: () =>
-      import(
-        './roles/pages/role-editor/role-editor-page'
-      ).then((m) => m.RoleEditorPage),
+      import('./roles/pages/role-editor/role-editor-page').then((m) => m.RoleEditorPage),
   },
   {
     path: 'modules-features',
@@ -111,5 +102,4 @@ export const accessControlRoutes: Routes = [
         (m) => m.ModuleFeaturePage,
       ),
   },
-
 ];

@@ -24,10 +24,8 @@ import {
   ClientStatusCode,
   DEFAULT_CLIENT_LIST_QUERY,
 } from '../../models/client-api.models';
-import {
-  clientStatusLabel,
-  formatDateForDisplay,
-} from '../../models/client-presentation';
+import { clientStatusLabel, formatDateForDisplay } from '../../models/client-presentation';
+import { ClientGuestInvitationDialogComponent } from '../../components/client-guest-invitation-dialog/client-guest-invitation-dialog';
 
 interface ClientListViewItem {
   readonly id: string;
@@ -43,7 +41,7 @@ interface ClientListViewItem {
 @Component({
   selector: 'app-client-list-page',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, ClientGuestInvitationDialogComponent],
   templateUrl: './client-list-page.html',
 })
 export class ClientListPageComponent {
@@ -56,10 +54,17 @@ export class ClientListPageComponent {
   private readonly searchChanged = new Subject<string>();
 
   readonly canCreateClient = computed(() =>
-    this.authorization.hasPermission(Permissions.Client.Create)
+    this.authorization.hasPermission(Permissions.Client.Create),
+  );
+  readonly canCreateGuestInvitation = computed(() =>
+    this.authorization.hasPermission(Permissions.Client.GuestInvite),
+  );
+  readonly canEditClient = computed(() =>
+    this.authorization.hasPermission(Permissions.Client.Edit),
   );
 
   readonly loading = signal(true);
+  readonly guestInvitationDialogOpen = signal(false);
   readonly loadFailed = signal(false);
   readonly searchDraft = signal('');
   readonly response = signal<ClientListResponse | null>(null);
@@ -74,7 +79,9 @@ export class ClientListPageComponent {
   });
   readonly locations = computed(() => {
     const serverLocations = this.response()?.availableLocations ?? [];
-    const pageLocations = this.clients().map((client) => client.location).filter(Boolean);
+    const pageLocations = this.clients()
+      .map((client) => client.location)
+      .filter(Boolean);
     return [...new Set([...serverLocations, ...pageLocations])].sort((a, b) => a.localeCompare(b));
   });
 
@@ -89,10 +96,7 @@ export class ClientListPageComponent {
   readonly Math = Math;
 
   constructor() {
-    combineLatest([
-      this.route.queryParamMap,
-      this.reloadRequested.pipe(startWith(undefined)),
-    ])
+    combineLatest([this.route.queryParamMap, this.reloadRequested.pipe(startWith(undefined))])
       .pipe(
         map(([params]) => this.parseQuery(params)),
         tap((query) => {
@@ -101,10 +105,12 @@ export class ClientListPageComponent {
           this.loading.set(true);
           this.loadFailed.set(false);
         }),
-        switchMap((query) => this.api.listClients(query).pipe(
-          map((response) => ({ response, failed: false })),
-          catchError(() => of({ response: null, failed: true })),
-        )),
+        switchMap((query) =>
+          this.api.listClients(query).pipe(
+            map((response) => ({ response, failed: false })),
+            catchError(() => of({ response: null, failed: true })),
+          ),
+        ),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe(({ response, failed }) => {
@@ -137,13 +143,18 @@ export class ClientListPageComponent {
 
     const value = event.target.value;
     const current = this.query();
-    const next: ClientListQuery = key === 'status'
-      ? { ...current, status: value ? Number(value) as ClientStatusCode : null, pageNumber: 1 }
-      : key === 'program'
-        ? { ...current, programType: value ? Number(value) as ClientProgramTypeCode : null, pageNumber: 1 }
-        : key === 'location'
-          ? { ...current, location: value, pageNumber: 1 }
-          : { ...current, onboarding: value === '' ? null : value === 'yes', pageNumber: 1 };
+    const next: ClientListQuery =
+      key === 'status'
+        ? { ...current, status: value ? (Number(value) as ClientStatusCode) : null, pageNumber: 1 }
+        : key === 'program'
+          ? {
+              ...current,
+              programType: value ? (Number(value) as ClientProgramTypeCode) : null,
+              pageNumber: 1,
+            }
+          : key === 'location'
+            ? { ...current, location: value, pageNumber: 1 }
+            : { ...current, onboarding: value === '' ? null : value === 'yes', pageNumber: 1 };
 
     void this.navigate(next);
   }
@@ -154,6 +165,14 @@ export class ClientListPageComponent {
 
   retry(): void {
     this.reloadRequested.next();
+  }
+
+  openGuestInvitationDialog(): void {
+    if (this.canCreateGuestInvitation()) this.guestInvitationDialogOpen.set(true);
+  }
+
+  closeGuestInvitationDialog(): void {
+    this.guestInvitationDialogOpen.set(false);
   }
 
   changePage(pageNumber: number): void {
@@ -179,11 +198,16 @@ export class ClientListPageComponent {
 
   statusClasses(status: string): string {
     switch (status) {
-      case 'Active': return 'bg-green-50 text-success ring-green-200';
-      case 'Pending': return 'bg-amber-50 text-warning ring-amber-200';
-      case 'On hold': return 'bg-blue-50 text-info ring-blue-200';
-      case 'Discharged': return 'bg-rose-50 text-danger ring-rose-200';
-      default: return 'bg-slate-100 text-text-muted ring-slate-200';
+      case 'Active':
+        return 'bg-green-50 text-success ring-green-200';
+      case 'Pending':
+        return 'bg-amber-50 text-warning ring-amber-200';
+      case 'On hold':
+        return 'bg-blue-50 text-info ring-blue-200';
+      case 'Discharged':
+        return 'bg-rose-50 text-danger ring-rose-200';
+      default:
+        return 'bg-slate-100 text-text-muted ring-slate-200';
     }
   }
 
@@ -220,12 +244,12 @@ export class ClientListPageComponent {
 
   private parseQuery(params: ParamMap): ClientListQuery {
     const status = this.parseEnumNumber<ClientStatusCode>(params.get('status'), [1, 2, 3, 4, 5]);
-    const programType = this.parseEnumNumber<ClientProgramTypeCode>(params.get('program'), [1, 2, 3, 4, 5]);
-    const onboarding = params.get('onboarding') === 'yes'
-      ? true
-      : params.get('onboarding') === 'no'
-        ? false
-        : null;
+    const programType = this.parseEnumNumber<ClientProgramTypeCode>(
+      params.get('program'),
+      [1, 2, 3, 4, 5],
+    );
+    const onboarding =
+      params.get('onboarding') === 'yes' ? true : params.get('onboarding') === 'no' ? false : null;
     const pageNumber = this.parsePositiveInteger(params.get('page'), 1);
     const parsedPageSize = this.parsePositiveInteger(params.get('pageSize'), 25);
 
@@ -243,10 +267,13 @@ export class ClientListPageComponent {
     };
   }
 
-  private parseEnumNumber<T extends number>(value: string | null, allowed: readonly number[]): T | null {
+  private parseEnumNumber<T extends number>(
+    value: string | null,
+    allowed: readonly number[],
+  ): T | null {
     if (value === null || !/^\d+$/.test(value)) return null;
     const parsed = Number(value);
-    return allowed.includes(parsed) ? parsed as T : null;
+    return allowed.includes(parsed) ? (parsed as T) : null;
   }
 
   private parsePositiveInteger(value: string | null, fallback: number): number {

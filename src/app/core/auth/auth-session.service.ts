@@ -81,9 +81,9 @@ export class AuthSessionService {
       await this.loadAuthenticatedSession();
       return { status: 'succeeded' };
     } catch (error: unknown) {
-      this.clearSession(error instanceof HttpErrorResponse && error.status === 401
-        ? 'anonymous'
-        : 'unavailable');
+      this.clearSession(
+        error instanceof HttpErrorResponse && error.status === 401 ? 'anonymous' : 'unavailable',
+      );
 
       if (error instanceof HttpErrorResponse) {
         if (error.status === 401) {
@@ -156,8 +156,9 @@ export class AuthSessionService {
       if (
         !Array.isArray(response.recoveryCodes) ||
         response.recoveryCodes.length !== 10 ||
-        response.recoveryCodes.some((recoveryCode) =>
-          typeof recoveryCode !== 'string' || !recoveryCode)
+        response.recoveryCodes.some(
+          (recoveryCode) => typeof recoveryCode !== 'string' || !recoveryCode,
+        )
       ) {
         return { status: 'unavailable' };
       }
@@ -232,9 +233,9 @@ export class AuthSessionService {
     try {
       await this.loadAuthenticatedSession();
     } catch (error: unknown) {
-      this.clearSession(error instanceof HttpErrorResponse && error.status === 401
-        ? 'anonymous'
-        : 'unavailable');
+      this.clearSession(
+        error instanceof HttpErrorResponse && error.status === 401 ? 'anonymous' : 'unavailable',
+      );
     }
   }
 
@@ -273,9 +274,7 @@ export class AuthSessionService {
     }
   }
 
-  private mapMfaError(
-    error: unknown,
-  ): Exclude<MfaAttemptResult, { readonly status: 'succeeded' }> {
+  private mapMfaError(error: unknown): Exclude<MfaAttemptResult, { readonly status: 'succeeded' }> {
     if (error instanceof HttpErrorResponse) {
       if (error.status === 429) {
         return { status: 'rateLimited' };

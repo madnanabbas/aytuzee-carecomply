@@ -1,11 +1,4 @@
-import {
-  Component,
-  effect,
-  ElementRef,
-  input,
-  output,
-  viewChild,
-} from '@angular/core';
+import { Component, effect, ElementRef, input, output, viewChild } from '@angular/core';
 import { LucideCheck } from '@lucide/angular';
 
 @Component({
@@ -15,8 +8,7 @@ import { LucideCheck } from '@lucide/angular';
   templateUrl: './success-dialog.html',
 })
 export class SuccessDialogComponent {
-  private readonly confirmButton =
-    viewChild<ElementRef<HTMLButtonElement>>('confirmButton');
+  private readonly confirmButton = viewChild<ElementRef<HTMLButtonElement>>('confirmButton');
 
   readonly open = input(false);
   readonly title = input('Saved successfully');

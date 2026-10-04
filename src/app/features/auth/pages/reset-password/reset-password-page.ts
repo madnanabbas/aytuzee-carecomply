@@ -7,10 +7,7 @@ import {
   ValidatorFn,
   Validators,
 } from '@angular/forms';
-import {
-  ActivatedRoute,
-  RouterLink,
-} from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AuthApiService } from '../../../../core/auth/auth-api.service';
 import {
@@ -33,9 +30,7 @@ const passwordsMatchValidator: ValidatorFn = (
     return null;
   }
 
-  return password === confirmPassword
-    ? null
-    : { passwordsMismatch: true };
+  return password === confirmPassword ? null : { passwordsMismatch: true };
 };
 
 @Component({
@@ -66,33 +61,19 @@ export class ResetPasswordPageComponent {
   readonly resetCompleted = signal(false);
   readonly resetFailed = signal(false);
 
-  readonly userId =
-    this.route.snapshot.queryParamMap.get('userId') ?? '';
+  readonly userId = this.route.snapshot.queryParamMap.get('userId') ?? '';
 
-  readonly token =
-    this.route.snapshot.queryParamMap.get('token') ?? '';
+  readonly token = this.route.snapshot.queryParamMap.get('token') ?? '';
 
   readonly resetLinkPresent = computed(
-    () =>
-      this.userId.trim().length > 0 &&
-      this.token.trim().length > 0,
+    () => this.userId.trim().length > 0 && this.token.trim().length > 0,
   );
 
   readonly form = new FormBuilder().nonNullable.group(
     {
-      password: [
-        '',
-        [
-          Validators.required,
-          Validators.minLength(15),
-          Validators.maxLength(128),
-        ],
-      ],
+      password: ['', [Validators.required, Validators.minLength(15), Validators.maxLength(128)]],
 
-      confirmPassword: [
-        '',
-        Validators.required,
-      ],
+      confirmPassword: ['', Validators.required],
     },
     {
       validators: passwordsMatchValidator,
@@ -118,12 +99,14 @@ export class ResetPasswordPageComponent {
     this.isSubmitting.set(true);
     this.resetFailed.set(false);
     try {
-      await firstValueFrom(this.authApi.resetPassword({
-        userId: this.userId,
-        token: this.token,
-        newPassword: this.form.controls.password.value,
-        confirmPassword: this.form.controls.confirmPassword.value,
-      }));
+      await firstValueFrom(
+        this.authApi.resetPassword({
+          userId: this.userId,
+          token: this.token,
+          newPassword: this.form.controls.password.value,
+          confirmPassword: this.form.controls.confirmPassword.value,
+        }),
+      );
       this.form.reset({ password: '', confirmPassword: '' });
       this.resetCompleted.set(true);
     } catch {
@@ -135,14 +118,10 @@ export class ResetPasswordPageComponent {
   }
 
   togglePasswordVisibility(): void {
-    this.passwordVisible.update(
-      (visible) => !visible,
-    );
+    this.passwordVisible.update((visible) => !visible);
   }
 
   toggleConfirmPasswordVisibility(): void {
-    this.confirmPasswordVisible.update(
-      (visible) => !visible,
-    );
+    this.confirmPasswordVisible.update((visible) => !visible);
   }
 }

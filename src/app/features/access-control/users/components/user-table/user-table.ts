@@ -13,10 +13,7 @@ export class UserTableComponent {
   readonly users = input.required<readonly UserListItem[]>();
 
   initials(displayName: string): string {
-    const parts = displayName
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean);
+    const parts = displayName.trim().split(/\s+/).filter(Boolean);
 
     if (parts.length === 0) {
       return 'U';

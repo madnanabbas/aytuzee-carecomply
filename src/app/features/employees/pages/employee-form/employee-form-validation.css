@@ -9,9 +9,9 @@
 
 .field-error {
   display: block;
-  margin-top: .25rem;
+  margin-top: 0.25rem;
   color: #b91c1c;
-  font-size: .62rem;
+  font-size: 0.62rem;
   font-weight: 600;
 }
 
@@ -23,16 +23,53 @@
   border-bottom: 1px solid #e2e8f0;
 }
 
-.section-row h3 { border: 0; }
-.compact { padding: .38rem .65rem; white-space: nowrap; }
-.grid.five { grid-template-columns: 2fr repeat(4, minmax(0, 1fr)); }
-.address-row { display: flex; align-items: end; gap: .65rem; }
-.address-row .grid { flex: 1; }
-.remove { border: 0; background: transparent; color: #b91c1c; padding: .55rem; cursor: pointer; }
-.empty-state { padding: 1rem; border: 1px dashed #cbd5e1; border-radius: .4rem; color: #64748b; font-size: .7rem; text-align: center; }
+.section-row h3 {
+  border: 0;
+}
+.compact {
+  padding: 0.38rem 0.65rem;
+  white-space: nowrap;
+}
+.grid.five {
+  grid-template-columns: 2fr repeat(4, minmax(0, 1fr));
+}
+.address-row {
+  display: flex;
+  align-items: end;
+  gap: 0.65rem;
+}
+.address-row .grid {
+  flex: 1;
+}
+.remove {
+  border: 0;
+  background: transparent;
+  color: #b91c1c;
+  padding: 0.55rem;
+  cursor: pointer;
+}
+.empty-state {
+  padding: 1rem;
+  border: 1px dashed #cbd5e1;
+  border-radius: 0.4rem;
+  color: #64748b;
+  font-size: 0.7rem;
+  text-align: center;
+}
 
-@media (max-width: 1100px) { .grid.five { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 640px) { .grid.five { grid-template-columns: 1fr; } .address-row { align-items: center; } }
+@media (max-width: 1100px) {
+  .grid.five {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .grid.five {
+    grid-template-columns: 1fr;
+  }
+  .address-row {
+    align-items: center;
+  }
+}
 
 /* The wizard's repeatable-section actions use the same controls as its footer. */
 .employee-page button.primary,
@@ -41,17 +78,20 @@
   min-height: 2.4rem;
   align-items: center;
   justify-content: center;
-  gap: .4rem;
-  border-radius: .4rem;
-  padding: .55rem .9rem;
+  gap: 0.4rem;
+  border-radius: 0.4rem;
+  padding: 0.55rem 0.9rem;
   font: inherit;
-  font-size: .72rem;
+  font-size: 0.72rem;
   font-weight: 650;
   line-height: 1.2;
   text-align: center;
   white-space: nowrap;
   cursor: pointer;
-  transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .employee-page button.primary {
@@ -87,7 +127,7 @@
 
 .employee-page button:disabled {
   cursor: not-allowed;
-  opacity: .55;
+  opacity: 0.55;
 }
 
 .employee-page .form-body {
@@ -101,7 +141,7 @@
 }
 
 .employee-page .section-row {
-  padding-bottom: .45rem;
+  padding-bottom: 0.45rem;
 }
 
 .employee-page .section-row h3 {
@@ -122,7 +162,7 @@
 
 @media (max-width: 640px) {
   .employee-page .form-body {
-    padding: .9rem;
+    padding: 0.9rem;
   }
 
   .employee-page .form-body .flex.justify-end.gap-2 button {

@@ -40,12 +40,21 @@ describe('App', () => {
       providers: [
         provideRouter(routes),
         provideHttpClient(),
-        ...provideAppConfig({ apiBaseUrl: '/api', postalLookupBaseUrl: '/postal', geographyBaseUrl: '/geography' }),
+        ...provideAppConfig({
+          apiBaseUrl: '/api',
+          postalLookupBaseUrl: '/postal',
+          geographyBaseUrl: '/geography',
+        }),
         { provide: AuthSessionService, useValue: session },
-        { provide: NavigationService, useValue: {
-          groups: signal([]).asReadonly(), status: signal('loaded').asReadonly(),
-          findByUrl: () => undefined, firstAllowedPath: () => '/dashboard',
-        } },
+        {
+          provide: NavigationService,
+          useValue: {
+            groups: signal([]).asReadonly(),
+            status: signal('loaded').asReadonly(),
+            findByUrl: () => undefined,
+            firstAllowedPath: () => '/dashboard',
+          },
+        },
       ],
     }).compileComponents();
 

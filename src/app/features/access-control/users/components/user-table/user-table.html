@@ -8,42 +8,25 @@
       class="border-b border-border bg-surface-muted/80 text-table-heading uppercase tracking-[0.04em] text-text-secondary"
     >
       <tr>
-        <th scope="col" class="px-4 py-2.5 font-semibold">
-          Name
-        </th>
+        <th scope="col" class="px-4 py-2.5 font-semibold">Name</th>
 
-        <th scope="col" class="px-4 py-2.5 font-semibold">
-          Email
-        </th>
+        <th scope="col" class="px-4 py-2.5 font-semibold">Email</th>
 
-        <th scope="col" class="px-4 py-2.5 font-semibold">
-          Roles
-        </th>
+        <th scope="col" class="px-4 py-2.5 font-semibold">Roles</th>
 
-        <th scope="col" class="px-4 py-2.5 font-semibold">
-          Status
-        </th>
+        <th scope="col" class="px-4 py-2.5 font-semibold">Status</th>
 
-        <th scope="col" class="px-4 py-2.5 font-semibold">
-          MFA
-        </th>
+        <th scope="col" class="px-4 py-2.5 font-semibold">MFA</th>
 
-        <th scope="col" class="px-4 py-2.5 text-right font-semibold">
-          Actions
-        </th>
+        <th scope="col" class="px-4 py-2.5 text-right font-semibold">Actions</th>
       </tr>
     </thead>
 
     <tbody class="divide-y divide-border bg-surface">
       @for (user of users(); track user.id) {
-        <tr
-          class="group transition-colors hover:bg-surface-muted/45"
-        >
+        <tr class="group transition-colors hover:bg-surface-muted/45">
           <!-- Name -->
-          <th
-            scope="row"
-            class="px-4 py-3 font-medium text-text-primary"
-          >
+          <th scope="row" class="px-4 py-3 font-medium text-text-primary">
             <div class="flex min-w-0 items-center gap-3">
               <div
                 aria-hidden="true"
@@ -80,9 +63,7 @@
                   {{ role.name }}
                 </span>
               } @empty {
-                <span class="text-small text-text-muted">
-                  No role assigned
-                </span>
+                <span class="text-small text-text-muted"> No role assigned </span>
               }
             </div>
           </td>
@@ -119,11 +100,7 @@
                 [class.bg-border-strong]="user.mfaStatus !== 'enabled'"
               ></span>
 
-              {{
-                user.mfaStatus === 'enabled'
-                  ? 'Enabled'
-                  : 'Not enabled'
-              }}
+              {{ user.mfaStatus === 'enabled' ? 'Enabled' : 'Not enabled' }}
             </span>
           </td>
 
@@ -144,9 +121,7 @@
                 stroke-linejoin="round"
               >
                 <path d="M12 20h9" />
-                <path
-                  d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"
-                />
+                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" />
               </svg>
 
               Edit

@@ -36,7 +36,11 @@ export function parseAppConfig(value: unknown): Readonly<AppConfig> {
     throw configurationError();
   }
 
-  if (typeof value['apiBaseUrl'] !== 'string' || typeof value['postalLookupBaseUrl'] !== 'string' || typeof value['geographyBaseUrl'] !== 'string') {
+  if (
+    typeof value['apiBaseUrl'] !== 'string' ||
+    typeof value['postalLookupBaseUrl'] !== 'string' ||
+    typeof value['geographyBaseUrl'] !== 'string'
+  ) {
     throw configurationError();
   }
 

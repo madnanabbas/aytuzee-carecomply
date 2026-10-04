@@ -77,7 +77,10 @@ describe('AuthSessionService', () => {
   });
 
   it('should fail closed when me contains an unknown permission', async () => {
-    api.meResponse = of({ ...currentUserResponse(), permissions: ['Dashboard.View', 'Unknown.Edit'] });
+    api.meResponse = of({
+      ...currentUserResponse(),
+      permissions: ['Dashboard.View', 'Unknown.Edit'],
+    });
 
     await session.initialize();
 
@@ -111,9 +114,7 @@ describe('AuthSessionService', () => {
   });
 
   it('should handle MFA without establishing a frontend session', async () => {
-    api.loginResponse = of(
-      new HttpResponse({ status: 202, body: { status: 'mfaRequired' } }),
-    );
+    api.loginResponse = of(new HttpResponse({ status: 202, body: { status: 'mfaRequired' } }));
 
     await expect(
       session.login({ email: 'user@example.com', password: 'password' }),
@@ -177,16 +178,22 @@ describe('AuthSessionService', () => {
   });
 
   it('should map expired and invalid MFA failures without authenticating', async () => {
-    api.verifyMfaResponse = throwError(() => new HttpErrorResponse({
-      status: 401,
-      error: { type: 'urn:carecomply:problem:mfa-challenge-expired' },
-    }));
+    api.verifyMfaResponse = throwError(
+      () =>
+        new HttpErrorResponse({
+          status: 401,
+          error: { type: 'urn:carecomply:problem:mfa-challenge-expired' },
+        }),
+    );
     await expect(session.verifyMfa('123456')).resolves.toEqual({ status: 'expired' });
 
-    api.verifyMfaResponse = throwError(() => new HttpErrorResponse({
-      status: 401,
-      error: { type: 'urn:carecomply:problem:mfa-verification-failed' },
-    }));
+    api.verifyMfaResponse = throwError(
+      () =>
+        new HttpErrorResponse({
+          status: 401,
+          error: { type: 'urn:carecomply:problem:mfa-verification-failed' },
+        }),
+    );
     await expect(session.verifyMfa('123456')).resolves.toEqual({ status: 'invalid' });
     expect(session.isAuthenticated()).toBe(false);
     expect(authorization.hasPermission(Permissions.Dashboard.View)).toBe(false);

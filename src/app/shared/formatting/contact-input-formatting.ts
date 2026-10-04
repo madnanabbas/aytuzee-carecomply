@@ -1,9 +1,12 @@
-import { formatUsPhone } from './client-field-validation';
+import {
+  formatUsPhone,
+  isValidEmail,
+  isValidUsPhone,
+} from '../../features/clients/models/client-field-validation';
 
-/** Format a US contact number without treating it as a numeric value (leading zeros matter). */
+/** Format a US contact number without treating it as numeric; leading zeros matter. */
 export function formatContactPhone(value: string): string {
-  const digits = value.replace(/\D/g, '');
-  return formatUsPhone(digits.length === 11 && digits.startsWith('1') ? digits.slice(1) : digits);
+  return formatUsPhone(value);
 }
 
 export function maskContactPhoneInput(event: Event): string {
@@ -15,9 +18,9 @@ export function maskContactPhoneInput(event: Event): string {
 
 export function isValidContactPhone(value: string, required = false): boolean {
   if (!value.trim()) return !required;
-  return /^\(\d{3}\) \d{3}-\d{4}$/.test(value);
+  return isValidUsPhone(value);
 }
 
 export function isValidContactEmail(value: string): boolean {
-  return !value.trim() || (value.length <= 320 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim()));
+  return isValidEmail(value);
 }

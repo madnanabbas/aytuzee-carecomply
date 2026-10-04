@@ -4,11 +4,7 @@ import { AuthorizationService } from '../authorization/authorization.service';
 import { canAccessNavigationRoute } from './app-navigation';
 import { NavigationApiService } from './navigation-api.service';
 import { resolveNavigationIcon } from './navigation-icon-resolver';
-import {
-  NavigationGroup,
-  NavigationItem,
-  NavigationLoadStatus,
-} from './navigation.models';
+import { NavigationGroup, NavigationItem, NavigationLoadStatus } from './navigation.models';
 
 const NAVIGATION_REQUEST_TIMEOUT_MS = 10_000;
 
@@ -29,8 +25,18 @@ export class NavigationService {
 
   async loadForSession(userId: string): Promise<void> {
     const permissionKey = this.authorization.permissionKey();
-    if (this.loadedUserId === userId && this.loadedPermissionKey === permissionKey && this.statusState() === 'loaded') return;
-    if (this.loadingUserId === userId && this.loadingPermissionKey === permissionKey && this.loadingPromise) return this.loadingPromise;
+    if (
+      this.loadedUserId === userId &&
+      this.loadedPermissionKey === permissionKey &&
+      this.statusState() === 'loaded'
+    )
+      return;
+    if (
+      this.loadingUserId === userId &&
+      this.loadingPermissionKey === permissionKey &&
+      this.loadingPromise
+    )
+      return this.loadingPromise;
 
     this.loadingUserId = userId;
     this.loadingPermissionKey = permissionKey;
@@ -51,7 +57,11 @@ export class NavigationService {
   }
 
   firstAllowedPath(): string {
-    return this.groupsState().flatMap((group) => group.items).at(0)?.route ?? '/forbidden';
+    return (
+      this.groupsState()
+        .flatMap((group) => group.items)
+        .at(0)?.route ?? '/forbidden'
+    );
   }
 
   findByUrl(url: string): NavigationItem | undefined {
@@ -59,10 +69,12 @@ export class NavigationService {
     const allItems = this.groupsState()
       .flatMap((group) => group.items)
       .flatMap((item) => [item, ...item.children]);
-    return allItems.find((item) => normalizeUrl(item.route) === normalized)
-      ?? [...allItems]
+    return (
+      allItems.find((item) => normalizeUrl(item.route) === normalized) ??
+      [...allItems]
         .sort((left, right) => right.route.length - left.route.length)
-        .find((item) => normalized.startsWith(`${normalizeUrl(item.route)}/`));
+        .find((item) => normalized.startsWith(`${normalizeUrl(item.route)}/`))
+    );
   }
 
   private async load(userId: string, permissionKey: string): Promise<void> {
@@ -103,11 +115,14 @@ export class NavigationService {
   }
 
   private parseModule(value: unknown): NavigationGroup | null {
-    if (!isRecord(value)
-      || !isSafeKey(value['key'])
-      || !isBoundedText(value['name'])
-      || !isSortOrder(value['sortOrder'])
-      || !Array.isArray(value['features'])) return null;
+    if (
+      !isRecord(value) ||
+      !isSafeKey(value['key']) ||
+      !isBoundedText(value['name']) ||
+      !isSortOrder(value['sortOrder']) ||
+      !Array.isArray(value['features'])
+    )
+      return null;
 
     const items = value['features']
       .map((feature) => this.parseFeature(feature, false))
@@ -124,15 +139,18 @@ export class NavigationService {
   }
 
   private parseFeature(value: unknown, isChild: boolean): NavigationItem | null {
-    if (!isRecord(value)
-      || !isSafeKey(value['key'])
-      || !isBoundedText(value['name'])
-      || !isSafeInternalRoute(value['route'])
-      || !isSafeKey(value['iconKey'])
-      || !isSortOrder(value['sortOrder'])
-      || !Array.isArray(value['children'])
-      || (isChild && value['children'].length > 0)
-      || !canAccessNavigationRoute(this.authorization, value['key'], value['route'])) return null;
+    if (
+      !isRecord(value) ||
+      !isSafeKey(value['key']) ||
+      !isBoundedText(value['name']) ||
+      !isSafeInternalRoute(value['route']) ||
+      !isSafeKey(value['iconKey']) ||
+      !isSortOrder(value['sortOrder']) ||
+      !Array.isArray(value['children']) ||
+      (isChild && value['children'].length > 0) ||
+      !canAccessNavigationRoute(this.authorization, value['key'], value['route'])
+    )
+      return null;
 
     const children = value['children']
       .map((child) => this.parseFeature(child, true))
@@ -154,8 +172,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function isSafeKey(value: unknown): value is string {
-  return typeof value === 'string' && value.length > 0 && value.length <= 100
-    && /^[a-z0-9-]+$/u.test(value);
+  return (
+    typeof value === 'string' &&
+    value.length > 0 &&
+    value.length <= 100 &&
+    /^[a-z0-9-]+$/u.test(value)
+  );
 }
 
 function isBoundedText(value: unknown): value is string {
@@ -167,8 +189,12 @@ function isSortOrder(value: unknown): value is number {
 }
 
 function isSafeInternalRoute(value: unknown): value is string {
-  return typeof value === 'string' && value.length >= 2 && value.length <= 200
-    && /^\/[a-z0-9-]+(?:\/[a-z0-9-]+)*$/u.test(value);
+  return (
+    typeof value === 'string' &&
+    value.length >= 2 &&
+    value.length <= 200 &&
+    /^\/[a-z0-9-]+(?:\/[a-z0-9-]+)*$/u.test(value)
+  );
 }
 
 function normalizeUrl(url: string): string {

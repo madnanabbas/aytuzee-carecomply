@@ -6,10 +6,7 @@
 </a>
 
 <div class="flex min-h-screen bg-background text-text-primary">
-  <app-sidebar
-    [mobileOpen]="mobileSidebarOpen()"
-    (closeRequested)="closeMobileSidebar()"
-  />
+  <app-sidebar [mobileOpen]="mobileSidebarOpen()" (closeRequested)="closeMobileSidebar()" />
 
   <div
     class="flex min-h-screen min-w-0 flex-1 flex-col"

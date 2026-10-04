@@ -87,9 +87,11 @@ export class MfaChallengePageComponent {
           await this.router.navigateByUrl(this.landing.firstAllowedPath());
           break;
         case 'invalid':
-          this.errorMessage.set(this.recoveryMode()
-            ? 'The recovery code is invalid or has already been used.'
-            : 'The verification code is invalid or has expired.');
+          this.errorMessage.set(
+            this.recoveryMode()
+              ? 'The recovery code is invalid or has already been used.'
+              : 'The verification code is invalid or has expired.',
+          );
           break;
         case 'rateLimited':
           this.errorMessage.set('Too many verification attempts. Please wait and try again.');

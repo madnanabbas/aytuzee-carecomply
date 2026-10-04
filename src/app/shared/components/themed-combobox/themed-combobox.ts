@@ -18,9 +18,11 @@ export class ThemedComboboxComponent {
 
   get filteredOptions(): readonly string[] {
     const query = this.value.trim().toLocaleLowerCase();
-    return (query
-      ? this.options.filter((option) => option.toLocaleLowerCase().includes(query))
-      : this.options).slice(0, 100);
+    return (
+      query
+        ? this.options.filter((option) => option.toLocaleLowerCase().includes(query))
+        : this.options
+    ).slice(0, 100);
   }
 
   update(value: string): void {

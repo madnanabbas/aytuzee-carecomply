@@ -1,0 +1,38 @@
+<nav class="client-wizard-sidebar" [attr.aria-label]="ariaLabel()">
+  <ol>
+    @for (step of steps(); track step.title; let index = $index) {
+      <li [class.active]="index === activeIndex()" [class.completed]="index < activeIndex()">
+        <button
+          type="button"
+          [disabled]="!canSelect(index)"
+          [attr.aria-current]="index === activeIndex() ? 'step' : null"
+          (click)="select(index)"
+        >
+          <span class="client-wizard-sidebar-number">{{ index + 1 }}</span>
+          <span>{{ step.title }}</span>
+        </button>
+      </li>
+    }
+  </ol>
+</nav>
+
+<div class="client-wizard-mobile-selector">
+  <div aria-live="polite">
+    <span>Step {{ activeIndex() + 1 }} of {{ steps().length }}</span>
+    <strong>{{ steps()[activeIndex()].title }}</strong>
+  </div>
+  <label>
+    <span>Change step</span>
+    <select
+      [attr.aria-label]="ariaLabel()"
+      [value]="activeIndex()"
+      (change)="selectFromDropdown($event)"
+    >
+      @for (step of steps(); track step.title; let index = $index) {
+        <option [value]="index" [disabled]="!canSelect(index)">
+          {{ index + 1 }}. {{ step.title }}
+        </option>
+      }
+    </select>
+  </label>
+</div>

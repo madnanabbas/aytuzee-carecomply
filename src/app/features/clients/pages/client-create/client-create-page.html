@@ -1,14 +1,27 @@
-<div class="mx-auto w-full max-w-[96rem] pb-8">
-  <header class="border-b border-border pb-3">
-    <a routerLink="/clients" class="inline-flex items-center gap-1.5 text-[12px] font-medium text-primary hover:text-primary-hover">
-      <svg aria-hidden="true" class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m15 18-6-6 6-6"/></svg>
+<div class="client-wizard-page">
+  <header class="client-wizard-header">
+    <a
+      routerLink="/clients"
+      class="inline-flex items-center gap-1.5 text-[12px] font-medium text-primary hover:text-primary-hover"
+    >
+      <svg
+        aria-hidden="true"
+        class="size-3.5"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+      >
+        <path d="m15 18-6-6 6-6" />
+      </svg>
       Back to clients
     </a>
     <div class="mt-1 flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
       <div>
         <h1 class="text-[21px] font-semibold leading-7 text-text-primary">Add client</h1>
         <p class="mt-0.5 max-w-4xl text-[12px] text-text-secondary">
-          Complete the client record, then add caregivers, contacts, providers, hospitalizations and visits in the same guided workflow.
+          Complete the client record, then add caregivers, contacts, providers and hospitalizations
+          in the same guided workflow.
         </p>
       </div>
       <div class="text-right text-[11px] text-text-muted">
@@ -19,261 +32,205 @@
     </div>
   </header>
 
-  <nav class="mt-3 border-b border-border" aria-label="Client creation steps">
-    <ol class="flex gap-8 overflow-x-auto">
-      @for (step of steps; track step.id; let index = $index) {
-        <li>
-          <button
-            type="button"
-            class="relative flex h-10 items-center gap-2 whitespace-nowrap px-1 text-[12px] font-medium text-text-muted transition-colors hover:text-text-primary"
-            [class.text-primary]="stepIndex() === index"
-            [class.text-text-primary]="stepIndex() > index"
-            (click)="goToStep(index)"
+  <div class="client-authenticated-wizard-layout">
+    <app-client-wizard-sidebar
+      [steps]="steps"
+      [activeIndex]="stepIndex()"
+      [maximumEnabledIndex]="furthestStepIndex()"
+      ariaLabel="Client creation steps"
+      (stepSelected)="goToStep($event)"
+    />
+
+    <div class="client-authenticated-wizard-main">
+      @if (errorMessage()) {
+        <div
+          class="mt-3 rounded-control border border-red-200 bg-red-50 px-3 py-2.5 text-[11px] text-red-800"
+          role="alert"
+        >
+          <p class="font-semibold">{{ errorMessage() }}</p>
+        </div>
+      }
+
+      <main class="client-wizard-content rounded-surface border border-border bg-surface">
+        <div class="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
+          <div>
+            <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+              Step {{ stepIndex() + 1 }}
+            </p>
+            <h2 class="mt-0.5 text-[16px] font-semibold text-text-primary">
+              {{ activeStep().title }}
+            </h2>
+          </div>
+          <span class="rounded-full bg-surface-muted px-2.5 py-1 text-[10px] text-text-muted"
+            >Fields marked <span class="font-semibold text-red-600">*</span> are required</span
           >
-            <span class="text-[10px] font-semibold" [class.text-primary]="stepIndex() === index">0{{ index + 1 }}</span>
-            {{ step.title }}
-            @if (stepIndex() > index) {
-              <svg aria-hidden="true" class="size-3.5 text-success" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4 4L19 6"/></svg>
-            }
-            @if (stepIndex() === index) {
-              <span class="absolute inset-x-0 bottom-0 h-0.5 bg-primary"></span>
-            }
-          </button>
-        </li>
-      }
-    </ol>
-  </nav>
+        </div>
 
-
-  @if (errorMessage()) {
-    <div class="mt-3 rounded-control border border-red-200 bg-red-50 px-3 py-2.5 text-[11px] text-red-800" role="alert">
-      <p class="font-semibold">{{ errorMessage() }}</p>
-    </div>
-  }
-
-  <main class="mt-3 rounded-surface border border-border bg-surface">
-    <div class="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-      <div>
-        <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">Step {{ stepIndex() + 1 }}</p>
-        <h2 class="mt-0.5 text-[16px] font-semibold text-text-primary">{{ activeStep().title }}</h2>
-      </div>
-      <span class="rounded-full bg-surface-muted px-2.5 py-1 text-[10px] text-text-muted">Fields marked <span class="font-semibold text-red-600">*</span> are required</span>
-    </div>
-
-    <div class="px-4 py-4 lg:px-5">
-      @switch (activeStep().id) {
-        @case ('basic') {
-          <div class="space-y-6">
-            <section>
-              <div class="mb-3 flex items-center gap-2 border-b border-border pb-2">
-                <span class="flex size-7 items-center justify-center rounded-md bg-primary-subtle text-primary">
-                  <svg aria-hidden="true" class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
-                </span>
-                <div><h3 class="text-[13px] font-semibold text-text-primary">Client identity</h3><p class="text-[10px] text-text-muted">Legal identity and primary identifiers.</p></div>
-              </div>
-              <div class="grid gap-x-4 gap-y-3 md:grid-cols-2 xl:grid-cols-4">
-                <label><span class="form-label">First name <span class="text-red-600">*</span></span><input [(ngModel)]="draft.firstName" (ngModelChange)="clearFieldError('firstName')" class="form-control" [style.border-color]="fieldError('firstName') ? '#dc2626' : null" [attr.aria-invalid]="!!fieldError('firstName')" placeholder="First name" required maxlength="100" autocomplete="given-name" />@if (fieldError('firstName'); as error) {<small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>}</label>
-                <label><span class="form-label">Middle name</span><input [(ngModel)]="draft.middleName" class="form-control" placeholder="Middle name" /></label>
-                <label><span class="form-label">Last name <span class="text-red-600">*</span></span><input [(ngModel)]="draft.lastName" (ngModelChange)="clearFieldError('lastName')" class="form-control" [style.border-color]="fieldError('lastName') ? '#dc2626' : null" [attr.aria-invalid]="!!fieldError('lastName')" placeholder="Last name" required maxlength="100" autocomplete="family-name" />@if (fieldError('lastName'); as error) {<small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>}</label>
-                <label><span class="form-label">Goes by</span><input [(ngModel)]="draft.goesBy" class="form-control" placeholder="Preferred name" /></label>
-                <label><span class="form-label">Date of birth <span class="text-red-600">*</span></span><input type="date" [(ngModel)]="draft.dob" (ngModelChange)="clearFieldError('dob')" class="form-control" [style.border-color]="fieldError('dob') ? '#dc2626' : null" [attr.aria-invalid]="!!fieldError('dob')" />@if (fieldError('dob'); as error) {<small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>}</label>
-                <label><span class="form-label">Age</span><input [value]="ageFromDob()" class="form-control bg-surface-muted" readonly /></label>
-                <label><span class="form-label">Gender <span class="text-red-600">*</span></span><select [(ngModel)]="draft.gender" (ngModelChange)="clearFieldError('gender')" class="form-control" [style.border-color]="fieldError('gender') ? '#dc2626' : null" [attr.aria-invalid]="!!fieldError('gender')" required><option value="">Select gender</option><option>Male</option><option>Female</option><option>Non-binary</option><option>Other</option><option>Prefer not to say</option></select>@if (fieldError('gender'); as error) {<small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>}</label>
-                <label><span class="form-label">PMI number <span class="text-red-600">*</span></span><input [value]="draft.pmi" (input)="normalizePmi($event)" class="form-control" [style.border-color]="fieldError('pmi') ? '#dc2626' : null" [attr.aria-invalid]="!!fieldError('pmi')" placeholder="24591384" required minlength="8" maxlength="8" inputmode="numeric" pattern="[0-9]{8}" autocomplete="off" />@if (fieldError('pmi'); as error) {<small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>} @else {<small class="mt-1 block text-[10px] text-text-muted">Enter the Minnesota 8-digit Person Master Index number.</small>}</label>
-                <label><span class="form-label">SSN</span><input [ngModel]="draft.ssn" (ngModelChange)="normalizeSsn($event)" type="text" class="form-control" [class.border-red-500]="fieldError('ssn')" [attr.aria-invalid]="!!fieldError('ssn')" placeholder="123-45-6789" minlength="11" maxlength="11" inputmode="numeric" autocomplete="off" aria-describedby="ssn-storage-note" />@if (fieldError('ssn'); as error) {<small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>} @else {<small id="ssn-storage-note" class="mt-1 block text-[10px] text-text-muted">Stored encrypted and restricted to authorized SSN access.</small>}</label>
-                <label><span class="form-label">Insurance</span><input [(ngModel)]="draft.insurance" class="form-control" placeholder="Insurance provider" /></label>
-              </div>
-            </section>
-
-            <section>
-              <div class="mb-3 flex items-center gap-2 border-b border-border pb-2">
-                <span class="flex size-7 items-center justify-center rounded-md bg-primary-subtle text-primary"><svg aria-hidden="true" class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h5"/></svg></span>
-                <div><h3 class="text-[13px] font-semibold text-text-primary">Intake & service setup</h3><p class="text-[10px] text-text-muted">Start of care, assignment and service information.</p></div>
-              </div>
-              <div class="grid gap-x-4 gap-y-3 md:grid-cols-2 xl:grid-cols-4">
-                <label><span class="form-label">Intake date</span><input type="date" [(ngModel)]="draft.intakeDate" (ngModelChange)="clearFieldError('intakeDate')" class="form-control" [class.border-red-500]="fieldError('intakeDate')" [attr.aria-invalid]="!!fieldError('intakeDate')" />@if (fieldError('intakeDate'); as error) {<small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>}</label>
-                <label><span class="form-label">SOC date <span class="text-red-600">*</span></span><input type="date" [(ngModel)]="draft.socDate" (ngModelChange)="clearFieldError('socDate')" class="form-control" [style.border-color]="fieldError('socDate') ? '#dc2626' : null" [attr.aria-invalid]="!!fieldError('socDate')" required />@if (fieldError('socDate'); as error) {<small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>}</label>
-                <label><span class="form-label">Referral source</span><select [(ngModel)]="draft.referralSource" class="form-control"><option value="">Select source</option><option>Self</option><option>County</option><option>Hospital</option><option>Clinic</option><option>Family / Friend</option><option>Other</option></select></label>
-                <label><span class="form-label">Status</span><select [(ngModel)]="draft.status" class="form-control"><option>Active</option><option>Pending</option><option>On hold</option><option>Inactive</option><option>Discharged</option></select></label>
-                <label><span class="form-label">Location <span class="text-red-600">*</span></span><select [ngModel]="draft.locationId" (ngModelChange)="selectLocation($event)" class="form-control"><option value="" disabled>Select location</option>@for (option of locationOptions(); track option.id) {<option [value]="option.id">{{ option.name }}{{ option.isMain ? ' (Main)' : '' }}</option>}</select></label>
-
-                <div class="relative">
-                  <span class="form-label">Client services</span>
-                  <button type="button" class="form-control flex items-center justify-between text-left" (click)="toggleServicesDropdown()"><span class="truncate" [class.text-text-muted]="draft.services.length === 0">{{ selectedLabel(draft.services, 'Select services') }}</span><svg class="size-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m6 9 6 6 6-6"/></svg></button>
-                  @if (servicesOpen()) {<div class="absolute z-30 mt-1 w-full rounded-control border border-border bg-surface p-1.5 shadow-lg">@for (option of serviceOptions; track option) {<label class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-[12px] hover:bg-surface-muted"><input type="checkbox" [checked]="draft.services.includes(option)" (change)="onToggleArray('services', option, $event)" /><span>{{ option }}</span></label>}</div>}
-                </div>
-
-                <label><span class="form-label">Supervisor</span><select [(ngModel)]="draft.supervisor" class="form-control" [disabled]="!draft.locationId || supervisorLoading()"><option value="">{{ supervisorLoading() ? 'Loading employees…' : 'No supervisor assigned' }}</option>@for (person of supervisorOptions(); track person.id) {<option [value]="person.id">{{ person.name }} — {{ person.jobTitle }}</option>}</select></label>
-                <label><span class="form-label">EVV hours</span><input type="number" min="0" max="168" [(ngModel)]="draft.evvHours" (ngModelChange)="clearFieldError('evvHours')" class="form-control" [class.border-red-500]="fieldError('evvHours')" [attr.aria-invalid]="!!fieldError('evvHours')" placeholder="Authorized hours" />@if (fieldError('evvHours'); as error) {<small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>}</label>
-                <label class="flex items-center gap-2 self-end pb-2"><input type="checkbox" [(ngModel)]="draft.onboarding" /><span class="text-[12px] font-medium text-text-secondary">Client is onboarding</span></label>
-                @if (draft.status === 'Discharged') {
-                  <label><span class="form-label">Discharge date</span><input type="date" [(ngModel)]="draft.dischargeDate" (ngModelChange)="clearFieldError('dischargeDate')" class="form-control" [class.border-red-500]="fieldError('dischargeDate')" [attr.aria-invalid]="!!fieldError('dischargeDate')" />@if (fieldError('dischargeDate'); as error) {<small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>}</label>
-                  <label><span class="form-label">Discharge reason</span><select [(ngModel)]="draft.dischargeReason" class="form-control"><option value="">Select reason</option><option>Services completed</option><option>Transferred</option><option>Client request</option><option>Other</option></select></label>
-                }
-              </div>
-            </section>
-          </div>
-        }
-
-        @case ('contact') {
-          <div class="space-y-6">
-            <section>
-              <div class="mb-3 flex items-center gap-2 border-b border-border pb-2">
-                <span class="flex size-7 items-center justify-center rounded-md bg-primary-subtle text-primary"><svg aria-hidden="true" class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.78.62 2.63a2 2 0 0 1-.45 2.11L8 9.73a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.85.29 1.73.5 2.63.62A2 2 0 0 1 22 16.92z"/></svg></span>
-                <div><h3 class="text-[13px] font-semibold text-text-primary">Contact & address</h3><p class="text-[10px] text-text-muted">Communication preferences and home address.</p></div>
-              </div>
-              <div class="grid gap-x-4 gap-y-3 md:grid-cols-2 xl:grid-cols-4">
-                <label><span class="form-label">Primary phone <span class="text-red-600">*</span></span><input [ngModel]="draft.phone1" (ngModelChange)="normalizePhone('phone1', $event)" class="form-control" [style.border-color]="fieldError('phone1') ? '#dc2626' : null" [attr.aria-invalid]="!!fieldError('phone1')" placeholder="(555) 555-1234" required maxlength="14" inputmode="tel" autocomplete="tel" />@if (fieldError('phone1'); as error) {<small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>}</label>
-                <label><span class="form-label">Secondary phone</span><input [ngModel]="draft.phone2" (ngModelChange)="normalizePhone('phone2', $event)" class="form-control" [class.border-red-500]="fieldError('phone2')" [attr.aria-invalid]="!!fieldError('phone2')" placeholder="(555) 555-1234" maxlength="14" inputmode="tel" />@if (fieldError('phone2'); as error) {<small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>}</label>
-                <label><span class="form-label">Email</span><input type="email" [(ngModel)]="draft.email" class="form-control" placeholder="client@example.com" /></label>
-                <div class="relative">
-                  <span class="form-label">Preferred language <span class="text-red-600">*</span></span>
-                  <button type="button" class="form-control flex items-center justify-between text-left" [style.border-color]="fieldError('languages') ? '#dc2626' : null" [attr.aria-invalid]="!!fieldError('languages')" (click)="toggleLanguagesDropdown()"><span class="truncate" [class.text-text-muted]="draft.languages.length === 0">{{ selectedLabel(draft.languages, 'Select languages') }}</span><svg class="size-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m6 9 6 6 6-6"/></svg></button>
-                  @if (languagesOpen()) {<div class="absolute z-30 mt-1 w-full rounded-control border border-border bg-surface p-1.5 shadow-lg">@for (option of languageOptions; track option) {<label class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-[12px] hover:bg-surface-muted"><input type="checkbox" [checked]="draft.languages.includes(option)" (change)="onToggleArray('languages', option, $event)" /><span>{{ option }}</span></label>}</div>}
-                  @if (fieldError('languages'); as error) {<small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>}
-                </div>
-                <label class="xl:col-span-2"><span class="form-label">Street <span class="text-red-600">*</span></span><input [(ngModel)]="draft.street" (ngModelChange)="clearFieldError('street')" class="form-control" [style.border-color]="fieldError('street') ? '#dc2626' : null" [attr.aria-invalid]="!!fieldError('street')" placeholder="Street address" required maxlength="200" autocomplete="address-line1" />@if (fieldError('street'); as error) {<small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>}</label>
-                <label><span class="form-label">Apartment / Unit</span><input [(ngModel)]="draft.apartment" class="form-control" /></label>
-                <label><span class="form-label">Postal / ZIP code</span><input [ngModel]="draft.zip" (ngModelChange)="normalizePostalCode($event)" class="form-control" [class.border-red-500]="fieldError('zip')" [attr.aria-invalid]="!!fieldError('zip')" placeholder="Postal code" maxlength="20" autocomplete="postal-code" />
-                  @if (fieldError('zip'); as error) {<small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>}
-                  @if (postalLookupLoading()) {<small class="mt-1 block text-[10px] text-text-muted">Looking up location…</small>}
-                </label>
-                <label><span class="form-label">Country</span><input value="United States" class="form-control bg-surface-muted" autocomplete="country-name" readonly /></label>
-                <label><span class="form-label">State / Province</span><app-themed-combobox [value]="draft.state" (valueChange)="onStateChange($event)" [options]="stateNames()" placeholder="Select or enter state" autocomplete="address-level1" /></label>
-                <label><span class="form-label">City</span><app-themed-combobox [value]="draft.city" (valueChange)="onCityChange($event)" [options]="cityOptions()" placeholder="Select or enter city" autocomplete="address-level2" /></label>
-                <label><span class="form-label">Area</span><input [(ngModel)]="draft.county" class="form-control" /></label>
-                @if (postalLookupMessage()) {<p class="md:col-span-2 xl:col-span-4 text-[10px] text-text-muted" aria-live="polite">{{ postalLookupMessage() }}</p>}
-              </div>
-            </section>
-
-            <section>
-              <div class="mb-3 flex items-center gap-2 border-b border-border pb-2">
-                <span class="flex size-7 items-center justify-center rounded-md bg-primary-subtle text-primary"><svg aria-hidden="true" class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
-                <div><h3 class="text-[13px] font-semibold text-text-primary">Care & safety</h3><p class="text-[10px] text-text-muted">Important information caregivers should know before service starts.</p></div>
-              </div>
-              <div class="grid gap-x-4 gap-y-3 md:grid-cols-2 xl:grid-cols-4">
-                <label><span class="form-label">Safety measure</span><input [(ngModel)]="draft.safetyMeasure" class="form-control" placeholder="Safety precautions" /></label>
-                <label><span class="form-label">Special equipment</span><input [(ngModel)]="draft.specialEquipment" class="form-control" placeholder="Mobility or medical equipment" /></label>
-                <label><span class="form-label">Allergies</span><input [(ngModel)]="draft.allergies" class="form-control" placeholder="Known allergies" /></label>
-                <label><span class="form-label">Other services</span><input [(ngModel)]="draft.otherServices" class="form-control" placeholder="Other services received" /></label>
-              </div>
-            </section>
-          </div>
-        }
-
-        @case ('additional') {
-          <div class="space-y-6">
-            <section>
-              <div class="section-heading"><h3>Program & demographics</h3><p>Program classification and supporting demographic information.</p></div>
-              <div class="grid gap-x-4 gap-y-3 md:grid-cols-2 xl:grid-cols-4">
-                <label><span class="form-label">Program type</span><select [(ngModel)]="draft.programType" class="form-control"><option value="">Select program</option><option>PCA Traditional</option><option>PCA Choice</option><option>245D</option><option>CFSS Agency</option><option>CFSS Budget</option></select></label>
-                <label><span class="form-label">Home care rating status</span><select [(ngModel)]="draft.homeCareRatingStatus" class="form-control"><option value="">Select rating</option><option>Standard</option><option>Moderate</option><option>Complex</option></select></label>
-                <label><span class="form-label">PCA complexity</span><select [(ngModel)]="draft.pcaComplexity" class="form-control"><option value="">Select complexity</option><option>Standard</option><option>Enhanced</option><option>Complex</option></select></label>
-                <label><span class="form-label">Medical equipment</span><select [(ngModel)]="draft.medicalEquipment" class="form-control"><option value="">Select equipment</option><option>None</option><option>Wheelchair</option><option>Walker</option><option>Oxygen</option><option>Other</option></select></label>
-                <label><span class="form-label">Marital status</span><select [(ngModel)]="draft.maritalStatus" class="form-control"><option value="">Select</option><option>Single</option><option>Married</option><option>Divorced</option><option>Widowed</option></select></label>
-                <label><span class="form-label">Ethnicity</span><input [(ngModel)]="draft.ethnicity" class="form-control" /></label>
-                <label><span class="form-label">Race</span><input [(ngModel)]="draft.race" class="form-control" /></label>
-                <label><span class="form-label">Caregiver preference</span><select [(ngModel)]="draft.caregiverPreference" class="form-control"><option value="">Select preference</option><option>No preference</option><option>Female caregiver</option><option>Male caregiver</option><option>Language match</option><option>Other</option></select></label>
-              </div>
-            </section>
-
-            <section>
-              <div class="section-heading"><h3>Referral & living information</h3><p>Referral context, home environment and caregiver considerations.</p></div>
-              <div class="grid gap-x-4 gap-y-3 md:grid-cols-2 xl:grid-cols-4">
-                <label class="flex items-center gap-2 self-end pb-2"><input type="checkbox" [(ngModel)]="draft.referringClient" /><span class="text-[12px] font-medium text-text-secondary">Referred by another client</span></label>
-                @if (draft.referringClient) {<label><span class="form-label">Referring client</span><input [(ngModel)]="draft.referringClientName" class="form-control" placeholder="Client name" /></label>}
-                <label><span class="form-label">Company name</span><input [(ngModel)]="draft.companyName" class="form-control" /></label>
-                <label><span class="form-label">Company phone</span><input [ngModel]="draft.companyPhone" (ngModelChange)="normalizePhone('companyPhone', $event)" class="form-control" placeholder="(555) 555-1234" maxlength="14" inputmode="tel" /></label>
-                <label><span class="form-label">Smoking</span><select [(ngModel)]="draft.smoking" class="form-control"><option value="">Select</option><option>No</option><option>Yes</option></select></label>
-                <label><span class="form-label">US military veteran</span><select [(ngModel)]="draft.veteran" class="form-control"><option value="">Select</option><option>No</option><option>Yes</option></select></label>
-                @if (draft.veteran === 'Yes') {<label class="xl:col-span-2"><span class="form-label">Veteran details</span><input [(ngModel)]="draft.veteranDetails" class="form-control" /></label>}
-                <label><span class="form-label">Pets</span><select [(ngModel)]="draft.pets" class="form-control"><option value="">Select</option><option>No</option><option>Yes</option></select></label>
-                @if (draft.pets === 'Yes') {<label class="xl:col-span-2"><span class="form-label">Pet details</span><input [(ngModel)]="draft.petsDetails" class="form-control" placeholder="Type, number, safety notes" /></label>}
-                <label><span class="form-label">Living arrangement</span><select [(ngModel)]="draft.livingArrangement" class="form-control"><option value="">Select arrangement</option><option>Lives alone</option><option>With family</option><option>With roommate</option><option>Assisted setting</option><option>Other</option></select></label>
-                <label class="xl:col-span-2"><span class="form-label">Living arrangement details</span><input [(ngModel)]="draft.livingArrangementDetails" class="form-control" /></label>
-              </div>
-            </section>
-
-            <section>
-              <div class="section-heading"><h3>Providers & emergency references</h3><p>Preferred clinic, hospital and ambulance references. These are not hospitalization history records.</p></div>
-              <div class="grid gap-3 xl:grid-cols-3">
-                <div class="rounded-control border border-border p-3"><p class="text-[12px] font-semibold text-text-primary">Clinic</p><div class="mt-2 grid gap-2"><input [(ngModel)]="draft.clinicName" class="form-control" placeholder="Clinic name" /><p class="text-[10px] leading-4 text-text-muted">Detailed clinic contact information will be managed in the Contacts/Providers phase.</p></div></div>
-                <div class="rounded-control border border-border p-3"><p class="text-[12px] font-semibold text-text-primary">Preferred hospital</p><div class="mt-2 grid gap-2"><input [(ngModel)]="draft.hospitalName" class="form-control" placeholder="Hospital name" /><p class="text-[10px] leading-4 text-text-muted">Hospitalization history remains a separate related record after creation.</p></div></div>
-                <div class="rounded-control border border-border p-3"><p class="text-[12px] font-semibold text-text-primary">Ambulance company</p><div class="mt-2 grid gap-2"><input [(ngModel)]="draft.ambulanceName" class="form-control" placeholder="Company name" /><p class="text-[10px] leading-4 text-text-muted">Detailed provider contact information is deferred to the related Contacts/Providers phase.</p></div></div>
-              </div>
-            </section>
-
-            <section>
-              <div class="section-heading"><h3>Nutrition & notes</h3><p>Dietary requirements and meal schedule preferences.</p></div>
-              <div class="grid gap-x-4 gap-y-3 md:grid-cols-2 xl:grid-cols-4">
-                <label class="md:col-span-2"><span class="form-label">Nutritional requirements</span><input [(ngModel)]="draft.nutritionalRequirements" class="form-control" placeholder="Special nutritional requirements" /></label>
-                <div class="md:col-span-2 xl:col-span-4"><span class="form-label">Current diet</span><div class="mt-1 flex flex-wrap gap-x-5 gap-y-2 rounded-control border border-border px-3 py-2">@for (option of dietOptions; track option) {<label class="flex items-center gap-2 text-[12px] text-text-secondary"><input type="checkbox" [checked]="draft.diet.includes(option)" (change)="onToggleArray('diet', option, $event)" />{{ option }}</label>}</div></div>
-                <label><span class="form-label">Breakfast time</span><input type="time" [(ngModel)]="draft.breakfastTime" class="form-control" /></label>
-                <label><span class="form-label">Lunch time</span><input type="time" [(ngModel)]="draft.lunchTime" class="form-control" /></label>
-                <label><span class="form-label">Dinner time</span><input type="time" [(ngModel)]="draft.dinnerTime" class="form-control" /></label>
-                <label class="md:col-span-2 xl:col-span-4"><span class="form-label">Notes</span><textarea rows="3" [(ngModel)]="draft.notes" class="form-control min-h-[74px] py-2" placeholder="General client notes"></textarea></label>
-                <label class="md:col-span-2 xl:col-span-4"><span class="form-label">Additional information</span><textarea rows="3" [(ngModel)]="draft.additionalInformation" class="form-control min-h-[74px] py-2" placeholder="Information not covered by another field"></textarea></label>
-              </div>
-            </section>
-          </div>
-        }
-
-        @case ('review') {
-          <div class="space-y-4">
-            <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-              <section class="rounded-control border border-border p-3"><div class="flex items-center justify-between"><h3 class="text-[13px] font-semibold text-text-primary">Client</h3><button type="button" class="text-[11px] font-medium text-primary" (click)="goToStep(0)">Edit</button></div><dl class="mt-3 grid grid-cols-[7rem_1fr] gap-x-2 gap-y-1.5 text-[11px]"><dt class="text-text-muted">Name</dt><dd>{{ draft.firstName || '—' }} {{ draft.middleName }} {{ draft.lastName }}</dd><dt class="text-text-muted">PMI</dt><dd>{{ draft.pmi || '—' }}</dd><dt class="text-text-muted">DOB</dt><dd>{{ draft.dob || '—' }} · {{ ageFromDob() }}</dd><dt class="text-text-muted">Status</dt><dd>{{ draft.status }}</dd></dl></section>
-              <section class="rounded-control border border-border p-3"><div class="flex items-center justify-between"><h3 class="text-[13px] font-semibold text-text-primary">Care setup</h3><button type="button" class="text-[11px] font-medium text-primary" (click)="goToStep(0)">Edit</button></div><dl class="mt-3 grid grid-cols-[7rem_1fr] gap-x-2 gap-y-1.5 text-[11px]"><dt class="text-text-muted">SOC</dt><dd>{{ draft.socDate || '—' }}</dd><dt class="text-text-muted">Location</dt><dd>{{ draft.location || '—' }}</dd><dt class="text-text-muted">Services</dt><dd>{{ draft.services.length ? draft.services.join(', ') : '—' }}</dd><dt class="text-text-muted">Languages</dt><dd>{{ draft.languages.length ? draft.languages.join(', ') : '—' }}</dd><dt class="text-text-muted">Supervisor</dt><dd>{{ selectedSupervisorName() }}</dd></dl></section>
-              <section class="rounded-control border border-border p-3"><div class="flex items-center justify-between"><h3 class="text-[13px] font-semibold text-text-primary">Additional</h3><button type="button" class="text-[11px] font-medium text-primary" (click)="goToStep(1)">Edit</button></div><dl class="mt-3 grid grid-cols-[7rem_1fr] gap-x-2 gap-y-1.5 text-[11px]"><dt class="text-text-muted">Program</dt><dd>{{ draft.programType || '—' }}</dd><dt class="text-text-muted">Complexity</dt><dd>{{ draft.pcaComplexity || '—' }}</dd><dt class="text-text-muted">Living</dt><dd>{{ draft.livingArrangement || '—' }}</dd><dt class="text-text-muted">Hospital</dt><dd>{{ draft.hospitalName || '—' }}</dd></dl></section>
-              <section class="rounded-control border border-border p-3"><div class="flex items-center justify-between"><h3 class="text-[13px] font-semibold text-text-primary">Contact</h3><button type="button" class="text-[11px] font-medium text-primary" (click)="goToStep(2)">Edit</button></div><dl class="mt-3 grid grid-cols-[7rem_1fr] gap-x-2 gap-y-1.5 text-[11px]"><dt class="text-text-muted">Phone</dt><dd>{{ draft.phone1 || '—' }}</dd><dt class="text-text-muted">Email</dt><dd class="break-all">{{ draft.email || '—' }}</dd><dt class="text-text-muted">Languages</dt><dd>{{ draft.languages.length ? draft.languages.join(', ') : '—' }}</dd><dt class="text-text-muted">Address</dt><dd>{{ draft.city || '—' }}, {{ draft.state || '—' }}</dd></dl></section>
+        <div class="px-4 py-4 lg:px-5">
+          @if (resuming()) {
+            <div
+              class="mb-4 rounded-control border border-border bg-surface-muted px-4 py-3 text-[11px] text-text-secondary"
+            >
+              Loading the saved Client Create session…
             </div>
+          }
+          @switch (activeStep().id) {
+            @case ('basic') {
+              <app-client-create-basic-section
+                [draft]="draft"
+                [fieldErrors]="fieldErrors()"
+                [locationOptions]="locationOptions()"
+                [supervisorOptions]="supervisorOptions()"
+                [supervisorLoading]="supervisorLoading()"
+                [serviceOptions]="serviceOptions"
+                [servicesOpen]="servicesOpen()"
+                (fieldCleared)="clearFieldError($event)"
+                (pmiInput)="normalizePmi($event)"
+                (ssnChanged)="normalizeSsn($event)"
+                (locationSelected)="selectLocation($event)"
+                (servicesDropdownToggled)="toggleServicesDropdown()"
+                (arrayToggled)="onToggleArray($event.field, $event.value, $event.event)"
+              />
+            }
+            @case ('contact') {
+              <app-client-create-contact-section
+                [draft]="draft"
+                [fieldErrors]="fieldErrors()"
+                [languageOptions]="languageOptions"
+                [languagesOpen]="languagesOpen()"
+                [postalLookupLoading]="postalLookupLoading()"
+                [postalLookupMessage]="postalLookupMessage()"
+                [stateNames]="stateNames()"
+                [cityOptions]="cityOptions()"
+                (fieldCleared)="clearFieldError($event)"
+                (phoneChanged)="normalizePhone($event.field, $event.value)"
+                (languagesDropdownToggled)="toggleLanguagesDropdown()"
+                (arrayToggled)="onToggleArray($event.field, $event.value, $event.event)"
+                (postalCodeChanged)="normalizePostalCode($event)"
+                (stateChanged)="onStateChange($event)"
+                (cityChanged)="onCityChange($event)"
+              />
+            }
+            @case ('additional') {
+              <app-client-create-additional-section
+                [draft]="draft"
+                [dietOptions]="dietOptions"
+                (phoneChanged)="normalizePhone($event.field, $event.value)"
+                (arrayToggled)="onToggleArray($event.field, $event.value, $event.event)"
+              />
+            }
+            @case ('caregivers') {
+              @if (createdClientId(); as clientId) {
+                <app-client-caregivers [clientId]="clientId" />
+              }
+            }
+            @case ('client-contacts') {
+              @if (createdClientId(); as clientId) {
+                <app-client-contacts #contactsSection [clientId]="clientId" />
+              }
+            }
+            @case ('care-coordinators') {
+              @if (createdClientId(); as clientId) {
+                <app-client-care-coordinators #careCoordinatorsSection [clientId]="clientId" />
+              }
+            }
+            @case ('consultation-providers') {
+              @if (createdClientId(); as clientId) {
+                <app-client-clinical-contacts
+                  #consultationProvidersSection
+                  [clientId]="clientId"
+                  kind="consultation-providers"
+                />
+              }
+            }
+            @case ('doctors') {
+              @if (createdClientId(); as clientId) {
+                <app-client-clinical-contacts
+                  #doctorsSection
+                  [clientId]="clientId"
+                  kind="physicians"
+                />
+              }
+            }
+            @case ('responsible-parties') {
+              @if (createdClientId(); as clientId) {
+                <app-client-responsible-parties #responsiblePartiesSection [clientId]="clientId" />
+              }
+            }
+            @case ('hospitalizations') {
+              @if (createdClientId(); as clientId) {
+                <app-client-hospitalizations #hospitalizationsSection [clientId]="clientId" />
+              }
+            }
+          }
+        </div>
 
-            <div class="rounded-control border border-border bg-surface-muted/50 p-3.5">
-              <div class="flex items-start gap-3">
-                <div class="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary-subtle text-primary"><svg aria-hidden="true" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
-                <div>
-                  <h3 class="text-[13px] font-semibold text-text-primary">Create the client to continue</h3>
-                  <p class="mt-1 text-[11px] leading-5 text-text-secondary">The next wizard steps use the new client ID to save related information safely.</p>
-                  <div class="mt-3 flex flex-wrap gap-2">
-                    @for (item of ['Primary caregivers', 'Contacts', 'Care coordinators', 'Providers', 'Responsible parties', 'Hospitalizations', 'Visits']; track item) {
-                      <span class="rounded-full border border-border bg-surface px-2.5 py-1 text-[10px] font-medium text-text-secondary">{{ item }}</span>
-                    }
-                  </div>
-                </div>
-              </div>
-            </div>
+        <div class="client-wizard-footer lg:px-5">
+          <a
+            routerLink="/clients"
+            class="text-[12px] font-medium text-text-secondary hover:text-text-primary"
+            >Cancel</a
+          >
+          <div class="flex items-center gap-2">
+            @if (!isFirstStep()) {
+              <button
+                type="button"
+                class="h-8 rounded-control border border-border-strong bg-surface px-3.5 text-[12px] font-medium text-text-primary hover:bg-surface-muted"
+                (click)="back()"
+              >
+                Back
+              </button>
+            }
+            @if (!isLastStep()) {
+              <button
+                type="button"
+                class="inline-flex h-8 items-center gap-1.5 rounded-control bg-primary px-4 text-[12px] font-semibold text-on-primary hover:bg-primary-hover disabled:opacity-60"
+                [disabled]="saving()"
+                (click)="next()"
+              >
+                {{
+                  activeStep().id === 'basic' ||
+                  activeStep().id === 'additional' ||
+                  activeStep().id === 'contact'
+                    ? saving()
+                      ? 'Saving…'
+                      : 'Save & continue'
+                    : 'Next'
+                }}<svg
+                  aria-hidden="true"
+                  class="size-3.5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                >
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
+              </button>
+            } @else {
+              <button
+                type="button"
+                class="inline-flex h-8 items-center gap-1.5 rounded-control bg-primary px-4 text-[12px] font-semibold text-on-primary hover:bg-primary-hover"
+                [disabled]="saving()"
+                (click)="finish()"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="size-3.5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="m5 12 4 4L19 6" /></svg
+                >{{ saving() ? 'Finishing…' : 'Finish client setup' }}
+              </button>
+            }
           </div>
-        }
-        @case ('caregivers') { @if (createdClientId(); as clientId) { <app-client-caregivers [clientId]="clientId" /> } }
-        @case ('client-contacts') { @if (createdClientId(); as clientId) { <app-client-contacts [clientId]="clientId" /> } }
-        @case ('care-coordinators') { @if (createdClientId(); as clientId) { <app-client-care-coordinators [clientId]="clientId" /> } }
-        @case ('consultation-providers') { @if (createdClientId(); as clientId) { <app-client-clinical-contacts [clientId]="clientId" kind="consultation-providers" /> } }
-        @case ('doctors') { @if (createdClientId(); as clientId) { <app-client-clinical-contacts [clientId]="clientId" kind="physicians" /> } }
-        @case ('responsible-parties') { @if (createdClientId(); as clientId) { <app-client-responsible-parties [clientId]="clientId" /> } }
-        @case ('hospitalizations') { @if (createdClientId(); as clientId) { <app-client-hospitalizations [clientId]="clientId" /> } }
-        @case ('visits') {
-          <section class="rounded-control border border-border bg-surface p-5">
-            <h3 class="text-[13px] font-semibold text-text-primary">Visits</h3>
-            <p class="mt-1 text-[11px] text-text-secondary">Visit scheduling and service entries will appear here when the visits workflow is connected.</p>
-            <div class="mt-4 rounded-control border border-dashed border-border bg-surface-muted/40 px-4 py-8 text-center text-[11px] text-text-muted">No visits recorded for this client.</div>
-          </section>
-        }
-      }
+        </div>
+      </main>
     </div>
-
-    <div class="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3 lg:px-5">
-      <a routerLink="/clients" class="text-[12px] font-medium text-text-secondary hover:text-text-primary">Cancel</a>
-      <div class="flex items-center gap-2">
-        @if (!isFirstStep() && (!createdClientId() || stepIndex() > 4)) {
-          <button type="button" class="h-8 rounded-control border border-border-strong bg-surface px-3.5 text-[12px] font-medium text-text-primary hover:bg-surface-muted" (click)="back()">Back</button>
-        }
-        @if (!isLastStep()) {
-          <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-control bg-primary px-4 text-[12px] font-semibold text-on-primary hover:bg-primary-hover disabled:opacity-60" [disabled]="saving()" (click)="next()">{{ activeStep().id === 'review' ? (saving() ? 'Creating…' : 'Create & continue') : 'Next' }}<svg aria-hidden="true" class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m9 18 6-6-6-6"/></svg></button>
-        } @else {
-          <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-control bg-primary px-4 text-[12px] font-semibold text-on-primary hover:bg-primary-hover" (click)="finish()"><svg aria-hidden="true" class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4 4L19 6"/></svg>Finish</button>
-        }
-      </div>
-    </div>
-  </main>
+  </div>
 </div>
 
 @if (completionDialog(); as dialog) {
@@ -285,13 +242,3 @@
     (confirmed)="confirmCompletion()"
   />
 }
-
-<style>
-  .form-label { display: block; margin-bottom: 0.25rem; font-size: 11px; font-weight: 500; color: var(--color-text-secondary, #475569); }
-  .form-control { height: 2rem; width: 100%; border-radius: 0.375rem; border: 1px solid var(--color-border-strong, #cbd5e1); background: var(--color-surface, #fff); padding-left: 0.65rem; padding-right: 0.65rem; font-size: 12px; color: var(--color-text-primary, #0f172a); outline: none; }
-  .form-control:focus { border-color: var(--color-primary, #0f766e); box-shadow: 0 0 0 1px var(--color-primary, #0f766e); }
-  textarea.form-control { height: auto; }
-  .section-heading { margin-bottom: 0.75rem; border-bottom: 1px solid var(--color-border, #e2e8f0); padding-bottom: 0.5rem; }
-  .section-heading h3 { font-size: 13px; font-weight: 600; color: var(--color-text-primary, #0f172a); }
-  .section-heading p { margin-top: 1px; font-size: 10px; color: var(--color-text-muted, #64748b); }
-</style>

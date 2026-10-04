@@ -7,7 +7,11 @@ import {
   ClientServiceInput,
   ClientStatusCode,
   CreateClientRequest,
+  CreateClientBasicDetailsRequest,
+  UpdateClientBasicDetailsRequest,
   UpdateClientRequest,
+  UpdateClientAdditionalInformationRequest,
+  UpdateClientContactInformationRequest,
 } from './client-api.models';
 import {
   booleanChoice,
@@ -101,15 +105,81 @@ export interface ClientFormModel {
 
 export function createEmptyClientForm(): ClientFormModel {
   return {
-    intakeDate: '', socDate: '', referralSource: '', status: 'Active', location: '', locationId: '', pmi: '', insurance: '', services: [], serviceChangeEffectiveDate: '',
-    email: '', firstName: '', middleName: '', lastName: '', goesBy: '', dob: '', gender: '', dischargeDate: '', dischargeReason: '',
-    phone1: '', phone2: '', ssn: '', languages: [], street: '', apartment: '', zip: '', city: '', county: '', state: 'Minnesota', country: 'United States',
-    safetyMeasure: '', specialEquipment: '', allergies: '', otherServices: '', evvHours: '', supervisor: '', onboarding: true,
-    programType: '', notes: '', referringClient: false, referringClientName: '', companyName: '', companyPhone: '', homeCareRatingStatus: '',
-    medicalEquipment: '', pcaComplexity: '', maritalStatus: '', ethnicity: '', race: '', smoking: '', veteran: '', veteranDetails: '',
-    pets: '', petsDetails: '', livingArrangement: '', livingArrangementDetails: '', clinicName: '', clinicPhone: '', clinicFax: '', clinicAddress: '',
-    hospitalName: '', hospitalPhone: '', hospitalFax: '', hospitalAddress: '', ambulanceName: '', ambulancePhone: '', ambulanceFax: '', ambulanceAddress: '',
-    nutritionalRequirements: '', caregiverPreference: '', diet: [], breakfastTime: '', lunchTime: '', dinnerTime: '', additionalInformation: '',
+    intakeDate: '',
+    socDate: '',
+    referralSource: '',
+    status: 'Active',
+    location: '',
+    locationId: '',
+    pmi: '',
+    insurance: '',
+    services: [],
+    serviceChangeEffectiveDate: '',
+    email: '',
+    firstName: '',
+    middleName: '',
+    lastName: '',
+    goesBy: '',
+    dob: '',
+    gender: '',
+    dischargeDate: '',
+    dischargeReason: '',
+    phone1: '',
+    phone2: '',
+    ssn: '',
+    languages: [],
+    street: '',
+    apartment: '',
+    zip: '',
+    city: '',
+    county: '',
+    state: 'Minnesota',
+    country: 'United States',
+    safetyMeasure: '',
+    specialEquipment: '',
+    allergies: '',
+    otherServices: '',
+    evvHours: '',
+    supervisor: '',
+    onboarding: true,
+    programType: '',
+    notes: '',
+    referringClient: false,
+    referringClientName: '',
+    companyName: '',
+    companyPhone: '',
+    homeCareRatingStatus: '',
+    medicalEquipment: '',
+    pcaComplexity: '',
+    maritalStatus: '',
+    ethnicity: '',
+    race: '',
+    smoking: '',
+    veteran: '',
+    veteranDetails: '',
+    pets: '',
+    petsDetails: '',
+    livingArrangement: '',
+    livingArrangementDetails: '',
+    clinicName: '',
+    clinicPhone: '',
+    clinicFax: '',
+    clinicAddress: '',
+    hospitalName: '',
+    hospitalPhone: '',
+    hospitalFax: '',
+    hospitalAddress: '',
+    ambulanceName: '',
+    ambulancePhone: '',
+    ambulanceFax: '',
+    ambulanceAddress: '',
+    nutritionalRequirements: '',
+    caregiverPreference: '',
+    diet: [],
+    breakfastTime: '',
+    lunchTime: '',
+    dinnerTime: '',
+    additionalInformation: '',
   };
 }
 
@@ -131,7 +201,9 @@ export function clientDetailsToForm(details: ClientDetails): ClientFormModel {
     supervisor: details.supervisorUserId ?? '',
     pmi: details.pmiNumber,
     insurance: details.insuranceProvider ?? '',
-    services: details.services.filter((service) => service.isActive).map((service) => serviceLabel(service.code, service.name)),
+    services: details.services
+      .filter((service) => service.isActive)
+      .map((service) => serviceLabel(service.code, service.name)),
     email: details.email ?? '',
     firstName: details.firstName,
     middleName: details.middleName ?? '',
@@ -244,6 +316,52 @@ export function clientFormToCreateRequest(form: ClientFormModel): CreateClientRe
   };
 }
 
+export function clientFormToBasicDetailsRequest(
+  form: ClientFormModel,
+): CreateClientBasicDetailsRequest {
+  const request = clientFormToCreateRequest(form);
+  return {
+    identity: request.identity,
+    careSetup: request.careSetup,
+    insuranceProvider: request.contact.insuranceProvider,
+    services: request.services,
+  };
+}
+
+export function clientFormToBasicDetailsUpdateRequest(
+  form: ClientFormModel,
+  editorVersion: string,
+): UpdateClientBasicDetailsRequest {
+  return { ...clientFormToBasicDetailsRequest(form), editorVersion };
+}
+
+export function clientFormToAdditionalInformationRequest(
+  form: ClientFormModel,
+  editorVersion: string,
+): UpdateClientAdditionalInformationRequest {
+  return { additionalProfile: additionalProfile(form), editorVersion };
+}
+
+export function clientFormToContactInformationRequest(
+  form: ClientFormModel,
+  editorVersion: string,
+): UpdateClientContactInformationRequest {
+  return {
+    email: nullableTrimmed(form.email),
+    primaryPhone: nullableTrimmed(form.phone1),
+    secondaryPhone: nullableTrimmed(form.phone2),
+    addressLine1: nullableTrimmed(form.street),
+    addressLine2: nullableTrimmed(form.apartment),
+    city: nullableTrimmed(form.city),
+    state: nullableTrimmed(form.state),
+    postalCode: nullableTrimmed(form.zip),
+    county: nullableTrimmed(form.county),
+    country: nullableTrimmed(form.country),
+    preferredLanguages: languageInputs(form),
+    editorVersion,
+  };
+}
+
 function clientStatusWireValue(value: string): string {
   return ClientStatusCode[clientStatusCode(value)];
 }
@@ -256,8 +374,16 @@ function clientProgramWireValue(value: string): string {
   return ClientProgramTypeCode[clientProgramCode(value)];
 }
 
-export function clientFormToUpdateRequest(form: ClientFormModel, editorVersion: string): UpdateClientRequest {
-  const { initialStatus: _initialStatus, dischargeDate: _dischargeDate, dischargeReason: _dischargeReason, ...core } = clientFormToCreateRequest(form);
+export function clientFormToUpdateRequest(
+  form: ClientFormModel,
+  editorVersion: string,
+): UpdateClientRequest {
+  const {
+    initialStatus: _initialStatus,
+    dischargeDate: _dischargeDate,
+    dischargeReason: _dischargeReason,
+    ...core
+  } = clientFormToCreateRequest(form);
   const serviceChangeEffectiveDate = nullableTrimmed(form.serviceChangeEffectiveDate);
   return {
     ...core,
@@ -269,33 +395,45 @@ export function clientFormToUpdateRequest(form: ClientFormModel, editorVersion: 
 function additionalProfile(form: ClientFormModel): ClientAdditionalProfileRequest {
   return {
     programType: clientProgramCode(form.programType),
-    referralDetails: nullableTrimmed(toKeyValueText({
-      referringClient: form.referringClient ? 'Yes' : 'No',
-      referringClientName: form.referringClientName,
-      companyName: form.companyName,
-      companyPhone: form.companyPhone,
-    })),
+    referralDetails: nullableTrimmed(
+      toKeyValueText({
+        referringClient: form.referringClient ? 'Yes' : 'No',
+        referringClientName: form.referringClientName,
+        companyName: form.companyName,
+        companyPhone: form.companyPhone,
+      }),
+    ),
     homeCareRating: nullableTrimmed(form.homeCareRatingStatus),
     medicalEquipment: nullableTrimmed(form.medicalEquipment),
     pcaComplexity: nullableTrimmed(form.pcaComplexity),
-    demographics: nullableTrimmed(toKeyValueText({
-      maritalStatus: form.maritalStatus,
-      ethnicity: form.ethnicity,
-      race: form.race,
-      veteranDetails: form.veteranDetails,
-      petsDetails: form.petsDetails,
-    })),
+    demographics: nullableTrimmed(
+      toKeyValueText({
+        maritalStatus: form.maritalStatus,
+        ethnicity: form.ethnicity,
+        race: form.race,
+        veteranDetails: form.veteranDetails,
+        petsDetails: form.petsDetails,
+      }),
+    ),
     smokes: nullableBoolean(form.smoking),
     isVeteran: nullableBoolean(form.veteran),
     hasPets: nullableBoolean(form.pets),
-    livingArrangement: nullableTrimmed(toKeyValueText({ type: form.livingArrangement, details: form.livingArrangementDetails })),
+    livingArrangement: nullableTrimmed(
+      toKeyValueText({ type: form.livingArrangement, details: form.livingArrangementDetails }),
+    ),
     preferredClinic: nullableTrimmed(form.clinicName),
     preferredHospital: nullableTrimmed(form.hospitalName),
     preferredAmbulance: nullableTrimmed(form.ambulanceName),
     caregiverPreference: nullableTrimmed(form.caregiverPreference),
     nutritionalRequirements: nullableTrimmed(form.nutritionalRequirements),
     diet: nullableTrimmed(form.diet.join(', ')),
-    mealSchedule: nullableTrimmed(toKeyValueText({ breakfast: form.breakfastTime, lunch: form.lunchTime, dinner: form.dinnerTime })),
+    mealSchedule: nullableTrimmed(
+      toKeyValueText({
+        breakfast: form.breakfastTime,
+        lunch: form.lunchTime,
+        dinner: form.dinnerTime,
+      }),
+    ),
     notes: nullableTrimmed(form.notes),
     additionalInformation: nullableTrimmed(form.additionalInformation),
   };
@@ -320,31 +458,54 @@ function languageInputs(form: ClientFormModel): readonly ClientLanguageInput[] {
 
 export function clientServiceCode(service: string): string {
   switch (service.trim().toLowerCase()) {
-    case 'respite': return 'RESPITE';
-    case '245d': return '245D';
-    case 'cfss': return 'CFSS';
-    case 'pca': return 'PCA';
-    default: return service.trim().toUpperCase().replace(/[^A-Z0-9]+/g, '-').slice(0, 50);
+    case 'respite':
+      return 'RESPITE';
+    case '245d':
+      return '245D';
+    case 'cfss':
+      return 'CFSS';
+    case 'pca':
+      return 'PCA';
+    default:
+      return service
+        .trim()
+        .toUpperCase()
+        .replace(/[^A-Z0-9]+/g, '-')
+        .slice(0, 50);
   }
 }
 
 function serviceLabel(code: string, name: string): string {
   switch (code.trim().toUpperCase()) {
-    case 'PCA': return 'PCA';
-    case 'CFSS': return 'CFSS';
-    case '245D': return '245D';
-    case 'RESPITE': return 'Respite';
-    default: return name.trim() || code.trim();
+    case 'PCA':
+      return 'PCA';
+    case 'CFSS':
+      return 'CFSS';
+    case '245D':
+      return '245D';
+    case 'RESPITE':
+      return 'Respite';
+    default:
+      return name.trim() || code.trim();
   }
 }
 
 function languageCode(language: string): string {
   switch (language.trim().toLowerCase()) {
-    case 'english': return 'en';
-    case 'spanish': return 'es';
-    case 'somali': return 'so';
-    case 'hmong': return 'hmn';
-    default: return language.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 20);
+    case 'english':
+      return 'en';
+    case 'spanish':
+      return 'es';
+    case 'somali':
+      return 'so';
+    case 'hmong':
+      return 'hmn';
+    default:
+      return language
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .slice(0, 20);
   }
 }
 
@@ -372,5 +533,8 @@ function parseKeyValueText(value: string): Record<string, string> {
 }
 
 function splitList(value: string): string[] {
-  return value.split(',').map((item) => item.trim()).filter(Boolean);
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
 }

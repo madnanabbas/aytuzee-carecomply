@@ -1,20 +1,15 @@
 <div class="mx-auto w-full max-w-[100rem] space-y-6">
   <!-- Page Header -->
-  <header
-    class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
-  >
+  <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
     <div>
       <div class="flex flex-wrap items-center gap-3">
-        <h1 class="text-page-title text-text-primary">
-          Compliance Dashboard
-        </h1>
+        <h1 class="text-page-title text-text-primary">Compliance Dashboard</h1>
       </div>
 
       <p class="mt-1 text-body text-text-secondary">
         Monitor compliance health, deadlines, workforce readiness and DHS activity.
       </p>
     </div>
-
   </header>
 
   <!-- Attention -->
@@ -44,11 +39,7 @@
               class="flex size-10 shrink-0 items-center justify-center rounded-control"
               [ngClass]="item.iconClass"
             >
-              <svg
-                [lucideIcon]="item.icon"
-                class="size-5"
-                aria-hidden="true"
-              ></svg>
+              <svg [lucideIcon]="item.icon" class="size-5" aria-hidden="true"></svg>
             </span>
           </div>
         </article>
@@ -67,11 +58,7 @@
             <span
               class="flex size-10 shrink-0 items-center justify-center rounded-control bg-primary-subtle text-primary"
             >
-              <svg
-                [lucideIcon]="item.icon"
-                class="size-5"
-                aria-hidden="true"
-              ></svg>
+              <svg [lucideIcon]="item.icon" class="size-5" aria-hidden="true"></svg>
             </span>
 
             <span
@@ -99,88 +86,46 @@
 
   <!-- Main Analytics -->
   <!-- Compliance Trend + Overall Compliance -->
-<div class="grid gap-4 xl:grid-cols-4">
-
-  <!-- Compliance Trend -->
-  <section
-    aria-labelledby="trend-heading"
-    class="xl:col-span-3 rounded-surface border border-border bg-surface p-5"
-  >
-    <div
-      class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"
+  <div class="grid gap-4 xl:grid-cols-4">
+    <!-- Compliance Trend -->
+    <section
+      aria-labelledby="trend-heading"
+      class="xl:col-span-3 rounded-surface border border-border bg-surface p-5"
     >
-      <div>
-        <h2
-          id="trend-heading"
-          class="text-card-title text-text-primary"
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 id="trend-heading" class="text-card-title text-text-primary">Compliance trend</h2>
+
+          <p class="mt-1 text-small text-text-muted">Six-month overall readiness trend.</p>
+        </div>
+
+        <div class="text-left sm:text-right">
+          <p class="text-[1.55rem] font-semibold leading-none text-text-primary">88%</p>
+
+          <p class="mt-1 text-helper font-medium text-active">+6.2% over 6 months</p>
+        </div>
+      </div>
+
+      <div class="mt-6">
+        <svg
+          viewBox="0 0 720 220"
+          class="h-[13rem] w-full"
+          role="img"
+          aria-label="Preview compliance readiness trend increasing from 78 percent to 88 percent"
+          preserveAspectRatio="none"
         >
-          Compliance trend
-        </h2>
+          <!-- Horizontal Grid -->
+          <line x1="42" y1="35" x2="700" y2="35" stroke="#E2E8F0" stroke-width="1" />
 
-        <p class="mt-1 text-small text-text-muted">
-          Six-month overall readiness trend.
-        </p>
-      </div>
+          <line x1="42" y1="82" x2="700" y2="82" stroke="#E2E8F0" stroke-width="1" />
 
-      <div class="text-left sm:text-right">
-        <p class="text-[1.55rem] font-semibold leading-none text-text-primary">
-          88%
-        </p>
+          <line x1="42" y1="129" x2="700" y2="129" stroke="#E2E8F0" stroke-width="1" />
 
-        <p class="mt-1 text-helper font-medium text-active">
-          +6.2% over 6 months
-        </p>
-      </div>
-    </div>
+          <line x1="42" y1="176" x2="700" y2="176" stroke="#E2E8F0" stroke-width="1" />
 
-    <div class="mt-6">
-      <svg
-        viewBox="0 0 720 220"
-        class="h-[13rem] w-full"
-        role="img"
-        aria-label="Preview compliance readiness trend increasing from 78 percent to 88 percent"
-        preserveAspectRatio="none"
-      >
-        <!-- Horizontal Grid -->
-        <line
-          x1="42"
-          y1="35"
-          x2="700"
-          y2="35"
-          stroke="#E2E8F0"
-          stroke-width="1"
-        />
-
-        <line
-          x1="42"
-          y1="82"
-          x2="700"
-          y2="82"
-          stroke="#E2E8F0"
-          stroke-width="1"
-        />
-
-        <line
-          x1="42"
-          y1="129"
-          x2="700"
-          y2="129"
-          stroke="#E2E8F0"
-          stroke-width="1"
-        />
-
-        <line
-          x1="42"
-          y1="176"
-          x2="700"
-          y2="176"
-          stroke="#E2E8F0"
-          stroke-width="1"
-        />
-
-        <!-- Area -->
-        <path
-          d="
+          <!-- Area -->
+          <path
+            d="
             M42 160
             C95 151, 130 144, 170 142
             S245 128, 290 130
@@ -190,13 +135,13 @@
             L700 190
             L42 190 Z
           "
-          fill="#0F766E"
-          fill-opacity="0.08"
-        ></path>
+            fill="#0F766E"
+            fill-opacity="0.08"
+          ></path>
 
-        <!-- Trend Line -->
-        <path
-          d="
+          <!-- Trend Line -->
+          <path
+            d="
             M42 160
             C95 151, 130 144, 170 142
             S245 128, 290 130
@@ -204,172 +149,105 @@
             S490 88, 530 90
             S615 62, 700 58
           "
-          fill="none"
-          stroke="#0F766E"
-          stroke-width="4"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        ></path>
-
-        <!-- Data Points -->
-        <circle
-          cx="42"
-          cy="160"
-          r="5"
-          fill="#FFFFFF"
-          stroke="#0F766E"
-          stroke-width="3"
-        />
-
-        <circle
-          cx="170"
-          cy="142"
-          r="5"
-          fill="#FFFFFF"
-          stroke="#0F766E"
-          stroke-width="3"
-        />
-
-        <circle
-          cx="290"
-          cy="130"
-          r="5"
-          fill="#FFFFFF"
-          stroke="#0F766E"
-          stroke-width="3"
-        />
-
-        <circle
-          cx="410"
-          cy="108"
-          r="5"
-          fill="#FFFFFF"
-          stroke="#0F766E"
-          stroke-width="3"
-        />
-
-        <circle
-          cx="530"
-          cy="90"
-          r="5"
-          fill="#FFFFFF"
-          stroke="#0F766E"
-          stroke-width="3"
-        />
-
-        <circle
-          cx="700"
-          cy="58"
-          r="5"
-          fill="#FFFFFF"
-          stroke="#0F766E"
-          stroke-width="3"
-        />
-      </svg>
-
-      <div
-        class="grid grid-cols-6 px-[0.35rem] text-center text-helper text-text-muted"
-      >
-        <span>Mar</span>
-        <span>Apr</span>
-        <span>May</span>
-        <span>Jun</span>
-        <span>Jul</span>
-        <span>Aug</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- Overall Compliance -->
-  <section
-    aria-labelledby="score-heading"
-    class="xl:col-span-1 rounded-surface border border-border bg-surface p-5"
-  >
-    <div>
-      <h2
-        id="score-heading"
-        class="text-card-title text-text-primary"
-      >
-        Overall compliance
-      </h2>
-
-      <p class="mt-1 text-small text-text-muted">
-        Current readiness across tracked requirements.
-      </p>
-    </div>
-
-    <div class="mt-5 flex justify-center">
-      <div class="relative size-44">
-        <svg
-          viewBox="0 0 120 120"
-          class="size-full -rotate-90"
-          role="img"
-          [attr.aria-label]="complianceScore + '% overall compliance'"
-        >
-          <circle
-            cx="60"
-            cy="60"
-            r="46"
-            pathLength="100"
-            fill="none"
-            stroke="#E2E8F0"
-            stroke-width="10"
-          ></circle>
-
-          <circle
-            cx="60"
-            cy="60"
-            r="46"
-            pathLength="100"
             fill="none"
             stroke="#0F766E"
-            stroke-width="10"
+            stroke-width="4"
             stroke-linecap="round"
-            [attr.stroke-dasharray]="complianceScore + ' 100'"
-          ></circle>
+            stroke-linejoin="round"
+          ></path>
+
+          <!-- Data Points -->
+          <circle cx="42" cy="160" r="5" fill="#FFFFFF" stroke="#0F766E" stroke-width="3" />
+
+          <circle cx="170" cy="142" r="5" fill="#FFFFFF" stroke="#0F766E" stroke-width="3" />
+
+          <circle cx="290" cy="130" r="5" fill="#FFFFFF" stroke="#0F766E" stroke-width="3" />
+
+          <circle cx="410" cy="108" r="5" fill="#FFFFFF" stroke="#0F766E" stroke-width="3" />
+
+          <circle cx="530" cy="90" r="5" fill="#FFFFFF" stroke="#0F766E" stroke-width="3" />
+
+          <circle cx="700" cy="58" r="5" fill="#FFFFFF" stroke="#0F766E" stroke-width="3" />
         </svg>
 
-        <div
-          class="absolute inset-0 flex flex-col items-center justify-center"
-        >
-          <span
-            class="text-[2rem] font-semibold text-text-primary"
-          >
-            {{ complianceScore }}%
-          </span>
-
-          <span class="mt-1 text-helper text-text-muted">
-            Ready
-          </span>
+        <div class="grid grid-cols-6 px-[0.35rem] text-center text-helper text-text-muted">
+          <span>Mar</span>
+          <span>Apr</span>
+          <span>May</span>
+          <span>Jun</span>
+          <span>Jul</span>
+          <span>Aug</span>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div
-      class="mt-5 grid grid-cols-2 gap-3 border-t border-border pt-4"
+    <!-- Overall Compliance -->
+    <section
+      aria-labelledby="score-heading"
+      class="xl:col-span-1 rounded-surface border border-border bg-surface p-5"
     >
       <div>
-        <p class="text-helper text-text-muted">
-          Current
-        </p>
+        <h2 id="score-heading" class="text-card-title text-text-primary">Overall compliance</h2>
 
-        <p class="mt-1 text-card-title text-active">
-          72%
+        <p class="mt-1 text-small text-text-muted">
+          Current readiness across tracked requirements.
         </p>
       </div>
 
-      <div>
-        <p class="text-helper text-text-muted">
-          At risk
-        </p>
+      <div class="mt-5 flex justify-center">
+        <div class="relative size-44">
+          <svg
+            viewBox="0 0 120 120"
+            class="size-full -rotate-90"
+            role="img"
+            [attr.aria-label]="complianceScore + '% overall compliance'"
+          >
+            <circle
+              cx="60"
+              cy="60"
+              r="46"
+              pathLength="100"
+              fill="none"
+              stroke="#E2E8F0"
+              stroke-width="10"
+            ></circle>
 
-        <p class="mt-1 text-card-title text-expiring-soon">
-          28%
-        </p>
+            <circle
+              cx="60"
+              cy="60"
+              r="46"
+              pathLength="100"
+              fill="none"
+              stroke="#0F766E"
+              stroke-width="10"
+              stroke-linecap="round"
+              [attr.stroke-dasharray]="complianceScore + ' 100'"
+            ></circle>
+          </svg>
+
+          <div class="absolute inset-0 flex flex-col items-center justify-center">
+            <span class="text-[2rem] font-semibold text-text-primary">
+              {{ complianceScore }}%
+            </span>
+
+            <span class="mt-1 text-helper text-text-muted"> Ready </span>
+          </div>
+        </div>
       </div>
-    </div>
-  </section>
 
-</div>
+      <div class="mt-5 grid grid-cols-2 gap-3 border-t border-border pt-4">
+        <div>
+          <p class="text-helper text-text-muted">Current</p>
 
+          <p class="mt-1 text-card-title text-active">72%</p>
+        </div>
+
+        <div>
+          <p class="text-helper text-text-muted">At risk</p>
+
+          <p class="mt-1 text-card-title text-expiring-soon">28%</p>
+        </div>
+      </div>
+    </section>
+  </div>
 </div>

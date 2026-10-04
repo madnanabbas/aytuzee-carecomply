@@ -15,7 +15,6 @@ import {
 } from '../models/user-management.models';
 import { UserManagementApiService } from './user-management-api.service';
 
-
 export interface SaveUserEditRequest {
   readonly general: UpdateUserGeneralRequest;
   readonly isActive: boolean;
@@ -57,14 +56,18 @@ export class UserEditorStore {
   readonly saving = signal(false);
   readonly error = signal<UserEditorError>(null);
   readonly successMessage = signal<string | null>(null);
-  readonly completionDialog = signal<{ readonly title: string; readonly message: string } | null>(null);
+  readonly completionDialog = signal<{ readonly title: string; readonly message: string } | null>(
+    null,
+  );
   readonly selectedRoles = computed(() => {
     const selectedIds = new Set(this.selectedRoleIds());
     return this.roles().filter((role) => selectedIds.has(role.id));
   });
-  readonly effectivePermissions = computed(() => Array.from(new Set(
-    this.selectedRoles().flatMap((role) => role.permissions),
-  )).sort((left, right) => left.localeCompare(right)));
+  readonly effectivePermissions = computed(() =>
+    Array.from(new Set(this.selectedRoles().flatMap((role) => role.permissions))).sort(
+      (left, right) => left.localeCompare(right),
+    ),
+  );
   readonly createMfaRequiredByRoles = computed(() => false);
   readonly createRequiresMfa = computed(() => this.createMfaEnabled());
 
@@ -72,7 +75,8 @@ export class UserEditorStore {
     this.isCreateMode.set(true);
     this.loading.set(true);
     this.error.set(null);
-    this.api.listRoles()
+    this.api
+      .listRoles()
       .pipe(
         finalize(() => this.loading.set(false)),
         takeUntilDestroyed(this.destroyRef),
@@ -101,7 +105,8 @@ export class UserEditorStore {
           this.acceptUser(user);
           this.roles.set(mergeAssignedRoles(user, availableRoles ?? []));
         },
-        error: (error: HttpErrorResponse) => this.error.set(error.status === 404 ? 'notFound' : 'failed'),
+        error: (error: HttpErrorResponse) =>
+          this.error.set(error.status === 404 ? 'notFound' : 'failed'),
       });
   }
 
@@ -113,7 +118,8 @@ export class UserEditorStore {
 
   toggleRole(roleId: string, selected: boolean): void {
     const next = new Set(this.selectedRoleIds());
-    if (selected) next.add(roleId); else next.delete(roleId);
+    if (selected) next.add(roleId);
+    else next.delete(roleId);
     this.selectedRoleIds.set(Array.from(next));
     if (this.error() === 'invalidRoles' && next.size > 0) this.error.set(null);
   }
@@ -146,19 +152,20 @@ export class UserEditorStore {
 
     const general = this.createGeneral();
     this.beginOperation();
-    this.api.createUser({
-      companyId: general.companyId || null,
-      firstName: general.firstName.trim(),
-      lastName: general.lastName.trim(),
-      email: general.email.trim(),
-      password: general.password,
-      phoneNumber: general.phoneNumber.trim() || null,
-      isActive: general.isActive,
-      requiresMfa: this.createMfaEnabled(),
-      mfaMethod: this.createMfaMethod(),
-      roleIds: this.selectedRoleIds(),
-      locationIds: general.locationIds ?? [],
-    })
+    this.api
+      .createUser({
+        companyId: general.companyId || null,
+        firstName: general.firstName.trim(),
+        lastName: general.lastName.trim(),
+        email: general.email.trim(),
+        password: general.password,
+        phoneNumber: general.phoneNumber.trim() || null,
+        isActive: general.isActive,
+        requiresMfa: this.createMfaEnabled(),
+        mfaMethod: this.createMfaMethod(),
+        roleIds: this.selectedRoleIds(),
+        locationIds: general.locationIds ?? [],
+      })
       .pipe(
         finalize(() => this.saving.set(false)),
         takeUntilDestroyed(this.destroyRef),
@@ -167,14 +174,19 @@ export class UserEditorStore {
         next: (_created) => {
           this.completionDialog.set({
             title: 'User created successfully',
-            message: 'The new CareComply user account was created and is ready for assigned access.',
+            message:
+              'The new CareComply user account was created and is ready for assigned access.',
           });
         },
         error: (error: HttpErrorResponse) => {
           const problemType = typeof error.error?.type === 'string' ? error.error.type : '';
-          this.error.set(problemType.endsWith('user-duplicate-email')
-            ? 'duplicateEmail'
-            : problemType.endsWith('user-role-invalid') ? 'invalidRoles' : 'failed');
+          this.error.set(
+            problemType.endsWith('user-duplicate-email')
+              ? 'duplicateEmail'
+              : problemType.endsWith('user-role-invalid')
+                ? 'invalidRoles'
+                : 'failed',
+          );
         },
       });
   }
@@ -213,21 +225,14 @@ export class UserEditorStore {
 
     if (request.statusChanged) {
       operation$ = operation$.pipe(
-        switchMap((user) =>
-          this.api.setActive(user.id, request.isActive, user.editorVersion),
-        ),
+        switchMap((user) => this.api.setActive(user.id, request.isActive, user.editorVersion)),
       );
     }
 
     if (request.mfaChanged) {
       operation$ = operation$.pipe(
         switchMap((user) =>
-          this.api.setMfa(
-            user.id,
-            request.mfaEnabled,
-            request.mfaMethod,
-            user.editorVersion,
-          ),
+          this.api.setMfa(user.id, request.mfaEnabled, request.mfaMethod, user.editorVersion),
         ),
       );
     }
@@ -242,12 +247,12 @@ export class UserEditorStore {
           this.acceptUser(updated);
           this.completionDialog.set({
             title: 'User updated successfully',
-            message: 'The user account, access settings, and security changes were saved successfully.',
+            message:
+              'The user account, access settings, and security changes were saved successfully.',
           });
         },
         error: (error: HttpErrorResponse) => {
-          const problemType =
-            typeof error.error?.type === 'string' ? error.error.type : '';
+          const problemType = typeof error.error?.type === 'string' ? error.error.type : '';
 
           this.error.set(
             problemType.endsWith('user-duplicate-email')
@@ -269,7 +274,8 @@ export class UserEditorStore {
     if (!user || this.saving()) return;
 
     this.beginOperation();
-    this.api.updateGeneral(user.id, request)
+    this.api
+      .updateGeneral(user.id, request)
       .pipe(
         finalize(() => this.saving.set(false)),
         takeUntilDestroyed(this.destroyRef),
@@ -282,7 +288,8 @@ export class UserEditorStore {
             message: 'The user details were updated successfully.',
           });
         },
-        error: (error: HttpErrorResponse) => this.error.set(error.status === 409 ? 'conflict' : 'failed'),
+        error: (error: HttpErrorResponse) =>
+          this.error.set(error.status === 409 ? 'conflict' : 'failed'),
       });
   }
 
@@ -291,7 +298,8 @@ export class UserEditorStore {
     if (!user || this.saving()) return;
 
     this.beginOperation();
-    this.api.setActive(user.id, isActive, user.editorVersion)
+    this.api
+      .setActive(user.id, isActive, user.editorVersion)
       .pipe(
         finalize(() => this.saving.set(false)),
         takeUntilDestroyed(this.destroyRef),
@@ -301,7 +309,8 @@ export class UserEditorStore {
           this.acceptUser(updated);
           this.successMessage.set(isActive ? 'User activated.' : 'User deactivated.');
         },
-        error: (error: HttpErrorResponse) => this.error.set(error.status === 409 ? 'conflict' : 'failed'),
+        error: (error: HttpErrorResponse) =>
+          this.error.set(error.status === 409 ? 'conflict' : 'failed'),
       });
   }
 
@@ -310,7 +319,8 @@ export class UserEditorStore {
     if (!user || this.saving()) return;
 
     this.beginOperation();
-    this.api.setMfa(user.id, isEnabled, method, user.editorVersion)
+    this.api
+      .setMfa(user.id, isEnabled, method, user.editorVersion)
       .pipe(
         finalize(() => this.saving.set(false)),
         takeUntilDestroyed(this.destroyRef),
@@ -318,17 +328,23 @@ export class UserEditorStore {
       .subscribe({
         next: (updated) => {
           this.acceptUser(updated);
-          this.successMessage.set(isEnabled
-            ? method === 'Email'
-              ? 'Email MFA enabled. The user will receive a code during sign in after their email is confirmed.'
-              : 'Authenticator MFA enabled. The user must enroll at their next login if needed.'
-            : 'MFA disabled. Existing MFA enrollment and sessions were revoked.');
+          this.successMessage.set(
+            isEnabled
+              ? method === 'Email'
+                ? 'Email MFA enabled. The user will receive a code during sign in after their email is confirmed.'
+                : 'Authenticator MFA enabled. The user must enroll at their next login if needed.'
+              : 'MFA disabled. Existing MFA enrollment and sessions were revoked.',
+          );
         },
         error: (error: HttpErrorResponse) => {
           const problemType = typeof error.error?.type === 'string' ? error.error.type : '';
-          this.error.set(problemType.endsWith('user-mfa-required-by-permissions')
-            ? 'mfaRequiredByPermissions'
-            : error.status === 409 ? 'conflict' : 'failed');
+          this.error.set(
+            problemType.endsWith('user-mfa-required-by-permissions')
+              ? 'mfaRequiredByPermissions'
+              : error.status === 409
+                ? 'conflict'
+                : 'failed',
+          );
         },
       });
   }
@@ -338,7 +354,8 @@ export class UserEditorStore {
     if (!user || this.saving()) return;
 
     this.beginOperation();
-    this.api.replaceRoles(user.id, { roleIds, editorVersion: user.editorVersion })
+    this.api
+      .replaceRoles(user.id, { roleIds, editorVersion: user.editorVersion })
       .pipe(
         finalize(() => this.saving.set(false)),
         takeUntilDestroyed(this.destroyRef),
@@ -350,9 +367,13 @@ export class UserEditorStore {
         },
         error: (error: HttpErrorResponse) => {
           const problemType = typeof error.error?.type === 'string' ? error.error.type : '';
-          this.error.set(problemType.endsWith('user-role-invalid')
-            ? 'invalidRoles'
-            : error.status === 409 ? 'conflict' : 'failed');
+          this.error.set(
+            problemType.endsWith('user-role-invalid')
+              ? 'invalidRoles'
+              : error.status === 409
+                ? 'conflict'
+                : 'failed',
+          );
         },
       });
   }
@@ -394,6 +415,7 @@ function mergeAssignedRoles(
       requiresMfa: false,
     }));
 
-  return [...availableRoles, ...missingAssignedRoles]
-    .sort((left, right) => left.name.localeCompare(right.name));
+  return [...availableRoles, ...missingAssignedRoles].sort((left, right) =>
+    left.name.localeCompare(right.name),
+  );
 }

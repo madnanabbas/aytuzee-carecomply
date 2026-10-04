@@ -8,7 +8,8 @@ export const CLIENT_FIELD_LIMITS = {
 } as const;
 
 export function formatUsPhone(value: string): string {
-  const digits = value.replace(/\D/g, '').slice(0, 10);
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+  if (digits.length > 10) return digits;
   if (digits.length <= 3) return digits;
   if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
   return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
@@ -31,7 +32,14 @@ export function formatPmi(value: string): string {
 }
 
 export function isValidUsPhone(value: string): boolean {
-  return value.replace(/\D/g, '').length === 10;
+  const digits = value.replace(/\D/g, '');
+  return digits.length === 10;
+}
+
+export function isValidEmail(value: string, required = false): boolean {
+  const normalized = value.trim();
+  if (!normalized) return !required;
+  return normalized.length <= 320 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized);
 }
 
 export function isValidUsPostalCode(value: string): boolean {

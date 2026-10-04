@@ -1,15 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
-import {
-  FormBuilder,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize, forkJoin, Observable, of, switchMap } from 'rxjs';
 import { AuthorizationService } from '../../../../../core/authorization/authorization.service';
 import { AuthSessionService } from '../../../../../core/auth/auth-session.service';
-import { Company, CompanyService } from '../../../companies/company.service';
+import { Company, CompanyLookupService } from '../../../../../core/lookups/company-lookup.service';
 import { Permissions } from '../../../../../core/authorization/permissions';
 import { SuccessDialogComponent } from '../../../../../shared/components/success-dialog/success-dialog';
 import { PermissionMatrixComponent } from '../../components/permission-matrix/permission-matrix';
@@ -19,11 +15,24 @@ import {
   RoleEditorError,
   RoleEditorModel,
 } from '../../models/role-management.models';
+import { RoleDetailsSectionComponent } from './role-details-section';
+import {
+  mapRoleError,
+  normalizeDescription,
+  setsEqual,
+  sortedPermissionIds,
+} from './role-editor.helpers';
 
 @Component({
   selector: 'app-role-editor-page',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, PermissionMatrixComponent, SuccessDialogComponent],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    PermissionMatrixComponent,
+    SuccessDialogComponent,
+    RoleDetailsSectionComponent,
+  ],
   templateUrl: './role-editor-page.html',
   styleUrls: ['../../../users/user-density.css'],
 })
@@ -34,15 +43,15 @@ export class RoleEditorPage {
   private readonly roleService = inject(RoleManagementService);
   private readonly authorization = inject(AuthorizationService);
   private readonly session = inject(AuthSessionService);
-  private readonly companiesApi = inject(CompanyService);
-  readonly isPlatformAdministrator = computed(() => this.session.currentUser()?.isPlatformAdministrator === true);
+  private readonly companiesApi = inject(CompanyLookupService);
+  readonly isPlatformAdministrator = computed(
+    () => this.session.currentUser()?.isPlatformAdministrator === true,
+  );
   readonly companies = signal<readonly Company[]>([]);
 
   readonly roleId = this.route.snapshot.paramMap.get('roleId');
   readonly isCreateMode = computed(() => !this.roleId);
-  readonly canManage = computed(() =>
-    this.authorization.hasPermission(Permissions.Role.Manage),
-  );
+  readonly canManage = computed(() => this.authorization.hasPermission(Permissions.Role.Manage));
 
   readonly permissionCatalog = signal<readonly ModulePermissionGroup[]>([]);
   readonly selectedPermissionIds = signal<ReadonlySet<number>>(new Set<number>());
@@ -50,7 +59,9 @@ export class RoleEditorPage {
   readonly saving = signal(false);
   readonly error = signal<RoleEditorError | null>(null);
   readonly successMessage = signal<string | null>(null);
-  readonly completionDialog = signal<{ readonly title: string; readonly message: string } | null>(null);
+  readonly completionDialog = signal<{ readonly title: string; readonly message: string } | null>(
+    null,
+  );
 
   readonly form = this.formBuilder.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(100)]],
@@ -61,18 +72,20 @@ export class RoleEditorPage {
   private loadedRole: RoleEditorModel | null = null;
   private initialPermissionIds = new Set<number>();
 
-  readonly permissionsChanged = computed(() =>
-    !setsEqual(this.selectedPermissionIds(), this.initialPermissionIds),
+  readonly permissionsChanged = computed(
+    () => !setsEqual(this.selectedPermissionIds(), this.initialPermissionIds),
   );
 
-  readonly hasChanges = computed(() =>
-    this.isCreateMode() || this.form.dirty || this.permissionsChanged(),
+  readonly hasChanges = computed(
+    () => this.isCreateMode() || this.form.dirty || this.permissionsChanged(),
   );
 
   constructor() {
     if (this.isCreateMode() && this.isPlatformAdministrator()) {
       this.form.controls.companyId.addValidators(Validators.required);
-      this.companiesApi.list().subscribe((companies) => this.companies.set(companies.filter(x => x.isActive)));
+      this.companiesApi
+        .list()
+        .subscribe((companies) => this.companies.set(companies.filter((x) => x.isActive)));
     }
     if (!this.isCreateMode() && !this.canManage()) {
       this.form.disable({ emitEvent: false });
@@ -160,7 +173,9 @@ export class RoleEditorPage {
           this.applyRole(role);
           if (permissionsChanged) {
             void this.session.refreshPermissionsAndNavigation().catch(() => {
-              this.successMessage.set('Permissions were saved. Refresh the page to update your navigation.');
+              this.successMessage.set(
+                'Permissions were saved. Refresh the page to update your navigation.',
+              );
             });
           }
           this.completionDialog.set({
@@ -181,7 +196,9 @@ export class RoleEditorPage {
   private createRole(): void {
     this.roleService
       .createRole({
-        companyId: this.isPlatformAdministrator() ? this.form.controls.companyId.value || null : null,
+        companyId: this.isPlatformAdministrator()
+          ? this.form.controls.companyId.value || null
+          : null,
         name: this.form.controls.name.value.trim(),
         description: normalizeDescription(this.form.controls.description.value),
         permissionIds: sortedPermissionIds(this.selectedPermissionIds()),
@@ -256,43 +273,4 @@ export class RoleEditorPage {
     this.initialPermissionIds = new Set(role.permissionIds);
     this.selectedPermissionIds.set(new Set(role.permissionIds));
   }
-}
-
-function sortedPermissionIds(ids: ReadonlySet<number>): readonly number[] {
-  return [...ids].sort((left, right) => left - right);
-}
-
-function setsEqual(left: ReadonlySet<number>, right: ReadonlySet<number>): boolean {
-  return left.size === right.size && [...left].every((value) => right.has(value));
-}
-
-function normalizeDescription(value: string): string | null {
-  const description = value.trim();
-  return description.length === 0 ? null : description;
-}
-
-function mapRoleError(error: HttpErrorResponse): RoleEditorError {
-  if (error.status === 404) {
-    return 'notFound';
-  }
-
-  const type = typeof error.error?.type === 'string' ? error.error.type.toLowerCase() : '';
-
-  if (type.includes('duplicate')) {
-    return 'duplicateName';
-  }
-
-  if (type.includes('permission') && type.includes('invalid')) {
-    return 'invalidPermission';
-  }
-
-  if (type.includes('last') && type.includes('manager')) {
-    return 'lastRoleManager';
-  }
-
-  if (error.status === 409) {
-    return 'conflict';
-  }
-
-  return 'failed';
 }

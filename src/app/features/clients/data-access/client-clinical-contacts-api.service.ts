@@ -53,12 +53,24 @@ export class ClientClinicalContactsApiService {
     return this.http.get<readonly ClinicalContact[]>(this.url(clientId, kind));
   }
 
-  create(clientId: string, kind: ClinicalContactKind, request: ConsultationProviderInput | PhysicianInput): Observable<ClinicalContact> {
+  create(
+    clientId: string,
+    kind: ClinicalContactKind,
+    request: ConsultationProviderInput | PhysicianInput,
+  ): Observable<ClinicalContact> {
     return this.http.post<ClinicalContact>(this.url(clientId, kind), request);
   }
 
-  update(clientId: string, kind: ClinicalContactKind, contactId: string, request: ConsultationProviderInput | PhysicianInput): Observable<ClinicalContact> {
-    return this.http.put<ClinicalContact>(`${this.url(clientId, kind)}/${encodeURIComponent(contactId)}`, request);
+  update(
+    clientId: string,
+    kind: ClinicalContactKind,
+    contactId: string,
+    request: ConsultationProviderInput | PhysicianInput,
+  ): Observable<ClinicalContact> {
+    return this.http.put<ClinicalContact>(
+      `${this.url(clientId, kind)}/${encodeURIComponent(contactId)}`,
+      request,
+    );
   }
 
   private url(clientId: string, kind: ClinicalContactKind): string {

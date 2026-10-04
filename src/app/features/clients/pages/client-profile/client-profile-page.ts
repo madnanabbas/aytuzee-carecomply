@@ -1,7 +1,8 @@
 import { Component, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-type ClientTab = 'overview' | 'personal' | 'contacts' | 'services' | 'documents' | 'compliance' | 'history';
+type ClientTab =
+  'overview' | 'personal' | 'contacts' | 'services' | 'documents' | 'compliance' | 'history';
 
 @Component({
   selector: 'app-client-profile-page',

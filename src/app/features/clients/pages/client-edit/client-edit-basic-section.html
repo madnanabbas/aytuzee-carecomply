@@ -1,0 +1,373 @@
+@if (mode === 'basic') {
+  <section class="form-section">
+    <header>
+      <h2>Client identity</h2>
+      <p>Legal identity and primary identifiers.</p>
+    </header>
+    <div class="form-grid">
+      <label
+        ><span class="form-label">First name *</span
+        ><input
+          class="form-control"
+          [(ngModel)]="model.firstName"
+          [attr.aria-invalid]="!!fieldError('firstName')"
+        />
+        @if (fieldError('firstName'); as error) {
+          <small class="field-error">{{ error }}</small>
+        }
+      </label>
+      <label
+        ><span class="form-label">Middle name</span
+        ><input class="form-control" [(ngModel)]="model.middleName"
+      /></label>
+      <label
+        ><span class="form-label">Last name *</span
+        ><input
+          class="form-control"
+          [(ngModel)]="model.lastName"
+          [attr.aria-invalid]="!!fieldError('lastName')"
+        />
+        @if (fieldError('lastName'); as error) {
+          <small class="field-error">{{ error }}</small>
+        }
+      </label>
+      <label
+        ><span class="form-label">Goes by</span
+        ><input class="form-control" [(ngModel)]="model.goesBy"
+      /></label>
+      <label
+        ><span class="form-label">Date of birth *</span
+        ><input
+          class="form-control"
+          type="date"
+          [(ngModel)]="model.dob"
+          [attr.aria-invalid]="!!fieldError('dob')"
+        />
+        @if (fieldError('dob'); as error) {
+          <small class="field-error">{{ error }}</small>
+        }
+      </label>
+      <label
+        ><span class="form-label">Gender *</span
+        ><select class="form-control" [(ngModel)]="model.gender">
+          <option value="">Select</option>
+          <option>Female</option>
+          <option>Male</option>
+          <option>Non-binary</option>
+          <option>Other</option>
+          <option>Prefer not to say</option>
+        </select></label
+      >
+      <label
+        ><span class="form-label">PMI number <span class="required-mark">*</span></span
+        ><input
+          class="form-control"
+          [value]="model.pmi"
+          (input)="normalizePmi($event)"
+          required
+          minlength="8"
+          maxlength="8"
+          inputmode="numeric"
+          pattern="[0-9]{8}"
+          autocomplete="off"
+          [attr.aria-invalid]="!!fieldError('pmi')"
+        />
+        @if (fieldError('pmi'); as error) {
+          <small class="field-error">{{ error }}</small>
+        }
+      </label>
+      <label
+        ><span class="form-label">SSN</span
+        ><input
+          class="form-control"
+          [ngModel]="model.ssn"
+          (ngModelChange)="normalizeSsn($event)"
+          maxlength="11"
+          inputmode="numeric"
+          placeholder="Leave blank to keep the stored SSN"
+          [attr.aria-invalid]="!!fieldError('ssn')"
+        /><span class="field-help">Enter a value only to add or replace the protected SSN.</span>
+        @if (fieldError('ssn'); as error) {
+          <small class="field-error">{{ error }}</small>
+        }
+      </label>
+      <label
+        ><span class="form-label">Insurance</span
+        ><input class="form-control" [(ngModel)]="model.insurance"
+      /></label>
+    </div>
+  </section>
+}
+
+@if (mode === 'basic') {
+  <section class="form-section">
+    <header>
+      <h2>Intake & service setup</h2>
+      <p>Dates, status, location and active client services.</p>
+    </header>
+    <div class="form-grid">
+      <label
+        ><span class="form-label">Intake date</span
+        ><input class="form-control" type="date" [(ngModel)]="model.intakeDate"
+      /></label>
+      <label
+        ><span class="form-label">SOC date *</span
+        ><input class="form-control" type="date" [(ngModel)]="model.socDate"
+      /></label>
+      <label
+        ><span class="form-label">Referral source</span
+        ><select class="form-control" [(ngModel)]="model.referralSource">
+          <option value="">Select source</option>
+          <option>Self</option>
+          <option>County</option>
+          <option>Hospital</option>
+          <option>Clinic</option>
+          <option>Family / Friend</option>
+          <option>Other</option>
+        </select></label
+      >
+      <label
+        ><span class="form-label">Status</span
+        ><select class="form-control" [(ngModel)]="model.status">
+          <option>Pending</option>
+          <option>Active</option>
+          <option>On hold</option>
+          <option>Discharged</option>
+          <option>Inactive</option>
+        </select></label
+      >
+      <label
+        ><span class="form-label">Location</span
+        ><select class="form-control" [(ngModel)]="model.location">
+          <option value="">Select location</option>
+          @for (value of locations; track value) {
+            <option>{{ value }}</option>
+          }
+        </select></label
+      >
+
+      <div class="relative">
+        <span class="form-label">Client services</span>
+        <button
+          type="button"
+          class="form-control flex items-center justify-between text-left"
+          (click)="toggleServicesDropdown()"
+        >
+          <span class="truncate">{{ selectedLabel(model.services, 'Select services') }}</span
+          ><span>⌄</span>
+        </button>
+        @if (servicesOpen) {
+          <div
+            class="absolute z-30 mt-1 w-full rounded-control border border-border bg-surface p-1.5 shadow-lg"
+          >
+            @for (value of serviceOptions; track value) {
+              <label
+                class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-[11px] hover:bg-surface-muted"
+                ><input
+                  type="checkbox"
+                  [checked]="model.services.includes(value)"
+                  (change)="toggleArray('services', value, $event)"
+                />{{ value }}</label
+              >
+            }
+          </div>
+        }
+      </div>
+
+      <label
+        ><span class="form-label">Service change effective date</span
+        ><input
+          class="form-control"
+          type="date"
+          [(ngModel)]="model.serviceChangeEffectiveDate"
+        /><span class="mt-1 block text-[9px] text-text-muted"
+          >Required only when active services are changed.</span
+        ></label
+      >
+      <label
+        ><span class="form-label">EVV authorized hours</span
+        ><input class="form-control" type="number" min="0" max="168" [(ngModel)]="model.evvHours"
+      /></label>
+      <label
+        ><span class="form-label">Supervisor</span
+        ><select class="form-control" [(ngModel)]="model.supervisor" [disabled]="supervisorLoading">
+          <option value="">
+            {{ supervisorLoading ? 'Loading employees…' : 'No supervisor assigned' }}
+          </option>
+          @if (assignedSupervisorUnavailable) {
+            <option [value]="model.supervisor">
+              Previously assigned supervisor (inactive or unavailable)
+            </option>
+          }
+          @for (person of supervisorOptions; track person.id) {
+            <option [value]="person.id">{{ person.name }} — {{ person.jobTitle }}</option>
+          }
+        </select></label
+      >
+      @if (model.status === 'Discharged') {
+        <label
+          ><span class="form-label">Discharge date *</span
+          ><input class="form-control" type="date" [(ngModel)]="model.dischargeDate"
+        /></label>
+        <label
+          ><span class="form-label">Discharge reason</span
+          ><input class="form-control" [(ngModel)]="model.dischargeReason"
+        /></label>
+      }
+    </div>
+  </section>
+}
+
+@if (mode === 'contact') {
+  <section class="form-section">
+    <header>
+      <h2>Contact & address</h2>
+      <p>Primary contact channels and home address.</p>
+    </header>
+    <div class="form-grid">
+      <label
+        ><span class="form-label">Email</span
+        ><input
+          class="form-control"
+          type="email"
+          [(ngModel)]="model.email"
+          [attr.aria-invalid]="!!fieldError('email')"
+        />
+        @if (fieldError('email'); as error) {
+          <small class="field-error">{{ error }}</small>
+        }
+      </label>
+      <label
+        ><span class="form-label">Primary phone <span class="required-mark">*</span></span
+        ><input
+          class="form-control"
+          [ngModel]="model.phone1"
+          (ngModelChange)="normalizePhone('phone1', $event)"
+          maxlength="14"
+          inputmode="tel"
+          [attr.aria-invalid]="!!fieldError('phone1')"
+        />
+        @if (fieldError('phone1'); as error) {
+          <small class="field-error">{{ error }}</small>
+        }
+      </label>
+      <label
+        ><span class="form-label">Secondary phone</span
+        ><input
+          class="form-control"
+          [ngModel]="model.phone2"
+          (ngModelChange)="normalizePhone('phone2', $event)"
+          maxlength="14"
+          inputmode="tel"
+          [attr.aria-invalid]="!!fieldError('phone2')"
+        />
+        @if (fieldError('phone2'); as error) {
+          <small class="field-error">{{ error }}</small>
+        }
+      </label>
+      <div class="relative">
+        <span class="form-label">Preferred languages <span class="required-mark">*</span></span>
+        <button
+          type="button"
+          class="form-control flex items-center justify-between text-left"
+          (click)="toggleLanguagesDropdown()"
+        >
+          <span class="truncate">{{ selectedLabel(model.languages, 'Select languages') }}</span
+          ><span>⌄</span>
+        </button>
+        @if (languagesOpen) {
+          <div
+            class="absolute z-30 mt-1 w-full rounded-control border border-border bg-surface p-1.5 shadow-lg"
+          >
+            @for (value of languageOptions; track value) {
+              <label
+                class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-[11px] hover:bg-surface-muted"
+                ><input
+                  type="checkbox"
+                  [checked]="model.languages.includes(value)"
+                  (change)="toggleArray('languages', value, $event)"
+                />{{ value }}</label
+              >
+            }
+          </div>
+        }
+      </div>
+      <label class="xl:col-span-2"
+        ><span class="form-label">Street <span class="required-mark">*</span></span
+        ><input
+          class="form-control"
+          [(ngModel)]="model.street"
+          [attr.aria-invalid]="!!fieldError('street')"
+        />
+        @if (fieldError('street'); as error) {
+          <small class="field-error">{{ error }}</small>
+        }
+      </label>
+      <label
+        ><span class="form-label">Apartment</span
+        ><input class="form-control" [(ngModel)]="model.apartment"
+      /></label>
+      <label
+        ><span class="form-label">City</span><input class="form-control" [(ngModel)]="model.city"
+      /></label>
+      <label
+        ><span class="form-label">County</span
+        ><input class="form-control" [(ngModel)]="model.county"
+      /></label>
+      <label
+        ><span class="form-label">Country</span
+        ><input
+          class="form-control bg-surface-muted"
+          value="United States"
+          autocomplete="country-name"
+          readonly
+      /></label>
+      <label
+        ><span class="form-label">State</span><input class="form-control" [(ngModel)]="model.state"
+      /></label>
+      <label
+        ><span class="form-label">ZIP</span
+        ><input
+          class="form-control"
+          [ngModel]="model.zip"
+          (ngModelChange)="normalizePostalCode($event)"
+          maxlength="10"
+          [attr.aria-invalid]="!!fieldError('zip')"
+        />
+        @if (fieldError('zip'); as error) {
+          <small class="field-error">{{ error }}</small>
+        }
+      </label>
+    </div>
+  </section>
+}
+
+@if (mode === 'basic') {
+  <section class="form-section">
+    <header>
+      <h2>Care & safety</h2>
+      <p>Important safety, equipment and allergy information.</p>
+    </header>
+    <div class="form-grid">
+      <label class="xl:col-span-2"
+        ><span class="form-label">Safety measure</span
+        ><input class="form-control" [(ngModel)]="model.safetyMeasure"
+      /></label>
+      <label
+        ><span class="form-label">Special equipment</span
+        ><input class="form-control" [(ngModel)]="model.specialEquipment"
+      /></label>
+      <label
+        ><span class="form-label">Allergies</span
+        ><input class="form-control" [(ngModel)]="model.allergies"
+      /></label>
+      <label class="xl:col-span-2"
+        ><span class="form-label">Other services</span
+        ><input class="form-control" [(ngModel)]="model.otherServices"
+      /></label>
+      <label class="flex items-center gap-2 pt-5 text-[11px] text-text-secondary"
+        ><input type="checkbox" [(ngModel)]="model.onboarding" />Client is in onboarding</label
+      >
+    </div>
+  </section>
+}

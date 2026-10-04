@@ -5,8 +5,6 @@ import { NavigationModuleItem } from '../models/module-feature.models';
 export class ModuleFeatureDesignService {
   // UI-only fixture. Replace this service with the management API after design approval.
   getModules(): readonly NavigationModuleItem[] {
-    return [
-     
-    ];
+    return [];
   }
 }

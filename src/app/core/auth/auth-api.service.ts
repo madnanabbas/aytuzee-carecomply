@@ -56,10 +56,9 @@ export class AuthApiService {
   }
 
   confirmMfaEnrollment(code: string): Observable<MfaEnrollmentConfirmedResponse> {
-    return this.http.post<MfaEnrollmentConfirmedResponse>(
-      this.authUrl('mfa/enrollment/confirm'),
-      { code },
-    );
+    return this.http.post<MfaEnrollmentConfirmedResponse>(this.authUrl('mfa/enrollment/confirm'), {
+      code,
+    });
   }
 
   verifyMfa(code: string): Observable<void> {

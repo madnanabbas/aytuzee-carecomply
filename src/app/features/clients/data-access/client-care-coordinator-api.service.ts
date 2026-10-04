@@ -29,8 +29,15 @@ export class ClientCareCoordinatorApiService {
     return this.http.post<CareCoordinator>(this.url(clientId), request);
   }
 
-  update(clientId: string, coordinatorId: string, request: SaveCareCoordinator): Observable<CareCoordinator> {
-    return this.http.put<CareCoordinator>(`${this.url(clientId)}/${encodeURIComponent(coordinatorId)}`, request);
+  update(
+    clientId: string,
+    coordinatorId: string,
+    request: SaveCareCoordinator,
+  ): Observable<CareCoordinator> {
+    return this.http.put<CareCoordinator>(
+      `${this.url(clientId)}/${encodeURIComponent(coordinatorId)}`,
+      request,
+    );
   }
 
   private url(clientId: string): string {

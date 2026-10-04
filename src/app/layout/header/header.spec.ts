@@ -32,9 +32,8 @@ describe('HeaderComponent', () => {
         {
           provide: NavigationService,
           useValue: {
-            findByUrl: (url: string) => url.startsWith('/employees')
-              ? { label: 'Employees' }
-              : undefined,
+            findByUrl: (url: string) =>
+              url.startsWith('/employees') ? { label: 'Employees' } : undefined,
           },
         },
       ],
@@ -51,7 +50,9 @@ describe('HeaderComponent', () => {
     expect(copy).toContain('Global Star Care');
     expect(copy).not.toContain('admin@carecomply.local');
     expect(copy).not.toContain('System Administrator');
-    expect((fixture.nativeElement as HTMLElement).querySelector('[aria-label="Notifications"]')).toBeNull();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('[aria-label="Notifications"]'),
+    ).toBeNull();
   });
 
   it('should show notifications only with Notification.View and no count badge', () => {
@@ -59,7 +60,9 @@ describe('HeaderComponent', () => {
     const fixture = TestBed.createComponent(HeaderComponent);
     fixture.detectChanges();
 
-    const link = (fixture.nativeElement as HTMLElement).querySelector('[aria-label="Notifications"]');
+    const link = (fixture.nativeElement as HTMLElement).querySelector(
+      '[aria-label="Notifications"]',
+    );
     expect(link).toBeTruthy();
     expect(link?.textContent?.trim()).toBe('');
   });

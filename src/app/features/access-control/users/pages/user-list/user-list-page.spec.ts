@@ -36,7 +36,9 @@ describe('UserListPageComponent', () => {
 
     response.error(new Error('unavailable'));
     fixture.detectChanges();
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Users could not be loaded');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'Users could not be loaded',
+    );
   });
 
   it('should distinguish empty and filtered-empty results', () => {
@@ -63,17 +65,19 @@ describe('UserListPageComponent', () => {
     const fixture = TestBed.createComponent(UserListPageComponent);
     fixture.detectChanges();
     response.next({
-      items: [{
-        id: 'user-1',
-        displayName: 'Ada Lovelace',
-        email: 'ada@example.test',
-        isActive: false,
-        mfaStatus: 'enabled',
-        roles: [
-          { id: 'role-1', name: 'Compliance Lead' },
-          { id: 'role-2', name: 'Reviewer' },
-        ],
-      }],
+      items: [
+        {
+          id: 'user-1',
+          displayName: 'Ada Lovelace',
+          email: 'ada@example.test',
+          isActive: false,
+          mfaStatus: 'enabled',
+          roles: [
+            { id: 'role-1', name: 'Compliance Lead' },
+            { id: 'role-2', name: 'Reviewer' },
+          ],
+        },
+      ],
       availableRoles: [
         { id: 'role-1', name: 'Compliance Lead' },
         { id: 'role-2', name: 'Reviewer' },
@@ -90,8 +94,11 @@ describe('UserListPageComponent', () => {
     expect(copy).toContain('Reviewer');
     expect(copy).toContain('Inactive');
     expect(copy).toContain('Enabled');
-    expect([...((fixture.nativeElement as HTMLElement).querySelectorAll('a'))]
-      .some(link => link.textContent?.includes('Ada Lovelace'))).toBe(true);
+    expect(
+      [...(fixture.nativeElement as HTMLElement).querySelectorAll('a')].some((link) =>
+        link.textContent?.includes('Ada Lovelace'),
+      ),
+    ).toBe(true);
   });
 
   it('should preserve applied filters in route query parameters and reset paging', () => {
@@ -106,27 +113,36 @@ describe('UserListPageComponent', () => {
       mfaStatus: 'notEnabled',
     });
 
-    expect(router.navigate).toHaveBeenCalledWith([], expect.objectContaining({
-      queryParams: expect.objectContaining({
-        search: 'Ada',
-        roleId: 'role-1',
-        status: 'active',
-        mfaStatus: 'notEnabled',
+    expect(router.navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({
+        queryParams: expect.objectContaining({
+          search: 'Ada',
+          roleId: 'role-1',
+          status: 'active',
+          mfaStatus: 'notEnabled',
+        }),
       }),
-    }));
+    );
   });
 
   it('should expose Add User only with User.Manage', () => {
     const authorization = TestBed.inject(AuthorizationService);
     const fixture = TestBed.createComponent(UserListPageComponent);
     fixture.detectChanges();
-    expect([...((fixture.nativeElement as HTMLElement).querySelectorAll('a'))]
-      .some(link => link.textContent?.includes('Add User'))).toBe(false);
+    expect(
+      [...(fixture.nativeElement as HTMLElement).querySelectorAll('a')].some((link) =>
+        link.textContent?.includes('Add User'),
+      ),
+    ).toBe(false);
 
     authorization.setPermissions([Permissions.User.View, Permissions.User.Manage]);
     fixture.detectChanges();
-    expect([...((fixture.nativeElement as HTMLElement).querySelectorAll('a'))]
-      .some(link => link.textContent?.includes('Add User'))).toBe(true);
+    expect(
+      [...(fixture.nativeElement as HTMLElement).querySelectorAll('a')].some((link) =>
+        link.textContent?.includes('Add User'),
+      ),
+    ).toBe(true);
   });
 
   function emptyResponse(): UserListResponse {

@@ -24,7 +24,7 @@ describe('PostalLookupService', () => {
 
   it('maps the primary place returned for a US ZIP code', () => {
     let result: unknown;
-    service.lookupPostalCode('US', '55404-1234').subscribe((value) => result = value);
+    service.lookupPostalCode('US', '55404-1234').subscribe((value) => (result = value));
 
     http.expectOne('https://postal.example.test/us/55404').flush({
       country: 'United States',
@@ -32,6 +32,12 @@ describe('PostalLookupService', () => {
       places: [{ 'place name': 'Minneapolis', state: 'Minnesota', 'state abbreviation': 'MN' }],
     });
 
-    expect(result).toEqual({ city: 'Minneapolis', state: 'Minnesota', country: 'United States', countryCode: 'US', area: null });
+    expect(result).toEqual({
+      city: 'Minneapolis',
+      state: 'Minnesota',
+      country: 'United States',
+      countryCode: 'US',
+      area: null,
+    });
   });
 });

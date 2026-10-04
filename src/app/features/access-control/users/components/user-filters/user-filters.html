@@ -1,17 +1,8 @@
-<form
-  class="border-b border-border bg-surface px-4 py-3"
-  [formGroup]="form"
-  (ngSubmit)="apply()"
->
-  <div
-    class="grid gap-3 lg:grid-cols-[minmax(20rem,1fr)_13rem_11rem_auto] lg:items-end"
-  >
+<form class="border-b border-border bg-surface px-4 py-3" [formGroup]="form" (ngSubmit)="apply()">
+  <div class="grid gap-3 lg:grid-cols-[minmax(20rem,1fr)_13rem_11rem_auto] lg:items-end">
     <!-- Search -->
     <div>
-      <label
-        for="user-search"
-        class="mb-1.5 block text-helper font-semibold text-text-secondary"
-      >
+      <label for="user-search" class="mb-1.5 block text-helper font-semibold text-text-secondary">
         Search
       </label>
 
