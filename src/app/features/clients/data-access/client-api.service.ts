@@ -9,6 +9,7 @@ import {
   ClientDetailsApiResponse,
   ClientListQuery,
   ClientListResponse,
+  ClientStatusCode,
   ClientCreationProgressResponse,
   ClientCreationState,
   ClientCreationStateApiResponse,
@@ -111,10 +112,13 @@ export class ClientApiService {
   completeClientCreation(
     clientId: string,
     editorVersion: string,
+    status: ClientStatusCode = ClientStatusCode.Active,
+    dischargeDate: string | null = null,
+    dischargeReason: string | null = null,
   ): Observable<CompleteClientCreationResponse> {
     return this.http.post<CompleteClientCreationResponse>(
       `${this.clientsUrl()}/${encodeURIComponent(clientId)}/complete-creation`,
-      { editorVersion },
+      { editorVersion, status, dischargeDate, dischargeReason },
     );
   }
 
@@ -224,6 +228,7 @@ function mapClientDetails(response: ClientDetailsApiResponse): ClientDetails {
     location: response.careSetup.location || null,
     locationId: response.careSetup.locationId ?? '',
     supervisorUserId: response.careSetup.supervisorUserId ?? null,
+    supervisorName: response.careSetup.supervisorName || null,
     isOnboarding: response.careSetup.isOnboarding,
     dischargeDate: response.careSetup.dischargeDate,
     dischargeReason: response.careSetup.dischargeReason || null,

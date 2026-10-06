@@ -163,15 +163,20 @@
     </section>
 
     <div class="client-record-layout">
-      <aside class="client-record-rail" aria-label="Client record navigation">
+      <aside
+        class="client-record-rail client-vertical-nav-card"
+        aria-label="Client record navigation"
+      >
         @for (group of navigationGroups(); track group.label) {
           @if (group.items.length) {
             <section class="client-record-nav-group">
-              <h2 class="client-record-nav-label">{{ group.label }}</h2>
+              <h2 class="client-record-nav-label client-vertical-nav-heading">
+                {{ group.label }}
+              </h2>
               @for (item of group.items; track item.id) {
                 <button
                   type="button"
-                  class="client-record-nav-item"
+                  class="client-record-nav-item client-vertical-nav-item"
                   [class.active]="activeTab() === item.id"
                   [attr.aria-current]="activeTab() === item.id ? 'page' : null"
                   (click)="setTab(item.id)"

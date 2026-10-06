@@ -29,14 +29,89 @@ describe('ClientCreatePageComponent', () => {
     }).compileComponents();
     const fixture = TestBed.createComponent(ClientCreatePageComponent);
     fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
     const element = fixture.nativeElement as HTMLElement;
+    const page = fixture.componentInstance;
 
     expect(element.querySelector('app-client-wizard-sidebar')).toBeTruthy();
     expect(element.querySelector('app-client-wizard-stepper')).toBeNull();
     expect(element.querySelectorAll('.client-wizard-sidebar li')).toHaveLength(10);
-    expect(element.querySelector('[aria-current="step"]')?.textContent).toContain('Basic details');
+    const sidebar = element.querySelector('.client-wizard-sidebar');
+    const active = sidebar?.querySelector('[aria-current="step"]');
+    expect(sidebar?.querySelector('.client-vertical-nav-heading')?.textContent?.trim()).toBe(
+      'Client setup',
+    );
+    expect(sidebar?.querySelector('.client-wizard-sidebar-number')).toBeNull();
+    expect(sidebar?.querySelectorAll('button:disabled')).toHaveLength(9);
+    expect(active?.textContent).toContain('Basic details');
+    expect(active?.classList).toContain('client-vertical-nav-item');
+    expect(active?.classList).toContain('active');
+    expect(element.querySelector('.client-wizard-mobile-selector')).toBeTruthy();
     expect(element.textContent).toContain('Client identity');
     expect(element.textContent).toContain('Save & continue');
+    expect(element.querySelectorAll('.client-step-section')).toHaveLength(2);
+    expect(element.querySelectorAll('.client-step-section__header')).toHaveLength(2);
+    expect(element.querySelectorAll('.client-step-section__grid')).toHaveLength(2);
+    const mainCard = element.querySelector('.client-wizard-content');
+    expect(mainCard?.classList).toContain('rounded-surface');
+    expect(mainCard?.classList).toContain('border-border');
+    expect(mainCard?.querySelector('.client-wizard-footer')).toBeTruthy();
+    const layout = element.querySelector('.client-authenticated-wizard-layout');
+    expect(layout?.children[0]?.tagName).toBe('APP-CLIENT-WIZARD-SIDEBAR');
+    expect(layout?.children[1]?.classList).toContain('client-authenticated-wizard-main');
+    const status = element.querySelector<HTMLSelectElement>('[data-client-status-select]');
+    expect(status?.disabled).toBe(false);
+    expect(status?.value).toBe('Pending');
+    expect(Array.from(status?.options ?? []).map((option) => option.text)).toEqual([
+      'Pending',
+      'Active',
+      'On hold',
+      'Discharged',
+      'Inactive',
+    ]);
+    expect(element.textContent).toContain('Discharge date');
+    expect(element.textContent).toContain('Discharge reason');
+
+    const ssn = element.querySelector<HTMLInputElement>('[data-client-ssn-input]')!;
+    ssn.value = 'sdasdasdasd';
+    ssn.dispatchEvent(new Event('input'));
+    expect(ssn.value).toBe('');
+    expect(page.draft.ssn).toBe('');
+    ssn.value = '12a3b45c6789';
+    ssn.dispatchEvent(new Event('input'));
+    expect(ssn.value).toBe('123-45-6789');
+    expect(page.draft.ssn).toBe('123-45-6789');
+
+    status!.value = 'Discharged';
+    status!.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const dischargeDate = element.querySelector<HTMLInputElement>('[data-client-discharge-date]')!;
+    const dischargeReason = element.querySelector<HTMLInputElement>(
+      '[data-client-discharge-reason]',
+    )!;
+    expect(dischargeDate.disabled).toBe(false);
+    expect(dischargeReason.disabled).toBe(false);
+    status!.value = 'Active';
+    status!.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(dischargeDate.disabled).toBe(true);
+    expect(dischargeReason.disabled).toBe(true);
+
+    page.servicesOpen.set(true);
+    fixture.detectChanges();
+    const serviceOptions = element.querySelector<HTMLElement>('[data-services-options]');
+    expect(serviceOptions).toBeTruthy();
+    expect(serviceOptions?.classList).not.toContain('absolute');
+    expect(serviceOptions?.parentElement?.hasAttribute('data-services-overlay-host')).toBe(true);
+    const serviceCheckbox =
+      serviceOptions?.querySelector<HTMLInputElement>('input[type="checkbox"]');
+    expect(serviceCheckbox).toBeTruthy();
+    serviceCheckbox!.checked = true;
+    serviceCheckbox!.dispatchEvent(new Event('change'));
+    expect(page.draft.services).toContain(page.serviceOptions[0]);
   });
 
   it('creates once from Step 1, stores identity/version, and advances to Step 2', () => {
@@ -143,6 +218,37 @@ describe('ClientCreatePageComponent', () => {
     expect(page.stepIndex()).toBe(3);
   });
 
+  it('requires discharge date and reason before a discharged client can leave Step 1', () => {
+    const createClientBasicDetails = vi.fn();
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: ClientApiService,
+          useValue: { supervisorCandidates: () => of([]), createClientBasicDetails },
+        },
+        { provide: LocationLookupService, useValue: { list: () => of([]) } },
+        { provide: PostalLookupService, useValue: { lookupPostalCode: () => of(null) } },
+        {
+          provide: GeographyDirectoryService,
+          useValue: { states: () => of([]), cities: () => of([]) },
+        },
+        { provide: Router, useValue: { navigate: vi.fn() } },
+      ],
+    });
+    const page = TestBed.runInInjectionContext(() => new ClientCreatePageComponent());
+    page.draft.status = 'Discharged';
+
+    page.createClientFromBasicDetails();
+
+    expect(createClientBasicDetails).not.toHaveBeenCalled();
+    expect(page.fieldErrors()['dischargeDate']).toBe(
+      'Discharge date is required for a discharged client.',
+    );
+    expect(page.fieldErrors()['dischargeReason']).toBe(
+      'Discharge reason is required for a discharged client.',
+    );
+  });
+
   it('does not allow later steps before Step 1 has created the Client', () => {
     TestBed.configureTestingModule({
       providers: [
@@ -198,13 +304,20 @@ describe('ClientCreatePageComponent', () => {
     page.createdClientId.set('client-1');
     page.editorVersion.set('a'.repeat(64));
     page.stepIndex.set(9);
+    page.draft.status = 'Active';
 
     page.finish();
     page.finish();
 
     expect(api.completeClientCreation).toHaveBeenCalledTimes(1);
     expect(api.createClientBasicDetails).not.toHaveBeenCalled();
-    expect(api.completeClientCreation).toHaveBeenCalledWith('client-1', 'a'.repeat(64));
+    expect(api.completeClientCreation).toHaveBeenCalledWith(
+      'client-1',
+      'a'.repeat(64),
+      2,
+      null,
+      null,
+    );
     completion.next({ id: 'client-1', status: 'Active', editorVersion: 'b'.repeat(64) });
     completion.complete();
     expect(page.editorVersion()).toBe('b'.repeat(64));
@@ -251,6 +364,46 @@ describe('ClientCreatePageComponent', () => {
 
     expect(canLeaveStep).toHaveBeenCalledTimes(1);
     expect(api.completeClientCreation).not.toHaveBeenCalled();
+  });
+
+  it('applies the authenticated staff selected discharged status after completing creation', () => {
+    const api = {
+      supervisorCandidates: vi.fn(() => of([])),
+      completeClientCreation: vi.fn(() =>
+        of({ id: 'client-1', status: 'Active' as const, editorVersion: 'c'.repeat(64) }),
+      ),
+    };
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: ClientApiService, useValue: api },
+        { provide: LocationLookupService, useValue: { list: () => of([]) } },
+        { provide: PostalLookupService, useValue: { lookupPostalCode: () => of(null) } },
+        {
+          provide: GeographyDirectoryService,
+          useValue: { states: () => of([]), cities: () => of([]) },
+        },
+        { provide: Router, useValue: { navigate: vi.fn() } },
+      ],
+    });
+    const page = TestBed.runInInjectionContext(() => new ClientCreatePageComponent());
+    page.createdClientId.set('client-1');
+    page.editorVersion.set('a'.repeat(64));
+    page.stepIndex.set(9);
+    page.draft.status = 'Discharged';
+    page.draft.dischargeDate = '2026-10-01';
+    page.draft.dischargeReason = 'Care completed';
+
+    page.finish();
+
+    expect(api.completeClientCreation).toHaveBeenCalledWith(
+      'client-1',
+      'a'.repeat(64),
+      4,
+      '2026-10-01',
+      'Care completed',
+    );
+    expect(page.editorVersion()).toBe('c'.repeat(64));
+    expect(page.completionDialog()?.title).toBe('Client created successfully');
   });
 
   it('remains on Hospitalizations and preserves identity/version when completion fails', () => {

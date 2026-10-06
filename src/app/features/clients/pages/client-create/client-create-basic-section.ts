@@ -2,6 +2,8 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { CompanyLocation } from '../../../../core/lookups/location-lookup.service';
 import type { ClientFormModel } from '../../models/client-form.models';
+import { CLIENT_STATUS_OPTIONS } from '../../models/client-presentation';
+import { formatUsSsn } from '../../models/client-field-validation';
 
 export interface ClientCreateArrayToggle {
   readonly field: 'services' | 'languages' | 'diet';
@@ -23,6 +25,7 @@ export interface ClientSupervisorOption {
   styleUrl: './client-create-form.css',
 })
 export class ClientCreateBasicSectionComponent {
+  readonly statusOptions = CLIENT_STATUS_OPTIONS;
   @Input({ required: true }) draft!: ClientFormModel;
   @Input() fieldErrors: Readonly<Record<string, string>> = {};
   @Input() locationOptions: readonly CompanyLocation[] = [];
@@ -51,8 +54,23 @@ export class ClientCreateBasicSectionComponent {
     this.pmiInput.emit(event);
   }
 
-  normalizeSsn(value: string): void {
-    this.ssnChanged.emit(value);
+  normalizeSsnInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const formatted = formatUsSsn(input.value);
+    input.value = formatted;
+    this.draft.ssn = formatted;
+    this.ssnChanged.emit(formatted);
+  }
+
+  changeStatus(status: string): void {
+    this.draft.status = status;
+    this.clearFieldError('status');
+    if (status !== 'Discharged') {
+      this.draft.dischargeDate = '';
+      this.draft.dischargeReason = '';
+      this.clearFieldError('dischargeDate');
+      this.clearFieldError('dischargeReason');
+    }
   }
 
   selectLocation(locationId: string): void {

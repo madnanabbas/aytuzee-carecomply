@@ -1,6 +1,9 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import type { CompanyLocation } from '../../../../core/lookups/location-lookup.service';
 import type { ClientFormModel } from '../../models/client-form.models';
+import { CLIENT_STATUS_OPTIONS } from '../../models/client-presentation';
+import { formatUsSsn } from '../../models/client-field-validation';
 
 export interface ClientEditArrayToggle {
   readonly field: 'services' | 'languages' | 'diet';
@@ -24,13 +27,14 @@ export interface ClientEditSupervisorOption {
   standalone: true,
   imports: [FormsModule],
   templateUrl: './client-edit-basic-section.html',
-  styleUrl: './client-edit-form.css',
+  styleUrls: ['../client-create/client-create-form.css', './client-edit-form.css'],
 })
 export class ClientEditBasicSectionComponent {
+  readonly statusOptions = CLIENT_STATUS_OPTIONS;
   @Input() mode: 'basic' | 'contact' = 'basic';
   @Input({ required: true }) model!: ClientFormModel;
   @Input() fieldErrors: Readonly<Record<string, string>> = {};
-  @Input() locations: readonly string[] = [];
+  @Input() locationOptions: readonly CompanyLocation[] = [];
   @Input() serviceOptions: readonly string[] = [];
   @Input() servicesOpen = false;
   @Input() languageOptions: readonly string[] = [];
@@ -41,6 +45,7 @@ export class ClientEditBasicSectionComponent {
 
   @Output() readonly pmiInput = new EventEmitter<Event>();
   @Output() readonly ssnChanged = new EventEmitter<string>();
+  @Output() readonly locationSelected = new EventEmitter<string>();
   @Output() readonly servicesDropdownToggled = new EventEmitter<void>();
   @Output() readonly languagesDropdownToggled = new EventEmitter<void>();
   @Output() readonly arrayToggled = new EventEmitter<ClientEditArrayToggle>();
@@ -51,8 +56,24 @@ export class ClientEditBasicSectionComponent {
     this.pmiInput.emit(event);
   }
 
-  normalizeSsn(value: string): void {
-    this.ssnChanged.emit(value);
+  normalizeSsnInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const formatted = formatUsSsn(input.value);
+    input.value = formatted;
+    this.model.ssn = formatted;
+    this.ssnChanged.emit(formatted);
+  }
+
+  changeStatus(status: string): void {
+    this.model.status = status;
+    if (status !== 'Discharged') {
+      this.model.dischargeDate = '';
+      this.model.dischargeReason = '';
+    }
+  }
+
+  selectLocation(locationId: string): void {
+    this.locationSelected.emit(locationId);
   }
 
   toggleServicesDropdown(): void {
@@ -81,5 +102,16 @@ export class ClientEditBasicSectionComponent {
 
   fieldError(field: string): string | null {
     return this.fieldErrors[field] ?? null;
+  }
+
+  ageFromDob(): string {
+    if (!this.model.dob) return 'Calculated automatically';
+    const dob = new Date(`${this.model.dob}T00:00:00`);
+    if (Number.isNaN(dob.getTime())) return 'Calculated automatically';
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const month = today.getMonth() - dob.getMonth();
+    if (month < 0 || (month === 0 && today.getDate() < dob.getDate())) age -= 1;
+    return `${Math.max(0, age)} years`;
   }
 }

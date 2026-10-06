@@ -314,7 +314,9 @@ export function toClientViewModel(details: ClientDetails): ClientViewModel {
     program,
     services: services.length ? services : ['—'],
     location: displayValue(details.location),
-    supervisor: 'Managed through Employee Services',
+    supervisor: details.supervisorUserId
+      ? displayValue(details.supervisorName)
+      : 'Managed through Employee Services',
     evvHours:
       details.evvAuthorizedHoursPerWeek === null
         ? '—'

@@ -27,10 +27,3 @@ export const CLIENT_EDIT_STEPS: readonly {
   { id: 'responsible-parties', title: CLIENT_WIZARD_STEP_TITLES[8] },
   { id: 'hospitalizations', title: CLIENT_WIZARD_STEP_TITLES[9] },
 ];
-
-export const CLIENT_EDIT_LOCATIONS = [
-  'Minneapolis',
-  'St. Paul',
-  'Brooklyn Park',
-  'Bloomington',
-] as const;

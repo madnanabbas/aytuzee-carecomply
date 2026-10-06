@@ -5,9 +5,9 @@ describe('CLIENT_EDIT_STEPS', () => {
     expect(CLIENT_EDIT_STEPS.map((step) => step.title)).toEqual([
       'Basic details',
       'Additional information',
-      'Contact information',
+      'Primary contact information',
       'Primary caregivers',
-      'Contacts',
+      'Other contacts',
       'Care coordinators',
       'Consultation providers',
       'Doctors',

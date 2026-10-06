@@ -8,7 +8,7 @@ import type { ClientEditArrayToggle, ClientEditPhoneChange } from './client-edit
   standalone: true,
   imports: [FormsModule],
   templateUrl: './client-edit-additional-section.html',
-  styleUrl: './client-edit-form.css',
+  styleUrls: ['../client-create/client-create-form.css', './client-edit-form.css'],
 })
 export class ClientEditAdditionalSectionComponent {
   @Input({ required: true }) model!: ClientFormModel;

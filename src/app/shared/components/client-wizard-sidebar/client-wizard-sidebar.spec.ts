@@ -2,9 +2,20 @@ import { TestBed } from '@angular/core/testing';
 import { ClientWizardSidebarComponent } from './client-wizard-sidebar';
 
 describe('ClientWizardSidebarComponent', () => {
-  const steps = Array.from({ length: 10 }, (_, index) => ({ title: `Step ${index + 1}` }));
+  const steps = [
+    'Basic details',
+    'Additional information',
+    'Contact information',
+    'Primary caregivers',
+    'Contacts',
+    'Care coordinators',
+    'Consultation providers',
+    'Doctors',
+    'Responsible parties',
+    'Hospitalizations',
+  ].map((title) => ({ title }));
 
-  it('renders a vertical semantic step list and compact mobile selector', async () => {
+  it('renders the shared Client Setup rail without numbered circles and keeps mobile progress', async () => {
     await TestBed.configureTestingModule({
       imports: [ClientWizardSidebarComponent],
     }).compileComponents();
@@ -15,14 +26,23 @@ describe('ClientWizardSidebarComponent', () => {
     fixture.detectChanges();
     const element = fixture.nativeElement as HTMLElement;
 
-    expect(element.querySelectorAll('.client-wizard-sidebar li')).toHaveLength(10);
-    expect(element.querySelector('[aria-current="step"]')?.textContent).toContain('Step 3');
+    const sidebar = element.querySelector('.client-wizard-sidebar');
+    const active = sidebar?.querySelector('[aria-current="step"]');
+    expect(sidebar?.querySelector('.client-vertical-nav-heading')?.textContent?.trim()).toBe(
+      'Client setup',
+    );
+    expect(sidebar?.querySelectorAll('li')).toHaveLength(10);
+    expect(sidebar?.querySelector('.client-wizard-sidebar-number')).toBeNull();
+    expect(active?.textContent).toContain('Contact information');
+    expect(active?.classList).toContain('client-vertical-nav-item');
+    expect(active?.classList).toContain('active');
     expect(element.querySelectorAll('.client-wizard-sidebar button:disabled')).toHaveLength(5);
     expect(element.querySelector('.client-wizard-mobile-selector')?.textContent).toContain(
       'Step 3 of 10',
     );
     expect(element.querySelectorAll('.client-wizard-mobile-selector option')).toHaveLength(10);
     expect(element.querySelector('.client-wizard-stepper')).toBeNull();
+    expect(element.querySelector('.client-wizard-horizontal-navigation')).toBeNull();
   });
 
   it('emits only enabled navigation selections', async () => {

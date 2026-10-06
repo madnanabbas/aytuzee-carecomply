@@ -23,15 +23,15 @@ export function validateEmployeeStep(
     if (!model.dateOfBirth) errors['dateOfBirth'] = 'Date of birth is required.';
     if (!model.gender) errors['gender'] = 'Select a gender.';
     if (!isValidContactPhone(model.phone, true))
-      errors['phone'] = 'Enter a 10-digit US phone number.';
+      errors['phone'] = 'Enter a valid 10-digit US phone number.';
+    if (!isValidContactPhone(model.secondaryPhone))
+      errors['secondaryPhone'] = 'Enter a valid 10-digit US phone number.';
     if (!model.streetAddress.trim()) errors['streetAddress'] = 'Street address is required.';
-    if (!isPersisted && model.ssn.replace(/\D/g, '').length !== 9)
-      errors['ssn'] = 'Enter a 9-digit SSN.';
+    if ((!isPersisted || model.ssn) && !/^\d{9}$/.test(model.ssn))
+      errors['ssn'] = 'SSN must contain exactly 9 digits.';
     if (model.npi && model.npi.length !== 10) errors['npi'] = 'NPI must contain 10 digits.';
-    if (model.evvEmail && !isValidContactEmail(model.evvEmail))
-      errors['evvEmail'] = 'Enter a valid EVV email address.';
-    if (model.evvPassword !== model.evvPasswordConfirm)
-      errors['evvPasswordConfirm'] = 'Passwords do not match.';
+    if (!isValidContactPhone(model.emergencyContactPhone))
+      errors['emergencyContactPhone'] = 'Enter a valid 10-digit US phone number.';
   }
   if (step === 1) {
     if (model.hasUsedDifferentName && !model.previousName.trim())
@@ -58,6 +58,6 @@ export function validateEmployeeStep(
       errors['otherEmployerName'] = 'Enter the other employer name.';
   }
   if (step === 4 && !isValidContactPhone(model.payerPhone))
-    errors['payerPhone'] = 'Enter a 10-digit US phone number.';
+    errors['payerPhone'] = 'Enter a valid 10-digit US phone number.';
   return errors;
 }

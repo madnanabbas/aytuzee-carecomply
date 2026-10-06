@@ -148,15 +148,16 @@
                   ><span>Secondary title</span
                   ><input [(ngModel)]="draft.secondaryJobTitle" /></label
                 ><label
-                  ><span>SSN *</span
+                  ><span>SSN{{ editing ? '' : ' *' }}</span
                   ><input
                     [value]="draft.ssn"
                     (input)="ssn($any($event.target).value)"
                     [class.invalid]="!!fieldError('ssn')"
+                    [attr.aria-invalid]="!!fieldError('ssn')"
                     inputmode="numeric"
-                    maxlength="11"
+                    maxlength="9"
                     [placeholder]="
-                      draft.hasSsn ? 'Stored securely â€” enter only to replace' : '123-45-6789'
+                      draft.hasSsn ? 'Stored securely — enter only to replace' : '123456789'
                     "
                   />
                   @if (fieldError('ssn')) {
@@ -223,6 +224,7 @@
                     [value]="draft.phone"
                     (input)="phone('phone', $any($event.target).value)"
                     [class.invalid]="!!fieldError('phone')"
+                    [attr.aria-invalid]="!!fieldError('phone')"
                     placeholder="(612) 555-0100"
                   />
                   @if (fieldError('phone')) {
@@ -234,8 +236,14 @@
                     type="tel"
                     [value]="draft.secondaryPhone"
                     (input)="phone('secondaryPhone', $any($event.target).value)"
+                    [class.invalid]="!!fieldError('secondaryPhone')"
+                    [attr.aria-invalid]="!!fieldError('secondaryPhone')"
                     placeholder="(612) 555-0100"
-                /></label>
+                  />
+                  @if (fieldError('secondaryPhone')) {
+                    <small class="field-error">{{ fieldError('secondaryPhone') }}</small>
+                  }
+                </label>
               </div>
             </section>
             <section>
@@ -297,82 +305,6 @@
                   ><select [(ngModel)]="draft.state">
                     <option value="MN">Minnesota</option>
                   </select></label
-                >
-              </div>
-            </section>
-            <section>
-              <h3>EVV and IVR access</h3>
-              <p class="hint">Passwords and PINs are encrypted and never returned after saving.</p>
-              <div class="grid four">
-                <label
-                  ><span>EVV email</span
-                  ><input
-                    type="email"
-                    [(ngModel)]="draft.evvEmail"
-                    (ngModelChange)="clearFieldError('evvEmail')"
-                    [class.invalid]="!!fieldError('evvEmail')"
-                  />
-                  @if (fieldError('evvEmail')) {
-                    <small class="field-error">{{ fieldError('evvEmail') }}</small>
-                  }</label
-                ><label
-                  ><span>EVV password</span
-                  ><input
-                    type="password"
-                    [(ngModel)]="draft.evvPassword"
-                    autocomplete="new-password"
-                    [placeholder]="
-                      draft.hasEvvPassword ? 'Stored â€” enter to replace' : 'Enter password'
-                    " /></label
-                ><label
-                  ><span>Confirm EVV password</span
-                  ><input
-                    type="password"
-                    [(ngModel)]="draft.evvPasswordConfirm"
-                    (ngModelChange)="clearFieldError('evvPasswordConfirm')"
-                    [class.invalid]="!!fieldError('evvPasswordConfirm')"
-                    autocomplete="new-password"
-                  />
-                  @if (fieldError('evvPasswordConfirm')) {
-                    <small class="field-error">{{ fieldError('evvPasswordConfirm') }}</small>
-                  }</label
-                ><label
-                  ><span>IVR PIN</span
-                  ><input
-                    type="password"
-                    [value]="draft.ivrPin"
-                    (input)="pin($any($event.target).value)"
-                    inputmode="numeric"
-                    maxlength="10"
-                    [placeholder]="
-                      draft.hasIvrPin ? 'Stored â€” enter to replace' : 'Numeric PIN'
-                    " /></label
-                ><label
-                  ><span>EVV / IVR authorization</span
-                  ><select [(ngModel)]="draft.evvIvrAuthorization">
-                    <option value="">Select authorization</option>
-                    <option>EVV and IVR</option>
-                    <option>EVV only</option>
-                    <option>IVR only</option>
-                    <option>Not authorized</option>
-                  </select></label
-                >
-              </div>
-              <div class="choice-grid subsection">
-                <label class="choice"
-                  ><input type="checkbox" [(ngModel)]="draft.allowAggregator" /><span
-                    >Allow aggregator</span
-                  ></label
-                ><label class="choice"
-                  ><input type="checkbox" [(ngModel)]="draft.overrideRestriction" /><span
-                    >Override restriction</span
-                  ></label
-                ><label class="choice"
-                  ><input type="checkbox" [(ngModel)]="draft.evvOnly" /><span>EVV only</span></label
-                ><label class="choice"
-                  ><input type="checkbox" [(ngModel)]="draft.restrictDateAndTime" /><span
-                    >Restrict date and time</span
-                  ></label
                 >
               </div>
             </section>

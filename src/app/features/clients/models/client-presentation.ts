@@ -1,12 +1,16 @@
 import { ClientGenderCode, ClientProgramTypeCode, ClientStatusCode } from './client-api.models';
 
-const STATUS_LABELS: Readonly<Record<number, string>> = {
-  [ClientStatusCode.Pending]: 'Pending',
-  [ClientStatusCode.Active]: 'Active',
-  [ClientStatusCode.OnHold]: 'On hold',
-  [ClientStatusCode.Discharged]: 'Discharged',
-  [ClientStatusCode.Inactive]: 'Inactive',
-};
+export const CLIENT_STATUS_OPTIONS = [
+  { code: ClientStatusCode.Pending, label: 'Pending' },
+  { code: ClientStatusCode.Active, label: 'Active' },
+  { code: ClientStatusCode.OnHold, label: 'On hold' },
+  { code: ClientStatusCode.Discharged, label: 'Discharged' },
+  { code: ClientStatusCode.Inactive, label: 'Inactive' },
+] as const;
+
+const STATUS_LABELS: Readonly<Record<number, string>> = Object.fromEntries(
+  CLIENT_STATUS_OPTIONS.map((option) => [option.code, option.label]),
+);
 
 const GENDER_LABELS: Readonly<Record<number, string>> = {
   [ClientGenderCode.Unknown]: 'Unknown',
@@ -76,8 +80,12 @@ export function clientStatusCode(value: string): ClientStatusCode {
     case 'inactive':
       return ClientStatusCode.Inactive;
     default:
-      return ClientStatusCode.Pending;
+      return 0 as ClientStatusCode;
   }
+}
+
+export function isValidClientStatus(value: string): boolean {
+  return CLIENT_STATUS_OPTIONS.some((option) => option.label === value);
 }
 
 export function clientGenderCode(value: string): ClientGenderCode {

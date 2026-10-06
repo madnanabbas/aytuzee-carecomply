@@ -45,6 +45,7 @@ import {
   isValidUsSsn,
 } from '../../models/client-field-validation';
 import { CLIENT_SERVICE_OPTIONS } from '../../models/client-service-catalog';
+import { clientStatusCode, isValidClientStatus } from '../../models/client-presentation';
 import {
   CompanyLocation,
   LocationLookupService,
@@ -145,6 +146,7 @@ export class ClientCreatePageComponent {
   readonly draft: ClientFormModel = createEmptyClientForm();
 
   constructor() {
+    this.draft.status = 'Pending';
     this.locationApi
       .list()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -618,7 +620,13 @@ export class ClientCreatePageComponent {
     this.clearMessages();
     this.saving.set(true);
     this.api
-      .completeClientCreation(clientId, editorVersion)
+      .completeClientCreation(
+        clientId,
+        editorVersion,
+        clientStatusCode(this.draft.status),
+        this.draft.status === 'Discharged' ? this.draft.dischargeDate || null : null,
+        this.draft.status === 'Discharged' ? this.draft.dischargeReason.trim() || null : null,
+      )
       .pipe(
         timeout(30_000),
         finalize(() => this.saving.set(false)),
@@ -756,11 +764,14 @@ export class ClientCreatePageComponent {
       else if (!isValidPmi(this.draft.pmi)) add('pmi', 'PMI number must contain exactly 8 digits.');
       if (!this.draft.socDate) add('socDate', 'SOC date is required.');
       if (this.draft.ssn && !isValidUsSsn(this.draft.ssn))
-        add('ssn', 'Enter a valid 9-digit US Social Security number.');
+        add('ssn', 'Enter a valid SSN in XXX-XX-XXXX format.');
+      if (!isValidClientStatus(this.draft.status)) add('status', 'Status is invalid.');
       if (this.draft.intakeDate && this.draft.socDate && this.draft.intakeDate > this.draft.socDate)
         add('intakeDate', 'Intake date cannot be after the SOC date.');
       if (this.draft.status === 'Discharged' && !this.draft.dischargeDate)
         add('dischargeDate', 'Discharge date is required for a discharged client.');
+      if (this.draft.status === 'Discharged' && !this.draft.dischargeReason.trim())
+        add('dischargeReason', 'Discharge reason is required for a discharged client.');
       if (
         this.draft.dischargeDate &&
         this.draft.socDate &&

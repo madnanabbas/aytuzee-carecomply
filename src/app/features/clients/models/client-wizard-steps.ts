@@ -1,9 +1,9 @@
 export const CLIENT_WIZARD_STEP_TITLES = [
   'Basic details',
   'Additional information',
-  'Contact information',
+  'Primary contact information',
   'Primary caregivers',
-  'Contacts',
+  'Other contacts',
   'Care coordinators',
   'Consultation providers',
   'Doctors',

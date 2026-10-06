@@ -1,9 +1,9 @@
-<section class="form-section">
-  <header>
-    <h2>Program & demographics</h2>
+<section>
+  <div class="section-heading">
+    <h3>Program & demographics</h3>
     <p>Additional program and client profile information.</p>
-  </header>
-  <div class="form-grid">
+  </div>
+  <div class="grid gap-x-4 gap-y-3 md:grid-cols-2 xl:grid-cols-4">
     <label
       ><span class="form-label">Program type</span
       ><select class="form-control" [(ngModel)]="model.programType">
@@ -89,12 +89,12 @@
   </div>
 </section>
 
-<section class="form-section">
-  <header>
-    <h2>Referral information</h2>
+<section>
+  <div class="section-heading">
+    <h3>Referral information</h3>
     <p>Original referral context and referring organization.</p>
-  </header>
-  <div class="form-grid">
+  </div>
+  <div class="grid gap-x-4 gap-y-3 md:grid-cols-2 xl:grid-cols-4">
     <label class="flex items-center gap-2 pt-5 text-[11px] text-text-secondary"
       ><input type="checkbox" [(ngModel)]="model.referringClient" />Referred by another
       client</label
@@ -121,15 +121,15 @@
   </div>
 </section>
 
-<section class="form-section">
-  <header>
-    <h2>Provider references</h2>
+<section>
+  <div class="section-heading">
+    <h3>Provider references</h3>
     <p>
       Core stores preferred provider names. Detailed provider contacts will be handled as related
       contacts.
     </p>
-  </header>
-  <div class="form-grid">
+  </div>
+  <div class="grid gap-x-4 gap-y-3 md:grid-cols-2 xl:grid-cols-4">
     <label
       ><span class="form-label">Clinic name</span
       ><input class="form-control" [(ngModel)]="model.clinicName"
@@ -145,12 +145,12 @@
   </div>
 </section>
 
-<section class="form-section">
-  <header>
-    <h2>Nutrition & notes</h2>
+<section>
+  <div class="section-heading">
+    <h3>Nutrition & notes</h3>
     <p>Additional care preferences and contextual information.</p>
-  </header>
-  <div class="form-grid">
+  </div>
+  <div class="grid gap-x-4 gap-y-3 md:grid-cols-2 xl:grid-cols-4">
     <label class="xl:col-span-2"
       ><span class="form-label">Nutritional requirements</span
       ><input class="form-control" [(ngModel)]="model.nutritionalRequirements"

@@ -110,13 +110,16 @@ describe('ClientApiService', () => {
 
   it('uses encoded client detail and focused write endpoints', () => {
     let clientName: string | undefined;
+    let supervisorName: string | null | undefined;
     api.getClient('client/one').subscribe((client) => {
       clientName = client.firstName;
+      supervisorName = client.supervisorName;
     });
     const detail = http.expectOne('/api/clients/client%2Fone');
     expect(detail.request.method).toBe('GET');
     detail.flush(clientDetailsResponse());
     expect(clientName).toBe('Marcus');
+    expect(supervisorName).toBe('Nora Nurse');
 
     let revealedSsn: string | undefined;
     api.revealClientSsn('client/one').subscribe((response) => {
@@ -321,6 +324,9 @@ function clientDetailsResponse() {
       referralSource: 'County',
       status: 'Active',
       location: 'Minneapolis',
+      locationId: 'location-1',
+      supervisorUserId: 'supervisor-1',
+      supervisorName: 'Nora Nurse',
       isOnboarding: false,
       evvAuthorizedHoursPerWeek: 32,
       dischargeDate: null,

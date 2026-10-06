@@ -73,8 +73,9 @@ describe('EmployeeFormPageComponent step persistence', () => {
     });
     const router = TestBed.inject(Router);
     const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
-    const component = TestBed.createComponent(EmployeeFormPageComponent).componentInstance;
-    return { component, navigate };
+    const fixture = TestBed.createComponent(EmployeeFormPageComponent);
+    const component = fixture.componentInstance;
+    return { component, fixture, navigate };
   }
 
   it('creates on the first Next and resumes at the edit URL', () => {
@@ -89,7 +90,7 @@ describe('EmployeeFormPageComponent step persistence', () => {
       gender: 'Female',
       phone: '(612) 555-0102',
       streetAddress: '100 Main Street',
-      ssn: '123-45-6789',
+      ssn: '123456789',
     });
 
     component.next();
@@ -173,6 +174,52 @@ describe('EmployeeFormPageComponent step persistence', () => {
     const { component } = setup(null, null, true);
 
     expect(component.companies()).toEqual([]);
+  });
+
+  it('retains Employee SSN digits without adding hyphens', () => {
+    const { component } = setup();
+
+    component.ssn('123456789');
+
+    expect(component.draft.ssn).toBe('123456789');
+  });
+
+  it('normalizes a pasted formatted Employee SSN to nine digits', () => {
+    const { component } = setup();
+
+    component.ssn('123-45-6789');
+
+    expect(component.draft.ssn).toBe('123456789');
+  });
+
+  it('removes alphabetic and punctuation characters from Employee SSN input', () => {
+    const { component } = setup();
+
+    component.ssn('ABC-!@#');
+
+    expect(component.draft.ssn).toBe('');
+  });
+
+  it('limits Employee SSN input to nine digits', () => {
+    const { component } = setup();
+
+    component.ssn('1234567890123');
+
+    expect(component.draft.ssn).toBe('123456789');
+  });
+
+  it('does not render EVV or IVR controls for create or edit', () => {
+    for (const editId of [null, employeeId]) {
+      TestBed.resetTestingModule();
+      const { fixture } = setup(editId);
+      fixture.detectChanges();
+      const content = fixture.nativeElement.textContent as string;
+
+      expect(content).not.toContain('EVV email');
+      expect(content).not.toContain('EVV password');
+      expect(content).not.toContain('IVR PIN');
+      expect(content).not.toContain('EVV / IVR authorization');
+    }
   });
 
   it('adds, edits and removes contacts', () => {

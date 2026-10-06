@@ -1,14 +1,16 @@
-<nav class="client-wizard-sidebar" [attr.aria-label]="ariaLabel()">
+<nav class="client-wizard-sidebar client-vertical-nav-card" [attr.aria-label]="ariaLabel()">
+  <h2 class="client-vertical-nav-heading">Client setup</h2>
   <ol>
     @for (step of steps(); track step.title; let index = $index) {
       <li [class.active]="index === activeIndex()" [class.completed]="index < activeIndex()">
         <button
           type="button"
+          class="client-vertical-nav-item"
+          [class.active]="index === activeIndex()"
           [disabled]="!canSelect(index)"
           [attr.aria-current]="index === activeIndex() ? 'step' : null"
           (click)="select(index)"
         >
-          <span class="client-wizard-sidebar-number">{{ index + 1 }}</span>
           <span>{{ step.title }}</span>
         </button>
       </li>

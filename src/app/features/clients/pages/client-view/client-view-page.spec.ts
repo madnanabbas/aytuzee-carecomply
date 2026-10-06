@@ -12,6 +12,7 @@ import { ClientResponsiblePartyApiService } from '../../data-access/client-respo
 import { ClientTodoApiService } from '../../data-access/client-todo-api.service';
 import { ClientDetails } from '../../models/client-api.models';
 import { ClientViewPageComponent } from './client-view-page';
+import { toClientViewModel } from './client-view.models';
 
 describe('ClientViewPageComponent record navigation', () => {
   const profileItems = [
@@ -51,9 +52,10 @@ describe('ClientViewPageComponent record navigation', () => {
     socDate: '2026-01-01',
     referralSource: 'Hospital',
     status: 'Active',
-    location: 'Main',
+    location: 'Bloomington',
     locationId: 'location-1',
-    supervisorUserId: null,
+    supervisorUserId: 'supervisor-1',
+    supervisorName: 'Nora Nurse',
     isOnboarding: false,
     dischargeDate: null,
     dischargeReason: null,
@@ -227,6 +229,32 @@ describe('ClientViewPageComponent record navigation', () => {
     expect(element.querySelector('app-client-view-overview')).toBeTruthy();
     expect(element.querySelector('app-client-intake-profile')).toBeNull();
     expect(relatedList).not.toHaveBeenCalled();
+  });
+
+  it('renders the authoritative backend location and assigned supervisor name', async () => {
+    const { fixture } = await createFixture();
+    const element = fixture.nativeElement as HTMLElement;
+
+    expect(element.textContent).toContain('Bloomington');
+    expect(element.textContent).toContain('Nora Nurse');
+    expect(element.textContent).not.toContain('Managed through Employee Services');
+  });
+
+  it('uses the employee-services fallback only when no direct supervisor is assigned', () => {
+    const unassigned = toClientViewModel({
+      ...details,
+      supervisorUserId: null,
+      supervisorName: null,
+    });
+    const assignedWithoutAResolvedName = toClientViewModel({
+      ...details,
+      supervisorUserId: 'supervisor-1',
+      supervisorName: null,
+    });
+
+    expect(unassigned.supervisor).toBe('Managed through Employee Services');
+    expect(assignedWithoutAResolvedName.supervisor).toBe('—');
+    expect(unassigned.location).toBe('Bloomington');
   });
 
   it('does not show unavailable operations in either navigation control', async () => {

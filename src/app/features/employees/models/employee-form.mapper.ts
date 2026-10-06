@@ -59,7 +59,20 @@ export function employeeDtoToForm(value: EmployeeDto): EmployeeFormModel {
 }
 
 export function employeeFormToRequest(value: EmployeeFormModel): SaveEmployeeRequest {
-  const { evvPasswordConfirm: _, ...request } = value;
+  const {
+    allowAggregator: _allowAggregator,
+    overrideRestriction: _overrideRestriction,
+    evvOnly: _evvOnly,
+    restrictDateAndTime: _restrictDateAndTime,
+    evvEmail: _evvEmail,
+    evvPassword: _evvPassword,
+    evvPasswordConfirm: _evvPasswordConfirm,
+    hasEvvPassword: _hasEvvPassword,
+    ivrPin: _ivrPin,
+    hasIvrPin: _hasIvrPin,
+    evvIvrAuthorization: _evvIvrAuthorization,
+    ...request
+  } = value;
   const body: Record<string, unknown> = { ...request };
   for (const key of nullableDates) body[key] = value[key] || null;
   body['availableStartTime'] = value.availableStartTime || null;

@@ -1,6 +1,6 @@
 <fieldset class="space-y-6" [disabled]="readOnly">
-  <section>
-    <div class="mb-3 flex items-center gap-2 border-b border-border pb-2">
+  <section class="client-step-section">
+    <header class="client-step-section__header">
       <span
         class="flex size-7 items-center justify-center rounded-md bg-primary-subtle text-primary"
       >
@@ -20,8 +20,8 @@
         <h3 class="text-[13px] font-semibold text-text-primary">Client identity</h3>
         <p class="text-[10px] text-text-muted">Legal identity and primary identifiers.</p>
       </div>
-    </div>
-    <div class="grid gap-x-4 gap-y-3 md:grid-cols-2 xl:grid-cols-4">
+    </header>
+    <div class="client-step-section__grid">
       <label
         ><span class="form-label">First name <span class="text-red-600">*</span></span
         ><input
@@ -130,9 +130,10 @@
       <label
         ><span class="form-label">SSN</span
         ><input
-          [ngModel]="draft.ssn"
-          (ngModelChange)="normalizeSsn($event)"
+          [value]="draft.ssn"
+          (input)="normalizeSsnInput($event)"
           type="text"
+          data-client-ssn-input
           class="form-control"
           [class.border-red-500]="fieldError('ssn')"
           [attr.aria-invalid]="!!fieldError('ssn')"
@@ -158,8 +159,8 @@
     </div>
   </section>
 
-  <section>
-    <div class="mb-3 flex items-center gap-2 border-b border-border pb-2">
+  <section class="client-step-section">
+    <header class="client-step-section__header">
       <span
         class="flex size-7 items-center justify-center rounded-md bg-primary-subtle text-primary"
         ><svg
@@ -179,8 +180,8 @@
           Start of care, assignment and service information.
         </p>
       </div>
-    </div>
-    <div class="grid gap-x-4 gap-y-3 md:grid-cols-2 xl:grid-cols-4">
+    </header>
+    <div class="client-step-section__grid">
       <label
         ><span class="form-label">Intake date</span
         ><input
@@ -223,6 +224,23 @@
         </select></label
       >
       <label
+        ><span class="form-label">Status</span
+        ><select
+          data-client-status-select
+          [ngModel]="draft.status"
+          (ngModelChange)="changeStatus($event)"
+          class="form-control"
+          [attr.aria-invalid]="!!fieldError('status')"
+        >
+          @for (option of statusOptions; track option.code) {
+            <option [value]="option.label">{{ option.label }}</option>
+          }
+        </select>
+        @if (fieldError('status'); as error) {
+          <small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>
+        }
+      </label>
+      <label
         ><span class="form-label">Location <span class="text-red-600">*</span></span
         ><select
           [ngModel]="draft.locationId"
@@ -238,11 +256,13 @@
         </select></label
       >
 
-      <div class="relative">
+      <div class="relative" data-services-overlay-host>
         <span class="form-label">Client services</span>
         <button
           type="button"
           class="form-control flex items-center justify-between text-left"
+          aria-haspopup="true"
+          [attr.aria-expanded]="servicesOpen"
           (click)="toggleServicesDropdown()"
         >
           <span class="truncate" [class.text-text-muted]="draft.services.length === 0">{{
@@ -260,7 +280,10 @@
         </button>
         @if (servicesOpen) {
           <div
-            class="absolute z-30 mt-1 w-full rounded-control border border-border bg-surface p-1.5 shadow-lg"
+            role="group"
+            aria-label="Client services"
+            class="mt-1 max-h-48 w-full overflow-y-auto rounded-control border border-border bg-surface p-1.5 shadow-lg"
+            data-services-options
           >
             @for (option of serviceOptions; track option) {
               <label
@@ -305,6 +328,43 @@
           placeholder="Authorized hours"
         />
         @if (fieldError('evvHours'); as error) {
+          <small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>
+        }
+      </label>
+      <label
+        ><span class="form-label"
+          >Discharge date
+          @if (draft.status === 'Discharged') {
+            <span class="text-red-600"> *</span>
+          }</span
+        ><input
+          class="form-control"
+          type="date"
+          data-client-discharge-date
+          [(ngModel)]="draft.dischargeDate"
+          [disabled]="draft.status !== 'Discharged'"
+          [class.border-red-500]="fieldError('dischargeDate')"
+          [attr.aria-invalid]="!!fieldError('dischargeDate')"
+        />
+        @if (fieldError('dischargeDate'); as error) {
+          <small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>
+        }
+      </label>
+      <label
+        ><span class="form-label"
+          >Discharge reason
+          @if (draft.status === 'Discharged') {
+            <span class="text-red-600"> *</span>
+          }</span
+        ><input
+          data-client-discharge-reason
+          class="form-control"
+          [(ngModel)]="draft.dischargeReason"
+          [disabled]="draft.status !== 'Discharged'"
+          [class.border-red-500]="fieldError('dischargeReason')"
+          [attr.aria-invalid]="!!fieldError('dischargeReason')"
+        />
+        @if (fieldError('dischargeReason'); as error) {
           <small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>
         }
       </label>

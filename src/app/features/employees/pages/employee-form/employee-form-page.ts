@@ -475,17 +475,8 @@ export class EmployeeFormPageComponent {
     this.clearFieldError(field);
   }
   ssn(value: string) {
-    const d = value.replace(/\D/g, '').slice(0, 9);
-    this.draft.ssn =
-      d.length <= 3
-        ? d
-        : d.length <= 5
-          ? `${d.slice(0, 3)}-${d.slice(3)}`
-          : `${d.slice(0, 3)}-${d.slice(3, 5)}-${d.slice(5)}`;
+    this.draft.ssn = value.replace(/\D/g, '').slice(0, 9);
     this.clearFieldError('ssn');
-  }
-  pin(value: string) {
-    this.draft.ivrPin = value.replace(/\D/g, '').slice(0, 10);
   }
   npi(value: string) {
     this.draft.npi = value.replace(/\D/g, '').slice(0, 10);

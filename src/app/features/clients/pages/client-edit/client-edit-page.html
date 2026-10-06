@@ -2,7 +2,7 @@
   <header class="client-wizard-header">
     <a
       [routerLink]="backLink"
-      class="inline-flex items-center gap-1.5 text-[11px] font-medium text-primary hover:text-primary-hover"
+      class="inline-flex items-center gap-1.5 text-[12px] font-medium text-primary hover:text-primary-hover"
     >
       <svg
         class="size-3.5"
@@ -15,10 +15,10 @@
       </svg>
       Back to client
     </a>
-    <div class="mt-1 flex items-center justify-between gap-4">
+    <div class="mt-1 flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
       <div>
-        <h1 class="text-[20px] font-semibold text-text-primary">Edit client</h1>
-        <p class="mt-0.5 text-[11px] text-text-secondary">
+        <h1 class="text-[21px] font-semibold leading-7 text-text-primary">Edit client</h1>
+        <p class="mt-0.5 max-w-4xl text-[12px] text-text-secondary">
           Update client details and manage related care records in one workflow.
         </p>
       </div>
@@ -82,69 +82,86 @@
           </div>
         }
 
-        <main class="client-wizard-content space-y-3">
-          @if (section() === 'basic' || section() === 'contact') {
-            <app-client-edit-basic-section
-              [mode]="section() === 'contact' ? 'contact' : 'basic'"
-              [model]="model"
-              [fieldErrors]="fieldErrors()"
-              [locations]="locations"
-              [serviceOptions]="serviceOptions"
-              [servicesOpen]="servicesOpen()"
-              [languageOptions]="languageOptions"
-              [languagesOpen]="languagesOpen()"
-              [supervisorOptions]="supervisorOptions()"
-              [supervisorLoading]="supervisorLoading()"
-              [assignedSupervisorUnavailable]="assignedSupervisorUnavailable()"
-              (pmiInput)="normalizePmi($event)"
-              (ssnChanged)="normalizeSsn($event)"
-              (servicesDropdownToggled)="toggleServicesDropdown()"
-              (languagesDropdownToggled)="toggleLanguagesDropdown()"
-              (arrayToggled)="toggleArray($event.field, $event.value, $event.event)"
-              (phoneChanged)="normalizePhone($event.field, $event.value)"
-              (postalCodeChanged)="normalizePostalCode($event)"
-            />
-          } @else if (section() === 'additional') {
-            <app-client-edit-additional-section
-              [model]="model"
-              [dietOptions]="dietOptions"
-              (phoneChanged)="normalizePhone($event.field, $event.value)"
-              (arrayToggled)="toggleArray($event.field, $event.value, $event.event)"
-            />
-          } @else if (section() === 'caregivers') {
-            <app-client-caregivers [clientId]="clientId" />
-          } @else if (section() === 'client-contacts') {
-            <app-client-contacts [clientId]="clientId" />
-          } @else if (section() === 'care-coordinators') {
-            <app-client-care-coordinators [clientId]="clientId" />
-          } @else if (section() === 'consultation-providers') {
-            <app-client-clinical-contacts [clientId]="clientId" kind="consultation-providers" />
-          } @else if (section() === 'doctors') {
-            <app-client-clinical-contacts [clientId]="clientId" kind="physicians" />
-          } @else if (section() === 'responsible-parties') {
-            <app-client-responsible-parties [clientId]="clientId" />
-          } @else if (section() === 'hospitalizations') {
-            <app-client-hospitalizations [clientId]="clientId" />
-          }
-        </main>
-
-        <div class="client-wizard-footer mt-4 justify-end px-0">
-          <a
-            [routerLink]="backLink"
-            class="h-8 rounded-control border border-border-strong bg-surface px-3 text-[11px] font-medium leading-8 text-text-primary hover:bg-surface-muted"
-            >Cancel</a
-          >
-          @if (section() === 'basic' || section() === 'additional' || section() === 'contact') {
-            <button
-              type="button"
-              class="h-8 rounded-control bg-primary px-4 text-[11px] font-semibold text-on-primary hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
-              [disabled]="saving()"
-              (click)="save()"
+        <main class="client-wizard-content rounded-surface border border-border bg-surface">
+          <div class="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
+            <div>
+              <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+                Step {{ activeStepIndex() + 1 }}
+              </p>
+              <h2 class="mt-0.5 text-[16px] font-semibold text-text-primary">
+                {{ steps[activeStepIndex()].title }}
+              </h2>
+            </div>
+            <span class="rounded-full bg-surface-muted px-2.5 py-1 text-[10px] text-text-muted"
+              >Fields marked <span class="font-semibold text-red-600">*</span> are required</span
             >
-              {{ saving() ? 'Saving…' : 'Save changes' }}
-            </button>
-          }
-        </div>
+          </div>
+
+          <div class="px-4 py-4 lg:px-5">
+            @if (section() === 'basic' || section() === 'contact') {
+              <app-client-edit-basic-section
+                [mode]="section() === 'contact' ? 'contact' : 'basic'"
+                [model]="model"
+                [fieldErrors]="fieldErrors()"
+                [locationOptions]="locationOptions()"
+                [serviceOptions]="serviceOptions"
+                [servicesOpen]="servicesOpen()"
+                [languageOptions]="languageOptions"
+                [languagesOpen]="languagesOpen()"
+                [supervisorOptions]="supervisorOptions()"
+                [supervisorLoading]="supervisorLoading()"
+                [assignedSupervisorUnavailable]="assignedSupervisorUnavailable()"
+                (pmiInput)="normalizePmi($event)"
+                (ssnChanged)="normalizeSsn($event)"
+                (locationSelected)="selectLocation($event)"
+                (servicesDropdownToggled)="toggleServicesDropdown()"
+                (languagesDropdownToggled)="toggleLanguagesDropdown()"
+                (arrayToggled)="toggleArray($event.field, $event.value, $event.event)"
+                (phoneChanged)="normalizePhone($event.field, $event.value)"
+                (postalCodeChanged)="normalizePostalCode($event)"
+              />
+            } @else if (section() === 'additional') {
+              <app-client-edit-additional-section
+                [model]="model"
+                [dietOptions]="dietOptions"
+                (phoneChanged)="normalizePhone($event.field, $event.value)"
+                (arrayToggled)="toggleArray($event.field, $event.value, $event.event)"
+              />
+            } @else if (section() === 'caregivers') {
+              <app-client-caregivers [clientId]="clientId" />
+            } @else if (section() === 'client-contacts') {
+              <app-client-contacts [clientId]="clientId" />
+            } @else if (section() === 'care-coordinators') {
+              <app-client-care-coordinators [clientId]="clientId" />
+            } @else if (section() === 'consultation-providers') {
+              <app-client-clinical-contacts [clientId]="clientId" kind="consultation-providers" />
+            } @else if (section() === 'doctors') {
+              <app-client-clinical-contacts [clientId]="clientId" kind="physicians" />
+            } @else if (section() === 'responsible-parties') {
+              <app-client-responsible-parties [clientId]="clientId" />
+            } @else if (section() === 'hospitalizations') {
+              <app-client-hospitalizations [clientId]="clientId" />
+            }
+          </div>
+
+          <div class="client-wizard-footer lg:px-5">
+            <a
+              [routerLink]="backLink"
+              class="text-[12px] font-medium text-text-secondary hover:text-text-primary"
+              >Cancel</a
+            >
+            @if (section() === 'basic' || section() === 'additional' || section() === 'contact') {
+              <button
+                type="button"
+                class="h-8 rounded-control bg-primary px-4 text-[12px] font-semibold text-on-primary hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
+                [disabled]="saving()"
+                (click)="save()"
+              >
+                {{ saving() ? 'Saving…' : 'Save changes' }}
+              </button>
+            }
+          </div>
+        </main>
       </div>
     </div>
   }

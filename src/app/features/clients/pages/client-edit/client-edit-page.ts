@@ -4,6 +4,10 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize, of, switchMap } from 'rxjs';
+import {
+  CompanyLocation,
+  LocationLookupService,
+} from '../../../../core/lookups/location-lookup.service';
 import { ClientApiService } from '../../data-access/client-api.service';
 import { ClientDetails } from '../../models/client-api.models';
 import {
@@ -13,7 +17,7 @@ import {
   clientServiceCode,
   createEmptyClientForm,
 } from '../../models/client-form.models';
-import { clientStatusCode } from '../../models/client-presentation';
+import { clientStatusCode, isValidClientStatus } from '../../models/client-presentation';
 import { SuccessDialogComponent } from '../../../../shared/components/success-dialog/success-dialog';
 import { ClientWizardSidebarComponent } from '../../../../shared/components/client-wizard-sidebar/client-wizard-sidebar';
 import {
@@ -40,7 +44,7 @@ import {
   CLIENT_DIET_OPTIONS,
   CLIENT_LANGUAGE_OPTIONS,
 } from '../client-create/client-create-options';
-import { CLIENT_EDIT_LOCATIONS, CLIENT_EDIT_STEPS, ClientEditSection } from './client-edit-options';
+import { CLIENT_EDIT_STEPS, ClientEditSection } from './client-edit-options';
 
 @Component({
   selector: 'app-client-edit-page',
@@ -60,10 +64,11 @@ import { CLIENT_EDIT_LOCATIONS, CLIENT_EDIT_STEPS, ClientEditSection } from './c
     ClientEditBasicSectionComponent,
   ],
   templateUrl: './client-edit-page.html',
-  styleUrls: ['./client-edit-form.css', '../client-wizard-shell.css'],
+  styleUrls: ['../client-create/client-create-form.css', '../client-wizard-shell.css'],
 })
 export class ClientEditPageComponent {
   private readonly api = inject(ClientApiService);
+  private readonly locationApi = inject(LocationLookupService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -88,6 +93,7 @@ export class ClientEditPageComponent {
     [],
   );
   readonly supervisorLoading = signal(false);
+  readonly locationOptions = signal<readonly CompanyLocation[]>([]);
 
   assignedSupervisorUnavailable(): boolean {
     return (
@@ -96,7 +102,6 @@ export class ClientEditPageComponent {
     );
   }
 
-  readonly locations = CLIENT_EDIT_LOCATIONS;
   readonly serviceOptions = CLIENT_SERVICE_OPTIONS;
   readonly languageOptions = CLIENT_LANGUAGE_OPTIONS;
   readonly dietOptions = CLIENT_DIET_OPTIONS;
@@ -112,6 +117,7 @@ export class ClientEditPageComponent {
       this.loading.set(false);
       return;
     }
+    this.loadLocations();
     this.load();
   }
 
@@ -232,6 +238,14 @@ export class ClientEditPageComponent {
     this.model[field] = formatUsPhone(value);
   }
 
+  selectLocation(locationId: string): void {
+    const location = this.locationOptions().find((option) => option.id === locationId);
+    if (this.model.locationId !== locationId) this.model.supervisor = '';
+    this.model.locationId = location?.id ?? '';
+    this.model.location = location?.name ?? '';
+    this.loadSupervisorCandidates(this.model.locationId);
+  }
+
   selectedLabel(values: readonly string[], placeholder: string): string {
     if (!values.length) return placeholder;
     if (values.length <= 2) return values.join(', ');
@@ -242,16 +256,37 @@ export class ClientEditPageComponent {
     this.original = client;
     Object.assign(this.model, clientDetailsToForm(client));
     this.model.country = 'United States';
+    this.loadSupervisorCandidates(client.locationId);
+  }
+
+  private loadLocations(): void {
+    this.locationApi
+      .list()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (locations) => this.locationOptions.set(locations),
+        error: () => this.errorMessage.set('Locations could not be loaded. Please retry.'),
+      });
+  }
+
+  private loadSupervisorCandidates(locationId: string): void {
     this.supervisorOptions.set([]);
+    if (!locationId) {
+      this.supervisorLoading.set(false);
+      return;
+    }
+
     this.supervisorLoading.set(true);
     this.api
-      .supervisorCandidates(client.locationId)
+      .supervisorCandidates(locationId)
       .pipe(
         finalize(() => this.supervisorLoading.set(false)),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        next: (staff) => this.supervisorOptions.set(staff),
+        next: (staff) => {
+          if (this.model.locationId === locationId) this.supervisorOptions.set(staff);
+        },
         error: () => this.errorMessage.set('Supervisors could not be loaded. Please retry.'),
       });
   }
@@ -274,7 +309,7 @@ export class ClientEditPageComponent {
     if (this.model.email && !isValidEmail(this.model.email))
       errors.push('Enter a valid email address.');
     if (this.model.ssn && !isValidUsSsn(this.model.ssn))
-      errors.push('SSN must contain a valid 9-digit US Social Security number.');
+      errors.push('SSN must use a valid XXX-XX-XXXX format.');
     if (!this.model.street.trim()) errors.push('Street address is required.');
     if (this.model.zip && !isValidUsPostalCode(this.model.zip))
       errors.push('Use ZIP format 12345 or 12345-6789.');
@@ -288,8 +323,18 @@ export class ClientEditPageComponent {
     if (this.model.intakeDate && this.model.socDate && this.model.intakeDate > this.model.socDate) {
       errors.push('Intake date cannot be after SOC date.');
     }
-    if (this.model.status === 'Discharged' && !this.model.dischargeDate) {
-      errors.push('Discharge date is required for a discharged client.');
+    if (!isValidClientStatus(this.model.status)) errors.push('Status is invalid.');
+    if (this.model.status === 'Discharged') {
+      if (!this.model.dischargeDate)
+        errors.push('Discharge date is required for a discharged client.');
+      if (!this.model.dischargeReason.trim())
+        errors.push('Discharge reason is required for a discharged client.');
+      if (
+        this.model.dischargeDate &&
+        this.model.socDate &&
+        this.model.dischargeDate < this.model.socDate
+      )
+        errors.push('Discharge date cannot be before the SOC date.');
     }
     if (this.model.evvHours) {
       const hours = Number(this.model.evvHours);
@@ -362,6 +407,9 @@ function validationField(message: string): string {
   if (normalized.startsWith('primary phone')) return 'phone1';
   if (normalized.startsWith('secondary phone')) return 'phone2';
   if (normalized.startsWith('ssn')) return 'ssn';
+  if (normalized.startsWith('status')) return 'status';
+  if (normalized.startsWith('discharge date')) return 'dischargeDate';
+  if (normalized.startsWith('discharge reason')) return 'dischargeReason';
   if (normalized.startsWith('enter a valid email')) return 'email';
   if (normalized.startsWith('street')) return 'street';
   if (normalized.startsWith('use zip')) return 'zip';

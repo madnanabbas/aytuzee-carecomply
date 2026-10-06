@@ -149,7 +149,7 @@ export interface ClientMutationResponse {
 
 export interface CompleteClientCreationResponse {
   readonly id: string;
-  readonly status: 'Active';
+  readonly status: string;
   readonly editorVersion: string;
 }
 
@@ -295,6 +295,7 @@ export interface ClientDetails {
   readonly location: string | null;
   readonly locationId: string;
   readonly supervisorUserId?: string | null;
+  readonly supervisorName?: string | null;
   readonly isOnboarding: boolean;
   readonly dischargeDate: string | null;
   readonly dischargeReason: string | null;
@@ -365,6 +366,7 @@ export interface ClientDetailsApiResponse {
     readonly location: string;
     readonly locationId?: string;
     readonly supervisorUserId?: string | null;
+    readonly supervisorName?: string | null;
     readonly isOnboarding: boolean;
     readonly evvAuthorizedHoursPerWeek: number | null;
     readonly dischargeDate: string | null;

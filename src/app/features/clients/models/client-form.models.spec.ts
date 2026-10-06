@@ -74,6 +74,10 @@ describe('clientFormToCreateRequest', () => {
   it('persists the supervisor employee identifier in create and edit care setup', () => {
     const form = createEmptyClientForm();
     form.supervisor = '7acb8288-5501-4896-bfe2-c4145e2156fa';
+    form.locationId = '68bbb854-8746-4cb0-a3cd-a97955175080';
+    form.location = 'Bloomington';
+    expect(clientFormToCreateRequest(form).careSetup.locationId).toBe(form.locationId);
+    expect(clientFormToUpdateRequest(form, 'version').careSetup.locationId).toBe(form.locationId);
     expect(clientFormToCreateRequest(form).careSetup.supervisorUserId).toBe(form.supervisor);
     expect(clientFormToUpdateRequest(form, 'version').careSetup.supervisorUserId).toBe(
       form.supervisor,

@@ -57,7 +57,16 @@ describe('employee form mapper', () => {
     const request = employeeFormToRequest(form);
 
     expect(request['hireDate']).toBeNull();
+    expect(request['allowAggregator']).toBeUndefined();
+    expect(request['overrideRestriction']).toBeUndefined();
+    expect(request['evvOnly']).toBeUndefined();
+    expect(request['restrictDateAndTime']).toBeUndefined();
+    expect(request['evvEmail']).toBeUndefined();
+    expect(request['evvPassword']).toBeUndefined();
     expect(request['evvPasswordConfirm']).toBeUndefined();
+    expect(request['ivrPin']).toBeUndefined();
+    expect(request['evvIvrAuthorization']).toBeUndefined();
+    expect(request.ssn).toBe('');
     expect(request.payerAffiliations?.[0].affiliationDate).toBeNull();
     expect(request.backgroundInformation?.checks[0].checkDate).toBeNull();
   });

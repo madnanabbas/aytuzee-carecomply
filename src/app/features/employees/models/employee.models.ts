@@ -181,7 +181,20 @@ export interface EmployeeFormModel {
   contacts?: EmployeeContact[];
 }
 export type EmployeeDto = EmployeeFormModel & { id: string };
-export type SaveEmployeeRequest = Omit<EmployeeFormModel, 'evvPasswordConfirm'> &
+export type SaveEmployeeRequest = Omit<
+  EmployeeFormModel,
+  | 'allowAggregator'
+  | 'overrideRestriction'
+  | 'evvOnly'
+  | 'restrictDateAndTime'
+  | 'evvEmail'
+  | 'evvPassword'
+  | 'evvPasswordConfirm'
+  | 'hasEvvPassword'
+  | 'ivrPin'
+  | 'hasIvrPin'
+  | 'evvIvrAuthorization'
+> &
   Record<string, unknown>;
 
 export const emptyBackgroundCheck = (): EmployeeBackgroundCheck => ({
