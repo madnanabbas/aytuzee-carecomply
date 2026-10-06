@@ -1,0 +1,19 @@
+{
+  "routes": [
+    {
+      "route": "/config/app-config.json",
+      "headers": {
+        "Cache-Control": "no-store"
+      }
+    }
+  ],
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": [
+      "/api/*",
+      "/config/*",
+      "/images/*",
+      "/*.{css,js,map,json,ico,png,jpg,jpeg,gif,svg,webp,woff,woff2}"
+    ]
+  }
+}

@@ -1,0 +1,308 @@
+<div class="w-full">
+  <header
+    class="flex flex-col gap-3 border-b border-border pb-3 lg:flex-row lg:items-center lg:justify-between"
+  >
+    <div>
+      <div class="flex items-center gap-2 text-helper font-medium text-text-muted">
+        <span>People</span><span>/</span><span class="text-text-primary">Clients</span>
+      </div>
+      <h1 class="mt-0.5 text-[1.25rem] font-semibold leading-7 text-text-primary">Clients</h1>
+      <p class="mt-0.5 text-small text-text-secondary">Search and manage client records.</p>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      @if (canCreateGuestInvitation()) {
+        <button
+          type="button"
+          class="inline-flex h-9 items-center justify-center rounded-control border border-primary px-3.5 text-small font-semibold text-primary transition-colors hover:bg-primary-subtle"
+          (click)="openGuestInvitationDialog()"
+        >
+          G-Link
+        </button>
+      }
+      @if (canCreateClient()) {
+        <a
+          routerLink="/clients/new"
+          class="inline-flex h-9 items-center justify-center gap-1.5 rounded-control bg-primary px-3.5 text-small font-semibold text-on-primary transition-colors hover:bg-primary-hover"
+        >
+          <svg
+            aria-hidden="true"
+            class="size-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+          >
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          New client
+        </a>
+      }
+    </div>
+  </header>
+
+  <section
+    class="mt-3 overflow-hidden rounded-surface border border-border bg-surface"
+    aria-labelledby="client-directory-title"
+  >
+    <div class="border-b border-border px-3 py-2.5 lg:px-4">
+      <div class="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
+        <div class="flex min-w-0 flex-1 flex-col gap-2 lg:flex-row lg:items-center">
+          <label class="relative block w-full lg:max-w-[24rem]">
+            <span class="sr-only">Search clients</span>
+            <svg
+              aria-hidden="true"
+              class="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-text-muted"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-3.5-3.5" />
+            </svg>
+            <input
+              type="search"
+              class="h-9 w-full rounded-control border border-border-strong bg-surface pl-8 pr-3 text-small text-text-primary placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+              placeholder="Search name, PMI, phone or service"
+              [value]="searchDraft()"
+              (input)="updateSearch($event)"
+            />
+          </label>
+
+          <div class="flex flex-wrap gap-2">
+            <select
+              class="h-9 min-w-32 rounded-control border border-border-strong bg-surface px-2.5 text-small text-text-primary focus:border-primary focus:outline-none"
+              [value]="query().status ?? ''"
+              (change)="updateSelect('status', $event)"
+            >
+              <option value="">All statuses</option>
+              <option value="2">Active</option>
+              <option value="1">Pending</option>
+              <option value="3">On hold</option>
+              <option value="5">Inactive</option>
+              <option value="4">Discharged</option>
+            </select>
+
+            <select
+              class="h-9 min-w-36 rounded-control border border-border-strong bg-surface px-2.5 text-small text-text-primary focus:border-primary focus:outline-none"
+              [value]="query().programType ?? ''"
+              (change)="updateSelect('program', $event)"
+            >
+              <option value="">All programs</option>
+              @for (program of programOptions; track program.value) {
+                <option [value]="program.value">{{ program.label }}</option>
+              }
+            </select>
+
+            <select
+              class="h-9 min-w-36 rounded-control border border-border-strong bg-surface px-2.5 text-small text-text-primary focus:border-primary focus:outline-none"
+              [value]="query().location"
+              (change)="updateSelect('location', $event)"
+            >
+              <option value="">All locations</option>
+              @for (location of locations(); track location) {
+                <option [value]="location">{{ location }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="self-start px-1 py-1 text-helper font-medium text-primary hover:text-primary-hover"
+          (click)="clearFilters()"
+        >
+          Clear filters
+        </button>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="flex min-h-56 items-center justify-center p-6 text-center">
+        <div>
+          <div
+            class="mx-auto size-7 animate-spin rounded-full border-2 border-border border-t-primary"
+          ></div>
+          <p class="mt-3 text-small text-text-secondary">Loading clients…</p>
+        </div>
+      </div>
+    } @else if (loadFailed()) {
+      <div class="flex min-h-56 items-center justify-center p-6 text-center">
+        <div>
+          <h2 class="text-body font-semibold text-text-primary">Clients could not be loaded</h2>
+          <p class="mt-1 text-small text-text-secondary">Check the API connection and try again.</p>
+          <button
+            type="button"
+            class="mt-3 h-8 rounded-control border border-border-strong px-3 text-small font-medium text-primary hover:bg-primary-subtle"
+            (click)="retry()"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    } @else if (clients().length === 0) {
+      <div class="flex min-h-56 items-center justify-center p-6 text-center">
+        <div>
+          <h2 class="text-body font-semibold text-text-primary">No clients found</h2>
+          <p class="mt-1 text-small text-text-secondary">
+            Change the search or filters and try again.
+          </p>
+        </div>
+      </div>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-[64rem] table-fixed border-collapse text-left">
+          <thead
+            class="border-b border-border bg-surface-muted/70 text-[0.64rem] font-semibold uppercase tracking-[0.06em] text-text-muted"
+          >
+            <tr>
+              <th class="w-[28%] px-3 py-2 font-semibold">Name</th>
+              <th class="w-[13%] px-2.5 py-2 font-semibold">PMI number</th>
+              <th class="w-[14%] px-2.5 py-2 font-semibold">Date of birth</th>
+              <th class="w-[16%] px-2.5 py-2 font-semibold">Location</th>
+              <th class="w-[10%] px-2.5 py-2 font-semibold">Status</th>
+              <th class="w-[11%] px-2.5 py-2 font-semibold">Supervisor</th>
+              <th class="w-[8%] px-2 py-2 text-right font-semibold">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            @for (client of clients(); track client.id) {
+              <tr class="group transition-colors hover:bg-primary-subtle/30">
+                <td class="px-3 py-2">
+                  <div class="flex items-center gap-2">
+                    <div
+                      class="flex size-7 shrink-0 items-center justify-center rounded-full bg-surface-muted text-[0.64rem] font-semibold text-text-secondary ring-1 ring-inset ring-border"
+                    >
+                      {{ initials(client) }}
+                    </div>
+                    <div class="min-w-0">
+                      <a
+                        [routerLink]="['/clients', client.id]"
+                        class="block truncate text-[0.78rem] font-semibold text-primary hover:underline"
+                        >{{ fullName(client) }}</a
+                      >
+                      @if (client.goesBy) {
+                        <p class="mt-0.5 truncate text-[0.66rem] leading-3.5 text-text-muted">
+                          Preferred: {{ client.goesBy }}
+                        </p>
+                      }
+                    </div>
+                  </div>
+                </td>
+                <td class="truncate px-2.5 py-2 text-[0.74rem] font-medium text-text-secondary">
+                  {{ client.pmi }}
+                </td>
+                <td class="truncate px-2.5 py-2 text-[0.74rem] text-text-secondary">
+                  {{ client.dateOfBirth }}
+                </td>
+                <td class="truncate px-2.5 py-2 text-[0.74rem] text-text-secondary">
+                  {{ client.location }}
+                </td>
+                <td class="px-2.5 py-2">
+                  <span
+                    class="inline-flex rounded-status px-1.5 py-0.5 text-[0.63rem] font-semibold ring-1 ring-inset"
+                    [class]="statusClasses(client.status)"
+                    >{{ client.status }}</span
+                  >
+                </td>
+                <td
+                  class="truncate px-2.5 py-2 text-[0.74rem] text-text-secondary"
+                  [title]="client.supervisor"
+                >
+                  {{ client.supervisor }}
+                </td>
+                <td class="px-2 py-2 text-right">
+                  <div class="inline-flex items-center justify-end gap-1">
+                    <a
+                      [routerLink]="['/clients', client.id]"
+                      class="inline-flex size-7 items-center justify-center rounded-control border border-border-strong bg-surface text-primary transition-colors hover:border-primary hover:bg-primary-subtle"
+                      [attr.aria-label]="'View client ' + fullName(client)"
+                      [title]="'View Client'"
+                    >
+                      <svg
+                        aria-hidden="true"
+                        class="size-3.5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                      >
+                        <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
+                        <circle cx="12" cy="12" r="2.5" />
+                      </svg>
+                    </a>
+                    @if (canEditClient()) {
+                      <a
+                        [routerLink]="['/clients', client.id, 'edit']"
+                        class="inline-flex size-7 items-center justify-center rounded-control border border-border-strong bg-surface text-primary transition-colors hover:border-primary hover:bg-primary-subtle"
+                        [attr.aria-label]="'Edit client ' + fullName(client)"
+                        [title]="'Edit Client'"
+                      >
+                        <svg
+                          aria-hidden="true"
+                          class="size-3.5"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.8"
+                        >
+                          <path d="M12 20h9" />
+                          <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" />
+                        </svg>
+                      </a>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <footer
+        class="flex flex-col gap-1 border-t border-border px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <p class="text-helper text-text-secondary">
+          Showing {{ clients().length }} of {{ totalCount() }} clients
+        </p>
+        <div class="flex flex-wrap items-center gap-2 text-[0.68rem] text-text-muted">
+          <span>Page {{ response()?.pageNumber ?? 1 }} of {{ totalPages() }}</span>
+          <select
+            class="h-7 rounded-control border border-border bg-surface px-1.5"
+            [value]="response()?.pageSize ?? 25"
+            (change)="changePageSize($event)"
+            aria-label="Rows per page"
+          >
+            <option [value]="10">10</option>
+            <option [value]="25">25</option>
+            <option [value]="50">50</option>
+            <option [value]="100">100</option>
+          </select>
+          <button
+            type="button"
+            class="size-7 rounded-control border border-border disabled:opacity-40"
+            [disabled]="(response()?.pageNumber ?? 1) <= 1"
+            (click)="changePage((response()?.pageNumber ?? 1) - 1)"
+            aria-label="Previous page"
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            class="size-7 rounded-control border border-border disabled:opacity-40"
+            [disabled]="(response()?.pageNumber ?? 1) >= totalPages()"
+            (click)="changePage((response()?.pageNumber ?? 1) + 1)"
+            aria-label="Next page"
+          >
+            ›
+          </button>
+        </div>
+      </footer>
+    }
+  </section>
+</div>
+
+@if (guestInvitationDialogOpen()) {
+  <app-client-guest-invitation-dialog (closed)="closeGuestInvitationDialog()" />
+}

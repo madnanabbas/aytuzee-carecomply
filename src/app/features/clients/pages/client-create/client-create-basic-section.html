@@ -1,0 +1,379 @@
+<fieldset class="space-y-6" [disabled]="readOnly">
+  <section class="client-step-section">
+    <header class="client-step-section__header">
+      <span
+        class="flex size-7 items-center justify-center rounded-md bg-primary-subtle text-primary"
+      >
+        <svg
+          aria-hidden="true"
+          class="size-3.5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        >
+          <path d="M20 21a8 8 0 0 0-16 0" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+      </span>
+      <div>
+        <h3 class="text-[13px] font-semibold text-text-primary">Client identity</h3>
+        <p class="text-[10px] text-text-muted">Legal identity and primary identifiers.</p>
+      </div>
+    </header>
+    <div class="client-step-section__grid">
+      <label
+        ><span class="form-label">First name <span class="text-red-600">*</span></span
+        ><input
+          [(ngModel)]="draft.firstName"
+          (ngModelChange)="clearFieldError('firstName')"
+          class="form-control"
+          [style.border-color]="fieldError('firstName') ? '#dc2626' : null"
+          [attr.aria-invalid]="!!fieldError('firstName')"
+          placeholder="First name"
+          required
+          maxlength="100"
+          autocomplete="given-name"
+        />
+        @if (fieldError('firstName'); as error) {
+          <small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>
+        }
+      </label>
+      <label
+        ><span class="form-label">Middle name</span
+        ><input [(ngModel)]="draft.middleName" class="form-control" placeholder="Middle name"
+      /></label>
+      <label
+        ><span class="form-label">Last name <span class="text-red-600">*</span></span
+        ><input
+          [(ngModel)]="draft.lastName"
+          (ngModelChange)="clearFieldError('lastName')"
+          class="form-control"
+          [style.border-color]="fieldError('lastName') ? '#dc2626' : null"
+          [attr.aria-invalid]="!!fieldError('lastName')"
+          placeholder="Last name"
+          required
+          maxlength="100"
+          autocomplete="family-name"
+        />
+        @if (fieldError('lastName'); as error) {
+          <small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>
+        }
+      </label>
+      <label
+        ><span class="form-label">Goes by</span
+        ><input [(ngModel)]="draft.goesBy" class="form-control" placeholder="Preferred name"
+      /></label>
+      <label
+        ><span class="form-label">Date of birth <span class="text-red-600">*</span></span
+        ><input
+          type="date"
+          [(ngModel)]="draft.dob"
+          (ngModelChange)="clearFieldError('dob')"
+          class="form-control"
+          [style.border-color]="fieldError('dob') ? '#dc2626' : null"
+          [attr.aria-invalid]="!!fieldError('dob')"
+        />
+        @if (fieldError('dob'); as error) {
+          <small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>
+        }
+      </label>
+      <label
+        ><span class="form-label">Age</span
+        ><input [value]="ageFromDob()" class="form-control bg-surface-muted" readonly
+      /></label>
+      <label
+        ><span class="form-label">Gender <span class="text-red-600">*</span></span
+        ><select
+          [(ngModel)]="draft.gender"
+          (ngModelChange)="clearFieldError('gender')"
+          class="form-control"
+          [style.border-color]="fieldError('gender') ? '#dc2626' : null"
+          [attr.aria-invalid]="!!fieldError('gender')"
+          required
+        >
+          <option value="">Select gender</option>
+          <option>Male</option>
+          <option>Female</option>
+          <option>Non-binary</option>
+          <option>Other</option>
+          <option>Prefer not to say</option>
+        </select>
+        @if (fieldError('gender'); as error) {
+          <small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>
+        }
+      </label>
+      <label
+        ><span class="form-label">PMI number <span class="text-red-600">*</span></span
+        ><input
+          [value]="draft.pmi"
+          (input)="normalizePmi($event)"
+          class="form-control"
+          [style.border-color]="fieldError('pmi') ? '#dc2626' : null"
+          [attr.aria-invalid]="!!fieldError('pmi')"
+          placeholder="24591384"
+          required
+          minlength="8"
+          maxlength="8"
+          inputmode="numeric"
+          pattern="[0-9]{8}"
+          autocomplete="off"
+        />
+        @if (fieldError('pmi'); as error) {
+          <small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>
+        } @else {
+          <small class="mt-1 block text-[10px] text-text-muted"
+            >Enter the Minnesota 8-digit Person Master Index number.</small
+          >
+        }
+      </label>
+      <label
+        ><span class="form-label">SSN</span
+        ><input
+          [value]="draft.ssn"
+          (input)="normalizeSsnInput($event)"
+          type="text"
+          data-client-ssn-input
+          class="form-control"
+          [class.border-red-500]="fieldError('ssn')"
+          [attr.aria-invalid]="!!fieldError('ssn')"
+          placeholder="123-45-6789"
+          minlength="11"
+          maxlength="11"
+          inputmode="numeric"
+          autocomplete="off"
+          aria-describedby="ssn-storage-note"
+        />
+        @if (fieldError('ssn'); as error) {
+          <small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>
+        } @else {
+          <small id="ssn-storage-note" class="mt-1 block text-[10px] text-text-muted"
+            >Stored encrypted and restricted to authorized SSN access.</small
+          >
+        }
+      </label>
+      <label
+        ><span class="form-label">Insurance</span
+        ><input [(ngModel)]="draft.insurance" class="form-control" placeholder="Insurance provider"
+      /></label>
+    </div>
+  </section>
+
+  <section class="client-step-section">
+    <header class="client-step-section__header">
+      <span
+        class="flex size-7 items-center justify-center rounded-md bg-primary-subtle text-primary"
+        ><svg
+          aria-hidden="true"
+          class="size-3.5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        >
+          <path d="M4 5h16v14H4z" />
+          <path d="M8 9h8M8 13h5" /></svg
+      ></span>
+      <div>
+        <h3 class="text-[13px] font-semibold text-text-primary">Intake & service setup</h3>
+        <p class="text-[10px] text-text-muted">
+          Start of care, assignment and service information.
+        </p>
+      </div>
+    </header>
+    <div class="client-step-section__grid">
+      <label
+        ><span class="form-label">Intake date</span
+        ><input
+          type="date"
+          [(ngModel)]="draft.intakeDate"
+          (ngModelChange)="clearFieldError('intakeDate')"
+          class="form-control"
+          [class.border-red-500]="fieldError('intakeDate')"
+          [attr.aria-invalid]="!!fieldError('intakeDate')"
+        />
+        @if (fieldError('intakeDate'); as error) {
+          <small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>
+        }
+      </label>
+      <label
+        ><span class="form-label">SOC date <span class="text-red-600">*</span></span
+        ><input
+          type="date"
+          [(ngModel)]="draft.socDate"
+          (ngModelChange)="clearFieldError('socDate')"
+          class="form-control"
+          [style.border-color]="fieldError('socDate') ? '#dc2626' : null"
+          [attr.aria-invalid]="!!fieldError('socDate')"
+          required
+        />
+        @if (fieldError('socDate'); as error) {
+          <small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>
+        }
+      </label>
+      <label
+        ><span class="form-label">Referral source</span
+        ><select [(ngModel)]="draft.referralSource" class="form-control">
+          <option value="">Select source</option>
+          <option>Self</option>
+          <option>County</option>
+          <option>Hospital</option>
+          <option>Clinic</option>
+          <option>Family / Friend</option>
+          <option>Other</option>
+        </select></label
+      >
+      <label
+        ><span class="form-label">Status</span
+        ><select
+          data-client-status-select
+          [ngModel]="draft.status"
+          (ngModelChange)="changeStatus($event)"
+          class="form-control"
+          [attr.aria-invalid]="!!fieldError('status')"
+        >
+          @for (option of statusOptions; track option.code) {
+            <option [value]="option.label">{{ option.label }}</option>
+          }
+        </select>
+        @if (fieldError('status'); as error) {
+          <small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>
+        }
+      </label>
+      <label
+        ><span class="form-label">Location <span class="text-red-600">*</span></span
+        ><select
+          [ngModel]="draft.locationId"
+          (ngModelChange)="selectLocation($event)"
+          class="form-control"
+        >
+          <option value="" disabled>Select location</option>
+          @for (option of locationOptions; track option.id) {
+            <option [value]="option.id">
+              {{ option.name }}{{ option.isMain ? ' (Main)' : '' }}
+            </option>
+          }
+        </select></label
+      >
+
+      <div class="relative" data-services-overlay-host>
+        <span class="form-label">Client services</span>
+        <button
+          type="button"
+          class="form-control flex items-center justify-between text-left"
+          aria-haspopup="true"
+          [attr.aria-expanded]="servicesOpen"
+          (click)="toggleServicesDropdown()"
+        >
+          <span class="truncate" [class.text-text-muted]="draft.services.length === 0">{{
+            selectedLabel(draft.services, 'Select services')
+          }}</span
+          ><svg
+            class="size-3.5 shrink-0"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+          >
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </button>
+        @if (servicesOpen) {
+          <div
+            role="group"
+            aria-label="Client services"
+            class="mt-1 max-h-48 w-full overflow-y-auto rounded-control border border-border bg-surface p-1.5 shadow-lg"
+            data-services-options
+          >
+            @for (option of serviceOptions; track option) {
+              <label
+                class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-[12px] hover:bg-surface-muted"
+                ><input
+                  type="checkbox"
+                  [checked]="draft.services.includes(option)"
+                  (change)="onToggleArray('services', option, $event)"
+                /><span>{{ option }}</span></label
+              >
+            }
+          </div>
+        }
+      </div>
+
+      <label
+        ><span class="form-label">Supervisor</span
+        ><select
+          [(ngModel)]="draft.supervisor"
+          class="form-control"
+          [disabled]="!draft.locationId || supervisorLoading"
+        >
+          <option value="">
+            {{ supervisorLoading ? 'Loading employees…' : 'No supervisor assigned' }}
+          </option>
+          @for (person of supervisorOptions; track person.id) {
+            <option [value]="person.id">{{ person.name }} — {{ person.jobTitle }}</option>
+          }
+        </select></label
+      >
+      <label
+        ><span class="form-label">EVV hours</span
+        ><input
+          type="number"
+          min="0"
+          max="168"
+          [(ngModel)]="draft.evvHours"
+          (ngModelChange)="clearFieldError('evvHours')"
+          class="form-control"
+          [class.border-red-500]="fieldError('evvHours')"
+          [attr.aria-invalid]="!!fieldError('evvHours')"
+          placeholder="Authorized hours"
+        />
+        @if (fieldError('evvHours'); as error) {
+          <small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>
+        }
+      </label>
+      <label
+        ><span class="form-label"
+          >Discharge date
+          @if (draft.status === 'Discharged') {
+            <span class="text-red-600"> *</span>
+          }</span
+        ><input
+          class="form-control"
+          type="date"
+          data-client-discharge-date
+          [(ngModel)]="draft.dischargeDate"
+          [disabled]="draft.status !== 'Discharged'"
+          [class.border-red-500]="fieldError('dischargeDate')"
+          [attr.aria-invalid]="!!fieldError('dischargeDate')"
+        />
+        @if (fieldError('dischargeDate'); as error) {
+          <small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>
+        }
+      </label>
+      <label
+        ><span class="form-label"
+          >Discharge reason
+          @if (draft.status === 'Discharged') {
+            <span class="text-red-600"> *</span>
+          }</span
+        ><input
+          data-client-discharge-reason
+          class="form-control"
+          [(ngModel)]="draft.dischargeReason"
+          [disabled]="draft.status !== 'Discharged'"
+          [class.border-red-500]="fieldError('dischargeReason')"
+          [attr.aria-invalid]="!!fieldError('dischargeReason')"
+        />
+        @if (fieldError('dischargeReason'); as error) {
+          <small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>
+        }
+      </label>
+      <label class="flex items-center gap-2 self-end pb-2"
+        ><input type="checkbox" [(ngModel)]="draft.onboarding" /><span
+          class="text-[12px] font-medium text-text-secondary"
+          >Client is onboarding</span
+        ></label
+      >
+    </div>
+  </section>
+</fieldset>

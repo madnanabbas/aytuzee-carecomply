@@ -1,0 +1,28 @@
+<nav class="client-wizard-stepper" [attr.aria-label]="ariaLabel()">
+  <div class="client-wizard-mobile-step" aria-live="polite">
+    <span>Step {{ activeIndex() + 1 }} of {{ steps().length }}</span>
+    <strong>{{ steps()[activeIndex()].title }}</strong>
+  </div>
+
+  <ol>
+    @for (step of steps(); track step.title; let index = $index) {
+      <li
+        [class.active]="index === activeIndex()"
+        [class.completed]="index < activeIndex()"
+        [attr.aria-current]="index === activeIndex() ? 'step' : null"
+      >
+        @if (interactive()) {
+          <button type="button" (click)="select(index)">
+            <span class="client-wizard-step-number">{{ index + 1 }}</span>
+            <span class="client-wizard-step-label">{{ step.title }}</span>
+          </button>
+        } @else {
+          <div>
+            <span class="client-wizard-step-number">{{ index + 1 }}</span>
+            <span class="client-wizard-step-label">{{ step.title }}</span>
+          </div>
+        }
+      </li>
+    }
+  </ol>
+</nav>

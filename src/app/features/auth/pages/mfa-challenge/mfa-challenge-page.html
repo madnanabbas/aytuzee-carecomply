@@ -2,17 +2,10 @@
   class="relative flex min-h-dvh items-center justify-center overflow-hidden bg-[#F6F8FA] px-4 py-6 sm:px-6"
 >
   <!-- Background decoration -->
-  <div
-    aria-hidden="true"
-    class="pointer-events-none absolute inset-0 overflow-hidden"
-  >
-    <span
-      class="absolute -left-24 -top-28 size-64 rounded-full border border-primary/8"
-    ></span>
+  <div aria-hidden="true" class="pointer-events-none absolute inset-0 overflow-hidden">
+    <span class="absolute -left-24 -top-28 size-64 rounded-full border border-primary/8"></span>
 
-    <span
-      class="absolute -bottom-36 -right-20 size-72 rounded-full border border-primary/8"
-    ></span>
+    <span class="absolute -bottom-36 -right-20 size-72 rounded-full border border-primary/8"></span>
 
     <span
       class="absolute left-[9%] top-[68%] size-20 rotate-12 rounded-surface border border-primary/7"
@@ -56,16 +49,13 @@
           </svg>
         </div>
 
-        <h1
-          id="mfa-title"
-          class="mt-4 text-page-title text-text-primary"
-        >
-          Verify your identity
-        </h1>
+        <h1 id="mfa-title" class="mt-4 text-page-title text-text-primary">Verify your identity</h1>
 
         <p class="mx-auto mt-2 max-w-sm text-body leading-6 text-text-secondary">
           @if (recoveryMode()) {
             Enter one of your saved recovery codes to continue.
+          } @else if (method() === 'Email') {
+            Enter the verification code sent to your registered email.
           } @else {
             Enter the 6-digit code from your authenticator app.
           }
@@ -73,25 +63,15 @@
       </header>
 
       <!-- Verification form -->
-      <form
-        class="mt-7"
-        [formGroup]="verificationForm"
-        (ngSubmit)="submit()"
-        novalidate
-      >
+      <form class="mt-7" [formGroup]="verificationForm" (ngSubmit)="submit()" novalidate>
         <div>
           <div class="flex items-center justify-between gap-3">
-            <label
-              for="mfa-code"
-              class="block text-label text-text-primary"
-            >
+            <label for="mfa-code" class="block text-label text-text-primary">
               {{ recoveryMode() ? 'Recovery code' : 'Verification code' }}
             </label>
 
             @if (!recoveryMode()) {
-              <span class="text-helper text-text-muted">
-                6-digit code
-              </span>
+              <span class="text-helper text-text-muted"> 6-digit code </span>
             }
           </div>
 
@@ -105,17 +85,11 @@
             [attr.maxlength]="recoveryMode() ? null : 6"
             [attr.aria-invalid]="
               verificationForm.controls.code.invalid &&
-              (
-                verificationForm.controls.code.touched ||
-                submissionAttempted()
-              )
+              (verificationForm.controls.code.touched || submissionAttempted())
             "
             [attr.aria-describedby]="
               verificationForm.controls.code.invalid &&
-              (
-                verificationForm.controls.code.touched ||
-                submissionAttempted()
-              )
+              (verificationForm.controls.code.touched || submissionAttempted())
                 ? 'mfa-code-error'
                 : null
             "
@@ -129,15 +103,9 @@
 
           @if (
             verificationForm.controls.code.invalid &&
-            (
-              verificationForm.controls.code.touched ||
-              submissionAttempted()
-            )
+            (verificationForm.controls.code.touched || submissionAttempted())
           ) {
-            <p
-              id="mfa-code-error"
-              class="mt-1.5 text-helper text-danger"
-            >
+            <p id="mfa-code-error" class="mt-1.5 text-helper text-danger">
               Enter your
               {{ recoveryMode() ? 'recovery' : 'verification' }}
               code.
@@ -164,6 +132,15 @@
           </div>
         }
 
+        @if (statusMessage()) {
+          <div
+            role="status"
+            class="mt-4 rounded-control border border-success/30 bg-success/5 px-3.5 py-3 text-small text-text-primary"
+          >
+            {{ statusMessage() }}
+          </div>
+        }
+
         <!-- Submit -->
         <button
           type="submit"
@@ -183,24 +160,40 @@
         </button>
       </form>
 
-      <!-- Alternative method -->
-      <div class="mt-5 border-t border-border pt-5 text-center">
-        <p class="text-helper text-text-muted">
-          {{ recoveryMode()
-            ? 'Have access to your authenticator app?'
-            : 'Can’t access your authenticator app?' }}
-        </p>
+      @if (method() === 'Email') {
+        <div class="mt-5 border-t border-border pt-5 text-center">
+          <p class="text-helper text-text-muted">Didn't receive the email?</p>
+          <button
+            type="button"
+            [disabled]="isResending()"
+            class="mt-1.5 text-label font-medium text-primary transition-colors duration-150 hover:text-primary-hover hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+            (click)="resendCode()"
+          >
+            {{ isResending() ? 'Sending...' : 'Resend code' }}
+          </button>
+        </div>
+      }
 
-        <button
-          type="button"
-          class="mt-1.5 text-label font-medium text-primary transition-colors duration-150 hover:text-primary-hover hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-          (click)="switchMode()"
-        >
-          {{ recoveryMode()
-            ? 'Use an authenticator code'
-            : 'Use a recovery code instead' }}
-        </button>
-      </div>
+      <!-- Alternative method -->
+      @if (method() === 'Authenticator') {
+        <div class="mt-5 border-t border-border pt-5 text-center">
+          <p class="text-helper text-text-muted">
+            {{
+              recoveryMode()
+                ? 'Have access to your authenticator app?'
+                : 'Can’t access your authenticator app?'
+            }}
+          </p>
+
+          <button
+            type="button"
+            class="mt-1.5 text-label font-medium text-primary transition-colors duration-150 hover:text-primary-hover hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            (click)="switchMode()"
+          >
+            {{ recoveryMode() ? 'Use an authenticator code' : 'Use a recovery code instead' }}
+          </button>
+        </div>
+      }
 
       <!-- Back to login -->
       <div class="mt-4 text-center">

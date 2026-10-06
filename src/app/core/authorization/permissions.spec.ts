@@ -1,8 +1,9 @@
 import { ALL_PERMISSIONS, isPermission, Permissions } from './permissions';
 
 describe('Permissions', () => {
-  it('should contain exactly 48 permission values', () => {
-    expect(ALL_PERMISSIONS).toHaveLength(48);
+  it('contains the complete canonical permission catalog', () => {
+    expect(ALL_PERMISSIONS).toHaveLength(97);
+    expect(ALL_PERMISSIONS).toContain(Permissions.Client.GuestInvite);
   });
 
   it('should contain only unique values', () => {

@@ -2,15 +2,19 @@ import { Routes } from '@angular/router';
 import { AppShellComponent } from './layout/app-shell/app-shell';
 import { authGuard } from './core/guards/auth.guard';
 import { permissionGuard, PermissionRouteData } from './core/guards/permission-guard';
-import { APP_NAVIGATION_ITEMS } from './core/navigation/app-navigation';
+import { APP_ROUTE_METADATA } from './core/navigation/app-navigation';
 
 export const routes: Routes = [
   {
-    path: 'auth',
-    loadChildren: () =>
-      import('./features/auth/auth.routes').then(
-        (module) => module.authRoutes,
+    path: 'client-intake',
+    loadComponent: () =>
+      import('./features/public-client-intake/public-client-intake-page').then(
+        (module) => module.PublicClientIntakePageComponent,
       ),
+  },
+  {
+    path: 'auth',
+    loadChildren: () => import('./features/auth/auth.routes').then((module) => module.authRoutes),
   },
   {
     path: '',
@@ -30,7 +34,7 @@ export const routes: Routes = [
         path: 'dashboard',
         canActivate: [authGuard, permissionGuard],
         data: {
-          permissions: APP_NAVIGATION_ITEMS.dashboard.permissions,
+          permissions: APP_ROUTE_METADATA.dashboard.permissions,
         } satisfies PermissionRouteData,
         loadChildren: () =>
           import('./features/dashboard/dashboard.routes').then((module) => module.dashboardRoutes),
@@ -39,7 +43,7 @@ export const routes: Routes = [
         path: 'clients',
         canActivate: [authGuard, permissionGuard],
         data: {
-          permissions: APP_NAVIGATION_ITEMS.clients.permissions,
+          permissions: APP_ROUTE_METADATA.clients.permissions,
         } satisfies PermissionRouteData,
         loadChildren: () =>
           import('./features/clients/clients.routes').then((module) => module.clientsRoutes),
@@ -48,7 +52,7 @@ export const routes: Routes = [
         path: 'employees',
         canActivate: [authGuard, permissionGuard],
         data: {
-          permissions: APP_NAVIGATION_ITEMS.employees.permissions,
+          permissions: APP_ROUTE_METADATA.employees.permissions,
         } satisfies PermissionRouteData,
         loadChildren: () =>
           import('./features/employees/employees.routes').then((module) => module.employeesRoutes),
@@ -57,7 +61,7 @@ export const routes: Routes = [
         path: 'dhs-library',
         canActivate: [authGuard, permissionGuard],
         data: {
-          permissions: APP_NAVIGATION_ITEMS.dhsLibrary.permissions,
+          permissions: APP_ROUTE_METADATA.dhsLibrary.permissions,
         } satisfies PermissionRouteData,
         loadChildren: () =>
           import('./features/dhs-library/dhs-library.routes').then(
@@ -68,7 +72,7 @@ export const routes: Routes = [
         path: 'documents',
         canActivate: [authGuard, permissionGuard],
         data: {
-          permissions: APP_NAVIGATION_ITEMS.documents.permissions,
+          permissions: APP_ROUTE_METADATA.documents.permissions,
         } satisfies PermissionRouteData,
         loadChildren: () =>
           import('./features/documents/documents.routes').then((module) => module.documentsRoutes),
@@ -77,7 +81,7 @@ export const routes: Routes = [
         path: 'training',
         canActivate: [authGuard, permissionGuard],
         data: {
-          permissions: APP_NAVIGATION_ITEMS.training.permissions,
+          permissions: APP_ROUTE_METADATA.training.permissions,
         } satisfies PermissionRouteData,
         loadChildren: () =>
           import('./features/training/training.routes').then((module) => module.trainingRoutes),
@@ -86,7 +90,7 @@ export const routes: Routes = [
         path: 'background-checks',
         canActivate: [authGuard, permissionGuard],
         data: {
-          permissions: APP_NAVIGATION_ITEMS.backgroundChecks.permissions,
+          permissions: APP_ROUTE_METADATA.backgroundChecks.permissions,
         } satisfies PermissionRouteData,
         loadChildren: () =>
           import('./features/background-checks/background-checks.routes').then(
@@ -97,7 +101,7 @@ export const routes: Routes = [
         path: 'expiry-review',
         canActivate: [authGuard, permissionGuard],
         data: {
-          permissions: APP_NAVIGATION_ITEMS.expiryReview.permissions,
+          permissions: APP_ROUTE_METADATA.expiryReview.permissions,
         } satisfies PermissionRouteData,
         loadChildren: () =>
           import('./features/expiry-review/expiry-review.routes').then(
@@ -108,7 +112,7 @@ export const routes: Routes = [
         path: 'notifications',
         canActivate: [authGuard, permissionGuard],
         data: {
-          permissions: APP_NAVIGATION_ITEMS.notifications.permissions,
+          permissions: APP_ROUTE_METADATA.notifications.permissions,
         } satisfies PermissionRouteData,
         loadChildren: () =>
           import('./features/notifications/notifications.routes').then(
@@ -119,7 +123,7 @@ export const routes: Routes = [
         path: 'reports',
         canActivate: [authGuard, permissionGuard],
         data: {
-          permissions: APP_NAVIGATION_ITEMS.reports.permissions,
+          permissions: APP_ROUTE_METADATA.reports.permissions,
         } satisfies PermissionRouteData,
         loadChildren: () =>
           import('./features/reports/reports.routes').then((module) => module.reportsRoutes),
@@ -128,7 +132,7 @@ export const routes: Routes = [
         path: 'access-control',
         canActivate: [authGuard, permissionGuard],
         data: {
-          permissions: APP_NAVIGATION_ITEMS.accessControl.permissions,
+          permissions: APP_ROUTE_METADATA.accessControl.permissions,
         } satisfies PermissionRouteData,
         loadChildren: () =>
           import('./features/access-control/access-control.routes').then(

@@ -6,6 +6,9 @@ Read `/docs/14-frontend-configuration.md` before changing frontend runtime confi
 Read `/docs/15-frontend-authorization.md` before changing frontend permissions, guards, or permission-aware UI.
 Read `/docs/24-local-development-authentication.md` before changing login integration, session state, CSRF interception, authentication guards, or local API proxy behavior.
 Read `/docs/25-mfa-authentication.md` before changing MFA routes, enrollment/challenge UI, route-local MFA state, or MFA API integration.
+Read `/docs/26-user-management.md` before changing User Management pages, editor state, or user administration API contracts.
+Read `/docs/27-password-recovery.md` before changing forgot/reset password UI, password-recovery API contracts, reset-link handling, or recovery security behavior.
+Read `/docs/28-dynamic-navigation.md` before changing navigation API state, sidebar metadata, route/icon validation, or navigation caching.
 
 Applies to `/frontend`.
 

@@ -1,0 +1,241 @@
+<div class="space-y-6">
+  <section>
+    <div class="mb-3 flex items-center gap-2 border-b border-border pb-2">
+      <span
+        class="flex size-7 items-center justify-center rounded-md bg-primary-subtle text-primary"
+        ><svg
+          aria-hidden="true"
+          class="size-3.5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        >
+          <path
+            d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.78.62 2.63a2 2 0 0 1-.45 2.11L8 9.73a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.85.29 1.73.5 2.63.62A2 2 0 0 1 22 16.92z"
+          /></svg
+      ></span>
+      <div>
+        <h3 class="text-[13px] font-semibold text-text-primary">Contact & address</h3>
+        <p class="text-[10px] text-text-muted">Communication preferences and home address.</p>
+      </div>
+    </div>
+    <div class="grid gap-x-4 gap-y-3 md:grid-cols-2 xl:grid-cols-4">
+      <label
+        ><span class="form-label">Primary phone <span class="text-red-600">*</span></span
+        ><input
+          [ngModel]="draft.phone1"
+          (ngModelChange)="normalizePhone('phone1', $event)"
+          class="form-control"
+          [style.border-color]="fieldError('phone1') ? '#dc2626' : null"
+          [attr.aria-invalid]="!!fieldError('phone1')"
+          placeholder="(555) 555-1234"
+          required
+          maxlength="14"
+          inputmode="tel"
+          autocomplete="tel"
+        />
+        @if (fieldError('phone1'); as error) {
+          <small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>
+        }
+      </label>
+      <label
+        ><span class="form-label">Secondary phone</span
+        ><input
+          [ngModel]="draft.phone2"
+          (ngModelChange)="normalizePhone('phone2', $event)"
+          class="form-control"
+          [class.border-red-500]="fieldError('phone2')"
+          [attr.aria-invalid]="!!fieldError('phone2')"
+          placeholder="(555) 555-1234"
+          maxlength="14"
+          inputmode="tel"
+        />
+        @if (fieldError('phone2'); as error) {
+          <small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>
+        }
+      </label>
+      <label
+        ><span class="form-label">Email</span
+        ><input
+          type="email"
+          [(ngModel)]="draft.email"
+          (ngModelChange)="clearFieldError('email')"
+          class="form-control"
+          [style.border-color]="fieldError('email') ? '#dc2626' : null"
+          [attr.aria-invalid]="!!fieldError('email')"
+          placeholder="client@example.com"
+        />
+        @if (fieldError('email'); as error) {
+          <small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>
+        }
+      </label>
+      <div class="relative">
+        <span class="form-label">Preferred language <span class="text-red-600">*</span></span>
+        <button
+          type="button"
+          class="form-control flex items-center justify-between text-left"
+          [style.border-color]="fieldError('languages') ? '#dc2626' : null"
+          [attr.aria-invalid]="!!fieldError('languages')"
+          (click)="toggleLanguagesDropdown()"
+        >
+          <span class="truncate" [class.text-text-muted]="draft.languages.length === 0">{{
+            selectedLabel(draft.languages, 'Select languages')
+          }}</span
+          ><svg
+            class="size-3.5 shrink-0"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+          >
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </button>
+        @if (languagesOpen) {
+          <div
+            class="absolute z-30 mt-1 w-full rounded-control border border-border bg-surface p-1.5 shadow-lg"
+          >
+            @for (option of languageOptions; track option) {
+              <label
+                class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-[12px] hover:bg-surface-muted"
+                ><input
+                  type="checkbox"
+                  [checked]="draft.languages.includes(option)"
+                  (change)="onToggleArray('languages', option, $event)"
+                /><span>{{ option }}</span></label
+              >
+            }
+          </div>
+        }
+        @if (fieldError('languages'); as error) {
+          <small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>
+        }
+      </div>
+      <label class="xl:col-span-2"
+        ><span class="form-label">Street <span class="text-red-600">*</span></span
+        ><input
+          [(ngModel)]="draft.street"
+          (ngModelChange)="clearFieldError('street')"
+          class="form-control"
+          [style.border-color]="fieldError('street') ? '#dc2626' : null"
+          [attr.aria-invalid]="!!fieldError('street')"
+          placeholder="Street address"
+          required
+          maxlength="200"
+          autocomplete="address-line1"
+        />
+        @if (fieldError('street'); as error) {
+          <small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>
+        }
+      </label>
+      <label
+        ><span class="form-label">Apartment / Unit</span
+        ><input [(ngModel)]="draft.apartment" class="form-control"
+      /></label>
+      <label
+        ><span class="form-label">Postal / ZIP code</span
+        ><input
+          [ngModel]="draft.zip"
+          (ngModelChange)="normalizePostalCode($event)"
+          class="form-control"
+          [class.border-red-500]="fieldError('zip')"
+          [attr.aria-invalid]="!!fieldError('zip')"
+          placeholder="Postal code"
+          maxlength="20"
+          autocomplete="postal-code"
+        />
+        @if (fieldError('zip'); as error) {
+          <small class="mt-1 block text-[10px] text-red-700">{{ error }}</small>
+        }
+        @if (postalLookupLoading) {
+          <small class="mt-1 block text-[10px] text-text-muted">Looking up location…</small>
+        }
+      </label>
+      <label
+        ><span class="form-label">Country</span
+        ><input
+          value="United States"
+          class="form-control bg-surface-muted"
+          autocomplete="country-name"
+          readonly
+      /></label>
+      <label
+        ><span class="form-label">State / Province</span
+        ><app-themed-combobox
+          [value]="draft.state"
+          (valueChange)="onStateChange($event)"
+          [options]="stateNames"
+          placeholder="Select or enter state"
+          autocomplete="address-level1"
+      /></label>
+      <label
+        ><span class="form-label">City</span
+        ><app-themed-combobox
+          [value]="draft.city"
+          (valueChange)="onCityChange($event)"
+          [options]="cityOptions"
+          placeholder="Select or enter city"
+          autocomplete="address-level2"
+      /></label>
+      <label
+        ><span class="form-label">Area</span><input [(ngModel)]="draft.county" class="form-control"
+      /></label>
+      @if (postalLookupMessage) {
+        <p class="md:col-span-2 xl:col-span-4 text-[10px] text-text-muted" aria-live="polite">
+          {{ postalLookupMessage }}
+        </p>
+      }
+    </div>
+  </section>
+
+  <section>
+    <div class="mb-3 flex items-center gap-2 border-b border-border pb-2">
+      <span
+        class="flex size-7 items-center justify-center rounded-md bg-primary-subtle text-primary"
+        ><svg
+          aria-hidden="true"
+          class="size-3.5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        >
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg
+      ></span>
+      <div>
+        <h3 class="text-[13px] font-semibold text-text-primary">Care & safety</h3>
+        <p class="text-[10px] text-text-muted">
+          Important information caregivers should know before service starts.
+        </p>
+      </div>
+    </div>
+    <div class="grid gap-x-4 gap-y-3 md:grid-cols-2 xl:grid-cols-4">
+      <label
+        ><span class="form-label">Safety measure</span
+        ><input
+          [(ngModel)]="draft.safetyMeasure"
+          class="form-control"
+          placeholder="Safety precautions"
+      /></label>
+      <label
+        ><span class="form-label">Special equipment</span
+        ><input
+          [(ngModel)]="draft.specialEquipment"
+          class="form-control"
+          placeholder="Mobility or medical equipment"
+      /></label>
+      <label
+        ><span class="form-label">Allergies</span
+        ><input [(ngModel)]="draft.allergies" class="form-control" placeholder="Known allergies"
+      /></label>
+      <label
+        ><span class="form-label">Other services</span
+        ><input
+          [(ngModel)]="draft.otherServices"
+          class="form-control"
+          placeholder="Other services received"
+      /></label>
+    </div>
+  </section>
+</div>

@@ -1,0 +1,73 @@
+:host {
+  font-size: 0.75rem;
+}
+
+:host .text-page-title {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+}
+
+:host .text-section-title,
+:host .text-card-title {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+}
+
+:host .text-body,
+:host .text-label,
+:host .text-button,
+:host .text-table {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+:host .text-small {
+  font-size: 0.72rem;
+  line-height: 1rem;
+}
+
+:host .text-helper,
+:host .text-table-heading {
+  font-size: 0.64rem;
+  line-height: 0.875rem;
+}
+
+:host .h-control {
+  height: 2.25rem;
+}
+
+:host .h-control-compact {
+  height: 1.75rem;
+}
+
+:host .mt-section {
+  margin-top: 0.75rem;
+}
+
+:host .space-y-section > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 1rem;
+}
+
+:host .p-card {
+  padding: 1rem;
+}
+
+:host .py-6 {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+:host .mb-5 {
+  margin-bottom: 1rem;
+}
+
+:host .gap-y-4 {
+  row-gap: 0.75rem;
+}
+
+:host table.text-table th,
+:host table.text-table td {
+  padding: 0.5rem 0.75rem;
+}

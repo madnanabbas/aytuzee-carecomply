@@ -1,0 +1,80 @@
+<section>
+  <div class="section-row">
+    <div>
+      <h3>Employee contacts</h3>
+      <p class="hint">Add emergency contacts or other people associated with this employee.</p>
+    </div>
+  </div>
+  <div class="grid three subsection">
+    <label
+      ><span>Name *</span
+      ><input
+        [(ngModel)]="contactDraft.name"
+        (ngModelChange)="clearError.emit('contacts')"
+        maxlength="200"
+        [class.invalid]="!!fieldError('contacts')"
+        placeholder="Contact name"
+    /></label>
+    <label
+      ><span>Phone</span
+      ><input
+        type="tel"
+        [value]="contactDraft.phone"
+        (input)="phoneChange.emit($any($event.target).value)"
+        maxlength="14"
+        [class.invalid]="!!fieldError('contacts')"
+        placeholder="(612) 555-0100"
+    /></label>
+    <label
+      ><span>Relationship</span
+      ><input
+        [(ngModel)]="contactDraft.relationship"
+        maxlength="100"
+        placeholder="Relationship to employee"
+    /></label>
+  </div>
+  @if (fieldError('contacts')) {
+    <small class="field-error">{{ fieldError('contacts') }}</small>
+  }
+  <div class="mt-3 flex justify-end gap-2">
+    @if (editingIndex !== null) {
+      <button type="button" class="secondary compact" (click)="cancelContact.emit()">
+        Cancel edit
+      </button>
+    }
+    <button type="button" class="primary" (click)="saveContact.emit()">
+      {{ editingIndex === null ? 'Add contact' : 'Update contact' }}
+    </button>
+  </div>
+  <div class="mt-4 overflow-x-auto">
+    <table class="payer-table contact-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Phone</th>
+          <th>Relationship</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of draft.contacts ?? []; track $index; let i = $index) {
+          <tr>
+            <td>{{ item.name }}</td>
+            <td>{{ item.phone || '—' }}</td>
+            <td>{{ item.relationship || '—' }}</td>
+            <td>
+              <button type="button" class="table-action" (click)="editContact.emit(i)">Edit</button
+              ><button type="button" class="table-action danger" (click)="removeContact.emit(i)">
+                Remove
+              </button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="4" class="empty-state">No employee contacts added.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

@@ -1,0 +1,110 @@
+<section>
+  <div class="section-row">
+    <div>
+      <h3>Payer affiliations</h3>
+      <p class="hint">Record insurance affiliations required for this employee.</p>
+    </div>
+  </div>
+  <div class="choice-grid">
+    <label class="choice"
+      ><input
+        type="checkbox"
+        [(ngModel)]="draft.insuranceAffiliationRequired"
+        (ngModelChange)="clearError.emit('payerAffiliations')"
+      /><span>Insurance affiliation required</span></label
+    >
+  </div>
+  <div class="grid three subsection">
+    <label
+      ><span>Company *</span
+      ><input
+        [(ngModel)]="payerDraft.company"
+        (ngModelChange)="clearError.emit('payerAffiliation')"
+        maxlength="200"
+        placeholder="Insurance company"
+        [class.invalid]="!!fieldError('payerAffiliation')"
+    /></label>
+    <label
+      ><span>Payer *</span
+      ><input
+        [(ngModel)]="payerDraft.payer"
+        (ngModelChange)="clearError.emit('payerAffiliation')"
+        maxlength="200"
+        placeholder="Payer name"
+        [class.invalid]="!!fieldError('payerAffiliation')"
+    /></label>
+    <label
+      ><span>Payer ID</span
+      ><input [(ngModel)]="payerDraft.payerId" maxlength="100" placeholder="Payer ID"
+    /></label>
+    <label
+      ><span>Application faxed date</span
+      ><input type="date" [(ngModel)]="payerDraft.applicationFaxedDate"
+    /></label>
+    <label
+      ><span>Affiliation date</span><input type="date" [(ngModel)]="payerDraft.affiliationDate"
+    /></label>
+    <label
+      ><span>Affiliation end date</span
+      ><input type="date" [(ngModel)]="payerDraft.affiliationEndDate"
+    /></label>
+  </div>
+  @if (fieldError('payerAffiliation')) {
+    <small class="field-error">{{ fieldError('payerAffiliation') }}</small>
+  }
+  <div class="mt-3 flex justify-end gap-2">
+    @if (editingIndex !== null) {
+      <button type="button" class="secondary compact" (click)="cancelAffiliation.emit()">
+        Cancel edit
+      </button>
+    }
+    <button type="button" class="primary" (click)="saveAffiliation.emit()">
+      {{ editingIndex === null ? 'Add affiliation' : 'Update affiliation' }}
+    </button>
+  </div>
+  @if (fieldError('payerAffiliations')) {
+    <small class="field-error">{{ fieldError('payerAffiliations') }}</small>
+  }
+  <div class="mt-4 overflow-x-auto">
+    <table class="payer-table">
+      <thead>
+        <tr>
+          <th>Company</th>
+          <th>Payer</th>
+          <th>Payer ID</th>
+          <th>Application faxed</th>
+          <th>Affiliation date</th>
+          <th>End date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of draft.payerAffiliations ?? []; track $index; let i = $index) {
+          <tr>
+            <td>{{ item.company }}</td>
+            <td>{{ item.payer }}</td>
+            <td>{{ item.payerId || '—' }}</td>
+            <td>{{ item.applicationFaxedDate || '—' }}</td>
+            <td>{{ item.affiliationDate || '—' }}</td>
+            <td>{{ item.affiliationEndDate || '—' }}</td>
+            <td>
+              <button type="button" class="table-action" (click)="editAffiliation.emit(i)">
+                Edit</button
+              ><button
+                type="button"
+                class="table-action danger"
+                (click)="removeAffiliation.emit(i)"
+              >
+                Remove
+              </button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="7" class="empty-state">No payer affiliations added.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

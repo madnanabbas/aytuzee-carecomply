@@ -1,0 +1,151 @@
+<section class="border-t border-border py-6" [formGroup]="form">
+  <div class="mb-5">
+    <h2 class="text-section-title text-text-primary">Account access</h2>
+    <p class="mt-1 text-small text-text-secondary">
+      Configure the user's account access and sign-in security.
+    </p>
+  </div>
+
+  <div class="grid gap-x-5 gap-y-4 md:grid-cols-2">
+    <div>
+      <label for="user-account-status" class="block text-label font-medium text-text-primary">
+        Account status
+      </label>
+      <select
+        id="user-account-status"
+        formControlName="isActive"
+        [disabled]="!isCreateMode && (!canManage || saving)"
+        class="mt-1.5 h-control w-full rounded-control border border-border-strong bg-surface px-3 text-body text-text-primary transition-colors hover:border-text-muted focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/15 disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-text-muted"
+      >
+        <option [ngValue]="true">Active</option>
+        <option [ngValue]="false">Inactive</option>
+      </select>
+      <p class="mt-1.5 text-helper text-text-muted">Inactive users cannot sign in to CareComply.</p>
+    </div>
+
+    <div>
+      <label for="user-role" class="block text-label font-medium text-text-primary">
+        Role
+        @if (isCreateMode) {
+          <span class="text-danger">*</span>
+        }
+      </label>
+
+      @if (hasMultipleAssignedRoles) {
+        <select
+          id="user-role"
+          disabled
+          class="mt-1.5 h-control w-full cursor-not-allowed rounded-control border border-border-strong bg-surface-muted px-3 text-body text-text-muted"
+        >
+          <option>Multiple roles assigned</option>
+        </select>
+        <p class="mt-1.5 text-helper text-text-muted">
+          This account has multiple roles. They are preserved unchanged because this editor does not
+          define a primary role.
+        </p>
+      } @else {
+        <select
+          id="user-role"
+          [value]="selectedRoleId"
+          [disabled]="loading || saving || (!isCreateMode && !canManage)"
+          class="mt-1.5 h-control w-full rounded-control border border-border-strong bg-surface px-3 text-body text-text-primary transition-colors hover:border-text-muted focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/15 disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-text-muted"
+          (change)="roleChanged.emit($event)"
+        >
+          <option value="" disabled>Select role</option>
+          @for (role of roles; track role.id) {
+            <option [value]="role.id">{{ role.name }}</option>
+          }
+        </select>
+        <p class="mt-1.5 text-helper text-text-muted">
+          @if (isCreateMode) {
+            Select the initial access role for this user.
+          } @else if (!canManage) {
+            Role assignment is read-only.
+          } @else {
+            Role changes are applied only when you select Save changes.
+          }
+        </p>
+      }
+    </div>
+
+    <div>
+      <label class="block text-label font-medium text-text-primary">
+        Multi-factor authentication
+      </label>
+      <div class="mt-2 flex min-h-7 items-center gap-2.5">
+        <button
+          type="button"
+          role="switch"
+          aria-label="Require multi-factor authentication"
+          [attr.aria-checked]="mfaEnabled"
+          [disabled]="saving || (!isCreateMode && !canManage)"
+          class="relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+          [class.bg-primary]="mfaEnabled"
+          [class.bg-border-strong]="!mfaEnabled"
+          (click)="mfaEnabledChanged.emit(!mfaEnabled)"
+        >
+          <span
+            aria-hidden="true"
+            class="pointer-events-none absolute left-0.5 top-0.5 size-4 rounded-full bg-white shadow-sm transition-transform duration-200"
+            [class.translate-x-4]="mfaEnabled"
+            [class.translate-x-0]="!mfaEnabled"
+          ></span>
+        </button>
+        <span class="text-small text-text-primary"> Require MFA </span>
+        @if (!isCreateMode && mfaEnrolled && mfaEnabled) {
+          <span
+            class="rounded-status bg-primary-subtle px-2 py-0.5 text-helper font-medium text-primary"
+          >
+            Enrolled
+          </span>
+        }
+      </div>
+
+      <p class="mt-1.5 text-helper text-text-muted">
+        Require additional verification during sign in.
+      </p>
+
+      @if (mfaEnabled) {
+        <fieldset class="mt-4 space-y-2" aria-label="MFA method">
+          <legend class="text-label font-medium text-text-primary">Verification method</legend>
+          <label class="flex cursor-pointer items-start gap-3 py-1">
+            <input
+              type="radio"
+              name="mfa-method"
+              value="Authenticator"
+              class="mt-0.5 size-4 shrink-0 accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              [checked]="mfaMethod === 'Authenticator'"
+              [disabled]="saving || (!isCreateMode && !canManage)"
+              (change)="mfaMethodChanged.emit('Authenticator')"
+            />
+            <span>
+              <span class="block text-label font-medium text-text-primary">Authenticator app</span>
+              <span class="mt-0.5 block text-helper text-text-secondary">
+                Use Microsoft Authenticator to verify sign-in.
+              </span>
+            </span>
+          </label>
+          <label class="flex cursor-pointer items-start gap-3 py-1">
+            <input
+              type="radio"
+              name="mfa-method"
+              value="Email"
+              class="mt-0.5 size-4 shrink-0 accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              [checked]="mfaMethod === 'Email'"
+              [disabled]="saving || (!isCreateMode && !canManage)"
+              (change)="mfaMethodChanged.emit('Email')"
+            />
+            <span>
+              <span class="block text-label font-medium text-text-primary">
+                Email verification code
+              </span>
+              <span class="mt-0.5 block text-helper text-text-secondary">
+                Send a one-time verification code to the user's registered email.
+              </span>
+            </span>
+          </label>
+        </fieldset>
+      }
+    </div>
+  </div>
+</section>

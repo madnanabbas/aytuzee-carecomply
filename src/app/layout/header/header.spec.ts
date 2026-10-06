@@ -4,6 +4,7 @@ import { provideRouter, Router } from '@angular/router';
 import { AuthSessionService } from '../../core/auth/auth-session.service';
 import { AuthorizationService } from '../../core/authorization/authorization.service';
 import { Permissions } from '../../core/authorization/permissions';
+import { NavigationService } from '../../core/navigation/navigation.service';
 import { HeaderComponent } from './header';
 
 describe('HeaderComponent', () => {
@@ -11,6 +12,9 @@ describe('HeaderComponent', () => {
     id: 'user-1',
     displayName: 'Adnan Abbas',
     email: 'admin@carecomply.local',
+    companyId: 'company-1',
+    companyName: 'Global Star Care',
+    isPlatformAdministrator: false,
     permissions: [Permissions.Dashboard.View],
   });
   const session = {
@@ -25,6 +29,13 @@ describe('HeaderComponent', () => {
       providers: [
         provideRouter([{ path: 'employees', component: HeaderComponent }]),
         { provide: AuthSessionService, useValue: session },
+        {
+          provide: NavigationService,
+          useValue: {
+            findByUrl: (url: string) =>
+              url.startsWith('/employees') ? { label: 'Employees' } : undefined,
+          },
+        },
       ],
     });
   });
@@ -36,9 +47,12 @@ describe('HeaderComponent', () => {
 
     expect(copy).toContain('AA');
     expect(copy).toContain('Adnan Abbas');
-    expect(copy).toContain('admin@carecomply.local');
+    expect(copy).toContain('Global Star Care');
+    expect(copy).not.toContain('admin@carecomply.local');
     expect(copy).not.toContain('System Administrator');
-    expect((fixture.nativeElement as HTMLElement).querySelector('[aria-label="Notifications"]')).toBeNull();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('[aria-label="Notifications"]'),
+    ).toBeNull();
   });
 
   it('should show notifications only with Notification.View and no count badge', () => {
@@ -46,7 +60,9 @@ describe('HeaderComponent', () => {
     const fixture = TestBed.createComponent(HeaderComponent);
     fixture.detectChanges();
 
-    const link = (fixture.nativeElement as HTMLElement).querySelector('[aria-label="Notifications"]');
+    const link = (fixture.nativeElement as HTMLElement).querySelector(
+      '[aria-label="Notifications"]',
+    );
     expect(link).toBeTruthy();
     expect(link?.textContent?.trim()).toBe('');
   });
@@ -90,12 +106,12 @@ describe('HeaderComponent', () => {
     expect(session.logout).toHaveBeenCalledOnce();
   });
 
-  it('should update page context after navigation', async () => {
+  it('should keep account identity visible after navigation', async () => {
     const router = TestBed.inject(Router);
     const fixture = TestBed.createComponent(HeaderComponent);
     await router.navigateByUrl('/employees');
     fixture.detectChanges();
 
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Employees');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Adnan Abbas');
   });
 });

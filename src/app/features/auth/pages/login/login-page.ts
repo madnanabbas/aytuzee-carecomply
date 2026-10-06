@@ -10,6 +10,7 @@ import { BrandLogoComponent } from '../../../../shared/components/brand-logo/bra
   standalone: true,
   imports: [BrandLogoComponent, ReactiveFormsModule, RouterLink],
   templateUrl: './login-page.html',
+  styleUrl: '../../auth-density.css',
 })
 export class LoginPageComponent {
   private readonly session = inject(AuthSessionService);

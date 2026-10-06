@@ -1,9 +1,10 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { Observable, of, throwError } from 'rxjs';
+import { delay, Observable, of, throwError } from 'rxjs';
 import { AuthorizationService } from '../authorization/authorization.service';
 import { Permissions } from '../authorization/permissions';
+import { NavigationService } from '../navigation/navigation.service';
 import { AuthApiService } from './auth-api.service';
 import { AuthSessionService } from './auth-session.service';
 import {
@@ -17,6 +18,10 @@ import {
 } from './auth.models';
 
 describe('AuthSessionService', () => {
+  const navigation = {
+    loadForSession: vi.fn().mockResolvedValue(undefined),
+    clear: vi.fn(),
+  };
   let api: AuthApiStub;
   let authorization: AuthorizationService;
   let router: RouterStub;
@@ -25,10 +30,13 @@ describe('AuthSessionService', () => {
   beforeEach(() => {
     api = new AuthApiStub();
     router = new RouterStub();
+    navigation.loadForSession.mockClear();
+    navigation.clear.mockClear();
     TestBed.configureTestingModule({
       providers: [
         { provide: AuthApiService, useValue: api },
         { provide: Router, useValue: router },
+        { provide: NavigationService, useValue: navigation },
       ],
     });
 
@@ -44,6 +52,18 @@ describe('AuthSessionService', () => {
     expect(session.currentUser()?.displayName).toBe('Test User');
     expect(session.csrfToken()).toBe('csrf-token');
     expect(authorization.hasPermission(Permissions.Dashboard.View)).toBe(true);
+    expect(navigation.loadForSession).toHaveBeenCalledWith('0198a5db-4000-7000-8000-000000000001');
+  });
+
+  it('refreshes permissions and navigation after role changes', async () => {
+    await session.initialize();
+    navigation.clear.mockClear();
+    navigation.loadForSession.mockClear();
+
+    await session.refreshPermissionsAndNavigation();
+
+    expect(navigation.clear).toHaveBeenCalledOnce();
+    expect(navigation.loadForSession).toHaveBeenCalledWith('0198a5db-4000-7000-8000-000000000001');
   });
 
   it('should initialize anonymously when me returns 401', async () => {
@@ -57,7 +77,10 @@ describe('AuthSessionService', () => {
   });
 
   it('should fail closed when me contains an unknown permission', async () => {
-    api.meResponse = of({ ...currentUserResponse(), permissions: ['Dashboard.View', 'Unknown.Edit'] });
+    api.meResponse = of({
+      ...currentUserResponse(),
+      permissions: ['Dashboard.View', 'Unknown.Edit'],
+    });
 
     await session.initialize();
 
@@ -91,15 +114,29 @@ describe('AuthSessionService', () => {
   });
 
   it('should handle MFA without establishing a frontend session', async () => {
-    api.loginResponse = of(
-      new HttpResponse({ status: 202, body: { status: 'mfaRequired' } }),
-    );
+    api.loginResponse = of(new HttpResponse({ status: 202, body: { status: 'mfaRequired' } }));
 
     await expect(
       session.login({ email: 'user@example.com', password: 'password' }),
     ).resolves.toEqual({ status: 'mfaRequired' });
     expect(session.isAuthenticated()).toBe(false);
     expect(authorization.hasPermission(Permissions.Dashboard.View)).toBe(false);
+  });
+
+  it('should allow email delivery to exceed the ordinary ten-second auth timeout', async () => {
+    vi.useFakeTimers();
+    try {
+      api.loginResponse = of(
+        new HttpResponse({ status: 202, body: { status: 'mfaRequired' } }),
+      ).pipe(delay(10_001));
+
+      const login = session.login({ email: 'user@example.com', password: 'password' });
+      await vi.advanceTimersByTimeAsync(10_001);
+
+      await expect(login).resolves.toEqual({ status: 'mfaRequired' });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('should distinguish enrollment and retain no permissions before completion', async () => {
@@ -117,7 +154,8 @@ describe('AuthSessionService', () => {
   it('should restore only safe route-local MFA context and its antiforgery token', async () => {
     const result = await session.prepareMfaContext();
 
-    expect(result).toEqual({ status: 'mfaRequired' });
+    expect(result).toEqual({ status: 'mfaRequired', method: 'Authenticator' });
+    expect(session.mfaMethod()).toBe('Authenticator');
     expect(session.status()).toBe('anonymous');
     expect(session.csrfToken()).toBe('mfa-csrf-token');
     expect(authorization.hasPermission(Permissions.Dashboard.View)).toBe(false);
@@ -132,17 +170,30 @@ describe('AuthSessionService', () => {
     expect(authorization.hasPermission(Permissions.Dashboard.View)).toBe(true);
   });
 
+  it('should map an email-code resend without changing authentication state', async () => {
+    const result = await session.resendMfaEmailCode();
+
+    expect(result).toEqual({ status: 'succeeded' });
+    expect(session.isAuthenticated()).toBe(false);
+  });
+
   it('should map expired and invalid MFA failures without authenticating', async () => {
-    api.verifyMfaResponse = throwError(() => new HttpErrorResponse({
-      status: 401,
-      error: { type: 'urn:carecomply:problem:mfa-challenge-expired' },
-    }));
+    api.verifyMfaResponse = throwError(
+      () =>
+        new HttpErrorResponse({
+          status: 401,
+          error: { type: 'urn:carecomply:problem:mfa-challenge-expired' },
+        }),
+    );
     await expect(session.verifyMfa('123456')).resolves.toEqual({ status: 'expired' });
 
-    api.verifyMfaResponse = throwError(() => new HttpErrorResponse({
-      status: 401,
-      error: { type: 'urn:carecomply:problem:mfa-verification-failed' },
-    }));
+    api.verifyMfaResponse = throwError(
+      () =>
+        new HttpErrorResponse({
+          status: 401,
+          error: { type: 'urn:carecomply:problem:mfa-verification-failed' },
+        }),
+    );
     await expect(session.verifyMfa('123456')).resolves.toEqual({ status: 'invalid' });
     expect(session.isAuthenticated()).toBe(false);
     expect(authorization.hasPermission(Permissions.Dashboard.View)).toBe(false);
@@ -170,7 +221,7 @@ describe('AuthSessionService', () => {
     expect(session.currentUser()).toBeNull();
     expect(session.csrfToken()).toBeNull();
     expect(authorization.hasPermission(Permissions.Dashboard.View)).toBe(false);
-    expect(router.navigate).toHaveBeenCalledWith(['/login']);
+    expect(router.navigate).toHaveBeenCalledWith(['/auth/login']);
   });
 
   it('should clear session-invalid 401 state but preserve it for a forbidden response', async () => {
@@ -191,6 +242,9 @@ function currentUserResponse(): CurrentUserResponse {
     id: '0198a5db-4000-7000-8000-000000000001',
     email: 'user@example.com',
     displayName: 'Test User',
+    companyId: '0198a5db-4000-7000-8000-000000000002',
+    companyName: 'Test Care Company',
+    isPlatformAdministrator: false,
     permissions: [Permissions.Dashboard.View],
   };
 }
@@ -207,6 +261,7 @@ class AuthApiStub {
   logoutResponse: Observable<void> = of(undefined);
   mfaContextResponse: Observable<MfaContextResponse> = of({
     status: 'mfaRequired',
+    method: 'Authenticator',
     requestToken: 'mfa-csrf-token',
   });
   beginEnrollmentResponse: Observable<MfaEnrollmentResponse> = of({
@@ -219,6 +274,7 @@ class AuthApiStub {
   verifyMfaResponse: Observable<void> = of(undefined);
   verifyRecoveryResponse: Observable<void> = of(undefined);
   cancelMfaResponse: Observable<void> = of(undefined);
+  resendMfaEmailResponse: Observable<void> = of(undefined);
   verifyMfaCode: string | null = null;
 
   login(_credentials: LoginCredentials): Observable<HttpResponse<MfaRequiredResponse>> {
@@ -263,6 +319,10 @@ class AuthApiStub {
 
   cancelMfa(): Observable<void> {
     return this.cancelMfaResponse;
+  }
+
+  resendMfaEmailCode(): Observable<void> {
+    return this.resendMfaEmailResponse;
   }
 }
 

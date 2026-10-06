@@ -4,8 +4,6 @@ export const dashboardRoutes: Routes = [
   {
     path: '',
     loadComponent: () =>
-      import('./pages/dashboard/dashboard-page').then(
-        (module) => module.DashboardPageComponent,
-      ),
+      import('./pages/dashboard/dashboard-page').then((module) => module.DashboardPageComponent),
   },
 ];

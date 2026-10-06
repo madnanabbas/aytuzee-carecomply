@@ -1,0 +1,324 @@
+<div class="overview-grid">
+  <section class="panel-card overview-card">
+    <header class="panel-header">
+      <h2>Client information</h2>
+      @if (canEditClient) {
+        <a [routerLink]="['/clients', client.id, 'edit']" class="panel-link">Edit full profile</a>
+      }
+    </header>
+    <dl class="detail-list detail-list-compact">
+      <div>
+        <dt>Phone</dt>
+        <dd>{{ client.phone }}</dd>
+      </div>
+      <div>
+        <dt>Secondary phone</dt>
+        <dd>{{ client.secondaryPhone }}</dd>
+      </div>
+      <div>
+        <dt>Email</dt>
+        <dd class="break-all">{{ client.email }}</dd>
+      </div>
+      <div>
+        <dt>Address</dt>
+        <dd>{{ client.address }}</dd>
+      </div>
+      <div>
+        <dt>Preferred language</dt>
+        <dd>{{ client.preferredLanguage }}</dd>
+      </div>
+      <div>
+        <dt>County</dt>
+        <dd>{{ client.county }}</dd>
+      </div>
+      <div>
+        <dt>Insurance</dt>
+        <dd>{{ client.insurance }}</dd>
+      </div>
+      <div>
+        <dt>SSN</dt>
+        <dd class="flex flex-wrap items-center gap-2">
+          <span [class.font-mono]="hasSsn">{{ hasSsn ? ssn : 'Not provided' }}</span>
+          @if (hasSsn && canRevealSsn) {
+            @if (ssn === '***-**-****') {
+              <button
+                type="button"
+                class="panel-link"
+                [disabled]="ssnRevealing"
+                (click)="revealSsn()"
+              >
+                {{ ssnRevealing ? 'Revealing…' : 'Reveal' }}
+              </button>
+            } @else {
+              <button type="button" class="panel-link" (click)="hideSsn()">Hide</button>
+            }
+          }
+          @if (ssnError) {
+            <small class="text-danger">{{ ssnError }}</small>
+          }
+        </dd>
+      </div>
+    </dl>
+  </section>
+
+  <section class="panel-card overview-card">
+    <header class="panel-header">
+      <h2>Care & service</h2>
+      <span class="text-[10px] text-text-muted">Current setup</span>
+    </header>
+    <dl class="detail-list detail-list-compact">
+      <div>
+        <dt>Intake date</dt>
+        <dd>{{ client.intakeDate }}</dd>
+      </div>
+      <div>
+        <dt>SOC date</dt>
+        <dd>{{ client.socDate }}</dd>
+      </div>
+      <div>
+        <dt>Referral source</dt>
+        <dd>{{ client.referralSource }}</dd>
+      </div>
+      <div>
+        <dt>EVV authorized hours</dt>
+        <dd>{{ client.evvHours }}</dd>
+      </div>
+      <div>
+        <dt>Service</dt>
+        <dd>{{ client.services.join(', ') }}</dd>
+      </div>
+      <div>
+        <dt>Supervisor</dt>
+        <dd>{{ client.supervisor }}</dd>
+      </div>
+      <div>
+        <dt>Discharge date</dt>
+        <dd>{{ client.dischargeDate }}</dd>
+      </div>
+      <div>
+        <dt>Discharge reason</dt>
+        <dd>{{ client.dischargeReason }}</dd>
+      </div>
+    </dl>
+  </section>
+
+  <section class="panel-card overview-card overview-documents">
+    <header class="panel-header">
+      <h2>Recent documents</h2>
+      <span class="text-[10px] text-text-muted">API not available</span>
+    </header>
+    <table class="compact-table overview-doc-table">
+      <thead>
+        <tr>
+          <th>Document</th>
+          <th>Status</th>
+          <th>Expiration</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (doc of documents; track doc.file) {
+          <tr>
+            <td>
+              <div class="font-medium text-text-primary">{{ doc.name }}</div>
+              <div class="mt-0.5 text-[9.5px] text-text-muted">{{ doc.type }}</div>
+            </td>
+            <td>
+              <span class="status-pill" [class]="statusClass(doc.status)">{{ doc.status }}</span>
+            </td>
+            <td class="whitespace-nowrap">{{ doc.expiry }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="3" class="py-6 text-center text-text-muted">
+              No document data is available.
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
+</div>
+
+<div class="overview-secondary-grid mt-3">
+  <section class="panel-card overview-secondary-safety">
+    <header class="panel-header">
+      <h2>Safety information</h2>
+      <span class="text-[10px] text-text-muted">Health & safety summary</span>
+    </header>
+    <dl class="safety-grid safety-grid-four">
+      <div>
+        <dt>Safety measure</dt>
+        <dd>{{ client.safetyMeasure }}</dd>
+      </div>
+      <div>
+        <dt>Special equipment</dt>
+        <dd>{{ client.specialEquipment }}</dd>
+      </div>
+      <div>
+        <dt>Allergies</dt>
+        <dd class="text-danger">{{ client.allergies }}</dd>
+      </div>
+      <div>
+        <dt>Other services</dt>
+        <dd>{{ client.otherServices }}</dd>
+      </div>
+    </dl>
+  </section>
+
+  <section class="panel-card">
+    <header class="panel-header">
+      <h2>Recent activity</h2>
+      <span class="text-[10px] text-text-muted">API not available</span>
+    </header>
+    <div class="divide-y divide-border">
+      <p class="px-4 py-6 text-center text-[11px] text-text-muted">
+        No activity data is available.
+      </p>
+    </div>
+  </section>
+</div>
+
+<section class="panel-card mt-3">
+  <header class="panel-header">
+    <div>
+      <h2>Preferences & additional profile</h2>
+      <p>Personal preferences, home setting and care coordination details.</p>
+    </div>
+  </header>
+  <div class="profile-sections">
+    <section class="profile-section">
+      <h3>Referral & program</h3>
+      <dl class="profile-detail-list">
+        <div>
+          <dt>Referred by a client</dt>
+          <dd>{{ client.referringClient }}</dd>
+        </div>
+        <div>
+          <dt>Referring client</dt>
+          <dd>{{ client.referringClientName }}</dd>
+        </div>
+        <div>
+          <dt>Referral company</dt>
+          <dd>{{ client.referralCompany }}</dd>
+        </div>
+        <div>
+          <dt>Company phone</dt>
+          <dd>{{ client.referralCompanyPhone }}</dd>
+        </div>
+        <div>
+          <dt>Home-care rating</dt>
+          <dd>{{ client.homeCareRating }}</dd>
+        </div>
+        <div>
+          <dt>PCA complexity</dt>
+          <dd>{{ client.pcaComplexity }}</dd>
+        </div>
+        <div>
+          <dt>Medical equipment</dt>
+          <dd>{{ client.medicalEquipment }}</dd>
+        </div>
+      </dl>
+    </section>
+    <section class="profile-section">
+      <h3>Personal</h3>
+      <dl class="profile-detail-list">
+        <div>
+          <dt>Marital status</dt>
+          <dd>{{ client.maritalStatus }}</dd>
+        </div>
+        <div>
+          <dt>Ethnicity</dt>
+          <dd>{{ client.ethnicity }}</dd>
+        </div>
+        <div>
+          <dt>Race</dt>
+          <dd>{{ client.race }}</dd>
+        </div>
+        <div>
+          <dt>Smoking</dt>
+          <dd>{{ client.smoking }}</dd>
+        </div>
+        <div>
+          <dt>Veteran</dt>
+          <dd>{{ client.veteran }}</dd>
+        </div>
+        <div>
+          <dt>Pets</dt>
+          <dd>{{ client.pets }}</dd>
+        </div>
+        <div>
+          <dt>Caregiver preference</dt>
+          <dd>{{ client.caregiverPreference }}</dd>
+        </div>
+      </dl>
+    </section>
+    <section class="profile-section">
+      <h3>Home & care</h3>
+      <dl class="profile-detail-list">
+        <div>
+          <dt>Living arrangement</dt>
+          <dd>{{ client.livingArrangement }}</dd>
+        </div>
+        <div>
+          <dt>Home details</dt>
+          <dd>{{ client.livingArrangementDetails }}</dd>
+        </div>
+        <div>
+          <dt>Veteran details</dt>
+          <dd>{{ client.veteranDetails }}</dd>
+        </div>
+        <div>
+          <dt>Pet details</dt>
+          <dd>{{ client.petDetails }}</dd>
+        </div>
+        <div>
+          <dt>Nutrition</dt>
+          <dd>{{ client.nutritionalRequirements }}</dd>
+        </div>
+        <div>
+          <dt>Diet</dt>
+          <dd>{{ client.diet }}</dd>
+        </div>
+      </dl>
+    </section>
+    <section class="profile-section">
+      <h3>Providers & schedule</h3>
+      <dl class="profile-detail-list">
+        <div>
+          <dt>Clinic</dt>
+          <dd>{{ client.preferredClinic }}</dd>
+        </div>
+        <div>
+          <dt>Hospital</dt>
+          <dd>{{ client.preferredHospital }}</dd>
+        </div>
+        <div>
+          <dt>Ambulance</dt>
+          <dd>{{ client.preferredAmbulance }}</dd>
+        </div>
+        <div>
+          <dt>Breakfast</dt>
+          <dd>{{ client.breakfastTime }}</dd>
+        </div>
+        <div>
+          <dt>Lunch</dt>
+          <dd>{{ client.lunchTime }}</dd>
+        </div>
+        <div>
+          <dt>Dinner</dt>
+          <dd>{{ client.dinnerTime }}</dd>
+        </div>
+      </dl>
+    </section>
+    <section class="profile-notes">
+      <div>
+        <h3>Notes</h3>
+        <p>{{ client.notes }}</p>
+      </div>
+      <div>
+        <h3>Additional information</h3>
+        <p>{{ client.additionalInformation }}</p>
+      </div>
+    </section>
+  </div>
+</section>

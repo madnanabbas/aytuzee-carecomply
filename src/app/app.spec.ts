@@ -5,6 +5,10 @@ import { routes } from './app.routes';
 import { AuthSessionService } from './core/auth/auth-session.service';
 import { AuthorizationService } from './core/authorization/authorization.service';
 import { ALL_PERMISSIONS, Permissions } from './core/authorization/permissions';
+import { signal } from '@angular/core';
+import { NavigationService } from './core/navigation/navigation.service';
+import { provideHttpClient } from '@angular/common/http';
+import { provideAppConfig } from './core/config/app-config';
 
 describe('App', () => {
   let authenticated: boolean;
@@ -17,6 +21,7 @@ describe('App', () => {
     verifyMfa: vi.fn(),
     verifyMfaRecoveryCode: vi.fn(),
     cancelMfa: vi.fn(),
+    mfaMethod: signal<'Authenticator' | 'Email' | null>('Authenticator').asReadonly(),
     currentUser: () => ({
       id: 'user-1',
       email: 'user@carecomply.local',
@@ -34,7 +39,22 @@ describe('App', () => {
       imports: [App],
       providers: [
         provideRouter(routes),
+        provideHttpClient(),
+        ...provideAppConfig({
+          apiBaseUrl: '/api',
+          postalLookupBaseUrl: '/postal',
+          geographyBaseUrl: '/geography',
+        }),
         { provide: AuthSessionService, useValue: session },
+        {
+          provide: NavigationService,
+          useValue: {
+            groups: signal([]).asReadonly(),
+            status: signal('loaded').asReadonly(),
+            findByUrl: () => undefined,
+            firstAllowedPath: () => '/dashboard',
+          },
+        },
       ],
     }).compileComponents();
 
@@ -83,12 +103,12 @@ describe('App', () => {
     const router = TestBed.inject(Router);
     fixture.detectChanges();
 
-    await expect(router.navigateByUrl('/login')).resolves.toBe(true);
+    await expect(router.navigateByUrl('/auth/login')).resolves.toBe(true);
     await fixture.whenStable();
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(router.url).toBe('/login');
+    expect(router.url).toBe('/auth/login');
     expect(compiled.querySelector('app-login-page')).toBeTruthy();
     expect(compiled.querySelector('app-shell')).toBeFalsy();
   });
@@ -100,12 +120,12 @@ describe('App', () => {
     const router = TestBed.inject(Router);
     fixture.detectChanges();
 
-    await expect(router.navigateByUrl('/login/mfa')).resolves.toBe(true);
+    await expect(router.navigateByUrl('/auth/mfa')).resolves.toBe(true);
     await fixture.whenStable();
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(router.url).toBe('/login/mfa');
+    expect(router.url).toBe('/auth/mfa');
     expect(compiled.querySelector('app-mfa-challenge-page')).toBeTruthy();
     expect(compiled.querySelector('app-shell')).toBeFalsy();
   });
@@ -121,7 +141,7 @@ describe('App', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(router.url).toBe('/login');
+    expect(router.url).toBe('/auth/login');
     expect((fixture.nativeElement as HTMLElement).querySelector('app-shell')).toBeFalsy();
   });
 

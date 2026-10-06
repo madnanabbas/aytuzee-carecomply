@@ -1,0 +1,31 @@
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { EmployeeContact, EmployeeFormModel } from '../../models/employee.models';
+
+@Component({
+  selector: 'app-employee-contact-section',
+  standalone: true,
+  imports: [FormsModule],
+  templateUrl: './employee-contact-section.html',
+  styleUrls: [
+    './employee-form-page.css',
+    './employee-form-validation.css',
+    './payer-affiliation.css',
+  ],
+})
+export class EmployeeContactSectionComponent {
+  @Input({ required: true }) draft!: EmployeeFormModel;
+  @Input({ required: true }) contactDraft!: EmployeeContact;
+  @Input() editingIndex: number | null = null;
+  @Input({ required: true }) errors!: Readonly<Record<string, string>>;
+  @Output() readonly clearError = new EventEmitter<string>();
+  @Output() readonly phoneChange = new EventEmitter<string>();
+  @Output() readonly saveContact = new EventEmitter<void>();
+  @Output() readonly cancelContact = new EventEmitter<void>();
+  @Output() readonly editContact = new EventEmitter<number>();
+  @Output() readonly removeContact = new EventEmitter<number>();
+
+  fieldError(field: string): string {
+    return this.errors[field] ?? '';
+  }
+}

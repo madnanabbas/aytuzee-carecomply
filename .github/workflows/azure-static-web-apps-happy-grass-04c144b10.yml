@@ -1,0 +1,124 @@
+name: Azure Static Web Apps CI/CD
+
+on:
+  push:
+    branches:
+      - staging
+
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - closed
+    branches:
+      - staging
+
+jobs:
+  build_and_deploy_job:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+
+    runs-on: ubuntu-latest
+
+    name: Build and Deploy
+
+    steps:
+      # -------------------------------------------------------
+      # Checkout source code
+      # -------------------------------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          lfs: false
+
+      # -------------------------------------------------------
+      # Setup Node.js supported by Angular 22
+      # -------------------------------------------------------
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.15.0'
+          cache: 'npm'
+
+      # -------------------------------------------------------
+      # Install dependencies
+      # -------------------------------------------------------
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Run unit tests
+        run: npm test -- --watch=false
+
+      # -------------------------------------------------------
+      # Configure CareComply staging runtime API
+      # -------------------------------------------------------
+      - name: Configure staging API
+        run: |
+          mkdir -p public/config
+
+          cat > public/config/app-config.json <<'EOF'
+          {
+            "apiBaseUrl": "https://aytuzee-carecomply-drbhbnava8axccgu.centralus-01.azurewebsites.net/api"
+          }
+          EOF
+
+      # -------------------------------------------------------
+      # Build Angular
+      # -------------------------------------------------------
+      - name: Build Angular
+        run: npm run build
+
+      # -------------------------------------------------------
+      # Verify runtime configuration exists in build output
+      # -------------------------------------------------------
+      - name: Verify staging configuration
+        run: |
+          test -f dist/care-comply/browser/config/app-config.json
+
+          grep -q \
+            "aytuzee-carecomply-drbhbnava8axccgu.centralus-01.azurewebsites.net/api" \
+            dist/care-comply/browser/config/app-config.json
+
+      # -------------------------------------------------------
+      # Deploy already-built Angular application
+      # -------------------------------------------------------
+      - name: Deploy to Azure Static Web Apps
+        id: builddeploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_HAPPY_GRASS_04C144B10 }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: 'upload'
+
+          # Angular was already built above.
+          app_location: 'dist/care-comply/browser'
+
+          # .NET API is hosted separately in Azure App Service.
+          api_location: ''
+
+          output_location: ''
+
+          # Do not let Oryx rebuild Angular.
+          skip_app_build: true
+
+  # =========================================================
+  # CLOSE STATIC WEB APP PREVIEW ENVIRONMENT
+  # =========================================================
+  close_pull_request_job:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+
+    runs-on: ubuntu-latest
+
+    name: Close Pull Request Environment
+
+    steps:
+      - name: Close Pull Request
+        id: closepullrequest
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_HAPPY_GRASS_04C144B10 }}
+          action: 'close'

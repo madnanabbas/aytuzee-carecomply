@@ -1,0 +1,154 @@
+<div class="mx-auto w-full max-w-[88rem]">
+  <a
+    routerLink="/access-control/roles"
+    class="inline-flex items-center gap-1 text-small font-medium text-primary hover:underline"
+  >
+    ← Back to roles
+  </a>
+
+  <header class="mt-5 border-b border-border pb-5">
+    <h1 class="text-page-title text-text-primary">
+      {{ isCreateMode() ? 'Add Role' : 'Edit Role' }}
+    </h1>
+
+    <p class="mt-1 text-body text-text-secondary">
+      {{
+        isCreateMode()
+          ? 'Create a role and assign its system permissions.'
+          : 'Manage role information and assigned system permissions.'
+      }}
+    </p>
+  </header>
+
+  @if (!isCreateMode() && !canManage()) {
+    <div
+      class="mt-4 rounded-control border border-border bg-surface-muted px-4 py-3 text-small text-text-secondary"
+    >
+      You have view-only access to this role.
+    </div>
+  }
+
+  @if (successMessage()) {
+    <div
+      class="mt-4 rounded-control border border-success/30 bg-success/5 px-4 py-3 text-small text-text-primary"
+      role="status"
+    >
+      {{ successMessage() }}
+    </div>
+  }
+
+  @if (error()) {
+    <div
+      class="mt-4 rounded-control border border-danger/30 bg-danger/5 px-4 py-3 text-small text-text-primary"
+      role="alert"
+    >
+      @switch (error()) {
+        @case ('notFound') {
+          Role not found.
+        }
+        @case ('duplicateName') {
+          A role with this name already exists.
+        }
+        @case ('invalidPermission') {
+          One or more selected permissions are no longer available. Reload and try again.
+        }
+        @case ('lastRoleManager') {
+          Role.Manage cannot be removed from the last active role-management path.
+        }
+        @case ('conflict') {
+          This role changed after you opened it. Reload before saving again.
+        }
+        @default {
+          The role could not be loaded or saved. Try again.
+        }
+      }
+      @if (!saving()) {
+        <button
+          type="button"
+          class="ml-2 font-medium text-primary hover:underline"
+          (click)="reload()"
+        >
+          Reload
+        </button>
+      }
+    </div>
+  }
+
+  @if (loading()) {
+    <div
+      class="mt-section rounded-surface border border-border bg-surface px-5 py-12 text-center text-small text-text-secondary"
+    >
+      Loading role permissions…
+    </div>
+  } @else {
+    <form
+      class="mt-section overflow-hidden rounded-surface border border-border bg-surface"
+      [formGroup]="form"
+      (ngSubmit)="save()"
+    >
+      <app-role-details-section
+        [form]="form"
+        [isCreateMode]="isCreateMode()"
+        [isPlatformAdministrator]="isPlatformAdministrator()"
+        [companies]="companies()"
+      />
+
+      <!-- =====================================================
+         PERMISSIONS
+         ===================================================== -->
+      <section class="border-t border-border p-5">
+        <div class="mb-5">
+          <h2 class="text-section-title text-text-primary">Permissions</h2>
+
+          <p class="mt-1 text-small text-text-secondary">
+            Select the features and actions users with this role can access.
+          </p>
+
+          <p class="mt-1 text-helper text-text-muted">
+            Choose a feature, then select the actions this role is allowed to perform.
+          </p>
+        </div>
+
+        <app-permission-matrix
+          [modules]="permissionCatalog()"
+          [selectedPermissionIds]="selectedPermissionIds()"
+          [disabled]="!canManage()"
+          (permissionChanged)="updatePermissions($event)"
+        />
+      </section>
+
+      <!-- =====================================================
+         ACTIONS
+         ===================================================== -->
+      @if (canManage()) {
+        <footer
+          class="flex flex-wrap justify-end gap-2 border-t border-border bg-surface px-5 py-4"
+        >
+          <button
+            type="button"
+            class="h-control rounded-control border border-border-strong bg-surface px-4 text-button font-medium text-text-secondary transition-colors hover:bg-surface-muted hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            (click)="cancel()"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            class="h-control rounded-control bg-primary px-5 text-button font-semibold text-on-primary transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+            [disabled]="form.invalid || saving() || !hasChanges()"
+          >
+            {{ saving() ? 'Saving…' : isCreateMode() ? 'Create Role' : 'Save changes' }}
+          </button>
+        </footer>
+      }
+    </form>
+  }
+</div>
+@if (completionDialog(); as dialog) {
+  <app-success-dialog
+    [open]="true"
+    [title]="dialog.title"
+    [message]="dialog.message"
+    (confirmed)="confirmCompletion()"
+  />
+}

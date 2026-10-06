@@ -1,0 +1,206 @@
+<section>
+  <div class="section-row">
+    <div>
+      <h3>Training and skills</h3>
+      <p class="hint">Track required courses, certifications and employee skills.</p>
+    </div>
+  </div>
+  <div class="subsection-heading">
+    <div>
+      <h4>Courses</h4>
+      <p class="hint">Add completed or assigned courses and their qualifying points.</p>
+    </div>
+  </div>
+  <div class="grid three subsection">
+    <label
+      ><span>Course *</span
+      ><select
+        [(ngModel)]="courseDraft.courseName"
+        (ngModelChange)="clearError.emit('trainingInformation')"
+      >
+        <option value="">Select course</option>
+        @for (option of courseOptions; track option) {
+          <option [value]="option">{{ option }}</option>
+        }
+      </select></label
+    >
+    <label
+      ><span>Qualifying points</span
+      ><input
+        type="number"
+        min="0"
+        max="10000"
+        step="0.5"
+        [(ngModel)]="courseDraft.qualifyingPoints"
+    /></label>
+    <label
+      ><span>Date completed</span><input type="date" [(ngModel)]="courseDraft.completedOn"
+    /></label>
+    <label
+      ><span>Obtained points</span
+      ><input type="number" min="0" max="10000" step="0.5" [(ngModel)]="courseDraft.obtainedPoints"
+    /></label>
+    <label class="span-two"
+      ><span>Notes</span
+      ><input [(ngModel)]="courseDraft.notes" maxlength="1000" placeholder="Optional course notes"
+    /></label>
+  </div>
+  <div class="mt-3 flex justify-end gap-2">
+    @if (courseEditingIndex !== null) {
+      <button type="button" class="secondary compact" (click)="cancelCourse.emit()">
+        Cancel edit
+      </button>
+    }
+    <button type="button" class="primary" (click)="saveCourse.emit()">
+      {{ courseEditingIndex === null ? 'Add course' : 'Update course' }}
+    </button>
+  </div>
+  <div class="mt-4 overflow-x-auto">
+    <table class="payer-table">
+      <thead>
+        <tr>
+          <th>Course</th>
+          <th>Qualifying points</th>
+          <th>Completed</th>
+          <th>Obtained points</th>
+          <th>Notes</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of training.courses; track $index; let i = $index) {
+          <tr>
+            <td>{{ item.courseName }}</td>
+            <td>{{ item.qualifyingPoints ?? '—' }}</td>
+            <td>{{ item.completedOn || '—' }}</td>
+            <td>{{ item.obtainedPoints ?? '—' }}</td>
+            <td>{{ item.notes || '—' }}</td>
+            <td>
+              <button type="button" class="table-action" (click)="editCourse.emit(i)">Edit</button
+              ><button type="button" class="table-action danger" (click)="removeCourse.emit(i)">
+                Remove
+              </button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="6" class="empty-state">No courses added.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <div class="subsection-heading mt-5">
+    <div>
+      <h4>Training and certifications</h4>
+      <p class="hint">Record role-specific training, completion and expiration dates.</p>
+    </div>
+  </div>
+  <div class="grid three subsection">
+    <label
+      ><span>Training / skill *</span
+      ><select
+        [(ngModel)]="trainingDraft.trainingName"
+        (ngModelChange)="clearError.emit('trainingInformation')"
+      >
+        <option value="">Select training</option>
+        @for (option of trainingOptions; track option) {
+          <option [value]="option">{{ option }}</option>
+        }
+      </select></label
+    >
+    <label
+      ><span>Job title</span
+      ><input
+        [(ngModel)]="trainingDraft.jobTitle"
+        maxlength="200"
+        placeholder="Applicable employee title"
+    /></label>
+    <label
+      ><span>Qualifying points</span
+      ><input
+        type="number"
+        min="0"
+        max="10000"
+        step="0.5"
+        [(ngModel)]="trainingDraft.qualifyingPoints"
+    /></label>
+    <label
+      ><span>Completed date</span><input type="date" [(ngModel)]="trainingDraft.completedOn"
+    /></label>
+    <label
+      ><span>Expiration date</span><input type="date" [(ngModel)]="trainingDraft.expiresOn"
+    /></label>
+    <label
+      ><span>Obtained points</span
+      ><input
+        type="number"
+        min="0"
+        max="10000"
+        step="0.5"
+        [(ngModel)]="trainingDraft.obtainedPoints"
+    /></label>
+    <label class="span-two"
+      ><span>Notes</span
+      ><input
+        [(ngModel)]="trainingDraft.notes"
+        maxlength="1000"
+        placeholder="Optional training notes"
+    /></label>
+    <label class="choice align-end"
+      ><input type="checkbox" [(ngModel)]="trainingDraft.allowedTraining" /><span
+        >Allow employee to provide this training</span
+      ></label
+    >
+  </div>
+  @if (fieldError('trainingInformation')) {
+    <small class="field-error">{{ fieldError('trainingInformation') }}</small>
+  }
+  <div class="mt-3 flex justify-end gap-2">
+    @if (trainingEditingIndex !== null) {
+      <button type="button" class="secondary compact" (click)="cancelTraining.emit()">
+        Cancel edit
+      </button>
+    }
+    <button type="button" class="primary" (click)="saveTraining.emit()">
+      {{ trainingEditingIndex === null ? 'Add training' : 'Update training' }}
+    </button>
+  </div>
+  <div class="mt-4 overflow-x-auto">
+    <table class="payer-table">
+      <thead>
+        <tr>
+          <th>Training</th>
+          <th>Job title</th>
+          <th>Points</th>
+          <th>Completed</th>
+          <th>Expires</th>
+          <th>Allowed trainer</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of training.trainings; track $index; let i = $index) {
+          <tr>
+            <td>{{ item.trainingName }}</td>
+            <td>{{ item.jobTitle || '—' }}</td>
+            <td>{{ item.obtainedPoints ?? '—' }} / {{ item.qualifyingPoints ?? '—' }}</td>
+            <td>{{ item.completedOn || '—' }}</td>
+            <td>{{ item.expiresOn || '—' }}</td>
+            <td>{{ item.allowedTraining ? 'Yes' : 'No' }}</td>
+            <td>
+              <button type="button" class="table-action" (click)="editTraining.emit(i)">Edit</button
+              ><button type="button" class="table-action danger" (click)="removeTraining.emit(i)">
+                Remove
+              </button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="7" class="empty-state">No training or skills added.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

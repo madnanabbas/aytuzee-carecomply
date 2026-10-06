@@ -1,0 +1,69 @@
+:host {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.client-wizard-page {
+  width: 100%;
+  max-width: 96rem;
+  min-width: 0;
+  margin-inline: auto;
+  padding-bottom: 2rem;
+}
+
+.client-wizard-header {
+  border-bottom: 1px solid var(--color-border, #e2e8f0);
+  padding-bottom: 0.75rem;
+}
+
+.client-wizard-content {
+  min-width: 0;
+}
+
+.client-authenticated-wizard-layout {
+  display: grid;
+  grid-template-columns: 15rem minmax(0, 1fr);
+  align-items: start;
+  gap: 1rem;
+  min-width: 0;
+  margin-top: 0.75rem;
+}
+
+.client-authenticated-wizard-main {
+  min-width: 0;
+}
+
+.client-wizard-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-top: 1px solid var(--color-border, #e2e8f0);
+  padding: 0.75rem 1rem;
+}
+
+.client-wizard-page .form-label {
+  margin-bottom: 0.25rem;
+  font-size: 11px;
+}
+
+.client-wizard-page .form-control {
+  min-height: 2rem;
+  font-size: 12px;
+}
+
+@media (max-width: 767px) {
+  .client-authenticated-wizard-layout {
+    display: block;
+  }
+
+  .client-authenticated-wizard-main {
+    margin-top: 0.75rem;
+  }
+
+  .client-wizard-footer {
+    padding-inline: 0.75rem;
+  }
+}

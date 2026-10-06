@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { AuthSessionService } from '../../../../core/auth/auth-session.service';
@@ -19,7 +20,10 @@ describe('MfaChallengePageComponent', () => {
       providers: [
         provideRouter([]),
         { provide: AuthSessionService, useValue: session },
-        { provide: AuthenticatedLandingService, useValue: { firstAllowedPath: () => '/dashboard' } },
+        {
+          provide: AuthenticatedLandingService,
+          useValue: { firstAllowedPath: () => '/dashboard' },
+        },
       ],
     }).compileComponents();
 
@@ -60,11 +64,26 @@ describe('MfaChallengePageComponent', () => {
     expect(session.verifyMfaRecoveryCode).toHaveBeenCalledWith('saved-code');
     expect(element.textContent).toContain('invalid or has already been used');
   });
+
+  it('should present email instructions, hide recovery, and resend through the session', async () => {
+    session.mfaMethod.set('Email');
+    fixture.detectChanges();
+
+    expect(element.textContent).toContain('sent to your registered email');
+    expect(element.textContent).not.toContain('Use a recovery code instead');
+    await component.resendCode();
+    fixture.detectChanges();
+
+    expect(session.resendMfaEmailCode).toHaveBeenCalledOnce();
+    expect(element.textContent).toContain('A new verification code was sent.');
+  });
 });
 
 class MfaSessionStub {
+  readonly mfaMethod = signal<'Authenticator' | 'Email'>('Authenticator');
   result: MfaAttemptResult = { status: 'succeeded' };
   readonly verifyMfa = vi.fn(async (_code: string) => this.result);
   readonly verifyMfaRecoveryCode = vi.fn(async (_code: string) => this.result);
   readonly cancelMfa = vi.fn(async () => undefined);
+  readonly resendMfaEmailCode = vi.fn(async () => ({ status: 'succeeded' as const }));
 }

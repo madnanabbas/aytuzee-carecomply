@@ -2,17 +2,10 @@
   class="relative flex min-h-dvh items-center justify-center overflow-hidden bg-[#F6F8FA] px-page-mobile py-8 sm:px-page lg:px-page-wide"
 >
   <!-- Subtle background decoration -->
-  <div
-    aria-hidden="true"
-    class="pointer-events-none absolute inset-0 overflow-hidden"
-  >
-    <span
-      class="absolute -left-24 -top-28 size-72 rounded-full border border-primary/8"
-    ></span>
+  <div aria-hidden="true" class="pointer-events-none absolute inset-0 overflow-hidden">
+    <span class="absolute -left-24 -top-28 size-72 rounded-full border border-primary/8"></span>
 
-    <span
-      class="absolute -bottom-36 -right-20 size-80 rounded-full border border-primary/8"
-    ></span>
+    <span class="absolute -bottom-36 -right-20 size-80 rounded-full border border-primary/8"></span>
 
     <span
       class="absolute left-[8%] top-[68%] size-24 rotate-12 rounded-surface border border-primary/7"
@@ -24,7 +17,6 @@
   </div>
 
   <div class="relative w-full max-w-[29rem]">
-
     <!-- Brand -->
     <div class="mb-7 flex justify-center">
       <div class="w-52 sm:w-60">
@@ -39,12 +31,7 @@
     >
       <!-- Header -->
       <header class="text-center">
-        <h1
-          id="login-title"
-          class="text-page-title text-text-primary"
-        >
-          Welcome back
-        </h1>
+        <h1 id="login-title" class="text-page-title text-text-primary">Welcome back</h1>
 
         <p class="mx-auto mt-2 max-w-sm text-body leading-6 text-text-secondary">
           Sign in to your Aytuzee Care Comply workspace.
@@ -52,20 +39,10 @@
       </header>
 
       <!-- Login form -->
-      <form
-        class="mt-7 space-y-form"
-        [formGroup]="loginForm"
-        (ngSubmit)="submit()"
-        novalidate
-      >
+      <form class="mt-7 space-y-form" [formGroup]="loginForm" (ngSubmit)="submit()" novalidate>
         <!-- Email -->
         <div>
-          <label
-            for="email"
-            class="block text-label text-text-primary"
-          >
-            Email address
-          </label>
+          <label for="email" class="block text-label text-text-primary"> Email address </label>
 
           <input
             id="email"
@@ -93,10 +70,7 @@
             loginForm.controls.email.invalid &&
             (loginForm.controls.email.touched || submissionAttempted())
           ) {
-            <p
-              id="email-error"
-              class="mt-1.5 text-helper text-danger"
-            >
+            <p id="email-error" class="mt-1.5 text-helper text-danger">
               @if (loginForm.controls.email.hasError('required')) {
                 Email address is required.
               } @else {
@@ -109,15 +83,10 @@
         <!-- Password -->
         <div>
           <div class="flex items-center justify-between gap-4">
-            <label
-              for="password"
-              class="block text-label text-text-primary"
-            >
-              Password
-            </label>
+            <label for="password" class="block text-label text-text-primary"> Password </label>
 
             <a
-              style="cursor: pointer;"
+              style="cursor: pointer"
               routerLink="/auth/forgot-password"
               class="text-helper font-medium text-primary transition-colors duration-150 hover:text-primary-hover hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
@@ -150,9 +119,7 @@
             <button
               type="button"
               class="absolute inset-y-0 right-0 flex w-touch items-center justify-center rounded-control text-text-muted transition-colors duration-150 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-              [attr.aria-label]="
-                passwordVisible() ? 'Hide password' : 'Show password'
-              "
+              [attr.aria-label]="passwordVisible() ? 'Hide password' : 'Show password'"
               [attr.aria-pressed]="passwordVisible()"
               (click)="togglePasswordVisibility()"
             >
@@ -169,12 +136,8 @@
                 >
                   <path d="m3 3 18 18" />
                   <path d="M10.6 10.7a2 2 0 0 0 2.7 2.7" />
-                  <path
-                    d="M9.9 4.2A10.7 10.7 0 0 1 12 4c5.5 0 9 5 9 5a15.6 15.6 0 0 1-2.1 2.6"
-                  />
-                  <path
-                    d="M6.6 6.6C4.4 8 3 10 3 10s3.5 5 9 5c1 0 1.9-.2 2.7-.4"
-                  />
+                  <path d="M9.9 4.2A10.7 10.7 0 0 1 12 4c5.5 0 9 5 9 5a15.6 15.6 0 0 1-2.1 2.6" />
+                  <path d="M6.6 6.6C4.4 8 3 10 3 10s3.5 5 9 5c1 0 1.9-.2 2.7-.4" />
                 </svg>
               } @else {
                 <svg
@@ -187,9 +150,7 @@
                   stroke-linejoin="round"
                   stroke-width="1.8"
                 >
-                  <path
-                    d="M3 10s3.5-5 9-5 9 5 9 5-3.5 5-9 5-9-5-9-5Z"
-                  />
+                  <path d="M3 10s3.5-5 9-5 9 5 9 5-3.5 5-9 5-9-5-9-5Z" />
                   <circle cx="12" cy="10" r="2.5" />
                 </svg>
               }
@@ -200,12 +161,7 @@
             loginForm.controls.password.invalid &&
             (loginForm.controls.password.touched || submissionAttempted())
           ) {
-            <p
-              id="password-error"
-              class="mt-1.5 text-helper text-danger"
-            >
-              Password is required.
-            </p>
+            <p id="password-error" class="mt-1.5 text-helper text-danger">Password is required.</p>
           }
         </div>
 

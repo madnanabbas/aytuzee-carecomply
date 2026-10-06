@@ -1,0 +1,550 @@
+<div class="mx-auto min-w-0 w-full max-w-[100rem] pb-8">
+  <div class="mb-2 flex items-center gap-2 text-[11px] font-medium text-text-muted">
+    <a routerLink="/clients" class="hover:text-primary">Clients</a><span>/</span
+    ><span class="text-text-primary">{{ client.firstName }} {{ client.lastName }}</span>
+  </div>
+
+  @if (createdMessage()) {
+    <div
+      class="mb-3 rounded-control border border-green-200 bg-green-50 px-3 py-2 text-[11px] font-medium text-green-800"
+    >
+      Client created successfully.
+    </div>
+  }
+
+  @if (loading()) {
+    <div
+      class="flex min-h-64 items-center justify-center rounded-surface border border-border bg-surface"
+    >
+      <div class="text-center">
+        <div
+          class="mx-auto size-7 animate-spin rounded-full border-2 border-border border-t-primary"
+        ></div>
+        <p class="mt-3 text-[11px] text-text-secondary">Loading client…</p>
+      </div>
+    </div>
+  } @else if (loadFailed()) {
+    <div
+      class="flex min-h-64 items-center justify-center rounded-surface border border-border bg-surface p-6 text-center"
+    >
+      <div>
+        <h2 class="text-[13px] font-semibold text-text-primary">Client could not be loaded</h2>
+        <p class="mt-1 text-[11px] text-text-secondary">
+          The record may not exist or the API is unavailable.
+        </p>
+        <button
+          type="button"
+          class="mt-3 h-8 rounded-control border border-border-strong px-3 text-[11px] font-medium text-primary"
+          (click)="retry()"
+        >
+          Retry
+        </button>
+      </div>
+    </div>
+  }
+
+  <div [class.hidden]="loading() || loadFailed()">
+    <section class="record-shell">
+      <div class="record-header">
+        <div class="record-identity">
+          <div class="record-avatar">
+            {{ client.firstName.charAt(0) }}{{ client.lastName.charAt(0) }}
+          </div>
+          <div class="min-w-0">
+            <div class="flex min-w-0 flex-wrap items-center gap-2">
+              <h1 class="truncate text-[20px] font-semibold leading-6 text-text-primary">
+                {{ client.fullName }}
+              </h1>
+              <span
+                class="rounded-status px-2 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide ring-1 ring-inset"
+                [class]="statusClass(client.status)"
+                >{{ client.status }}</span
+              >
+            </div>
+            <div class="record-meta mt-1.5">
+              <span
+                ><em>PMI</em><strong>{{ client.pmi }}</strong></span
+              >
+              <span
+                ><em>DOB</em><strong>{{ client.dob }}</strong></span
+              >
+              <span
+                ><em>Age</em><strong>{{ client.age }}</strong></span
+              >
+              <span
+                ><em>Gender</em><strong>{{ client.gender }}</strong></span
+              >
+              <span
+                ><em>Preferred name</em><strong>{{ client.goesBy }}</strong></span
+              >
+            </div>
+          </div>
+        </div>
+
+        <div class="record-actions">
+          @if (canEditClient()) {
+            <a [routerLink]="['/clients', client.id, 'edit']" class="command-button">
+              <svg
+                aria-hidden="true"
+                class="size-3.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              >
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg
+              >Edit client
+            </a>
+          }
+        </div>
+      </div>
+
+      <div class="record-summary-grid">
+        <section class="summary-section">
+          <div class="summary-heading">Care setup</div>
+          <dl class="summary-kv-grid">
+            <div>
+              <dt>Program</dt>
+              <dd>{{ client.program }}</dd>
+            </div>
+            <div>
+              <dt>Supervisor</dt>
+              <dd>{{ client.supervisor }}</dd>
+            </div>
+            <div>
+              <dt>Location</dt>
+              <dd>{{ client.location }}</dd>
+            </div>
+            <div>
+              <dt>SOC date</dt>
+              <dd>{{ client.socDate }}</dd>
+            </div>
+            <div>
+              <dt>Onboarding</dt>
+              <dd>{{ client.onboarding ? 'Yes' : 'No' }}</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="summary-section summary-section-bordered">
+          <div class="flex items-center justify-between gap-3">
+            <div class="summary-heading">Compliance at a glance</div>
+            <span class="text-[10px] text-text-muted">Not available</span>
+          </div>
+          <div class="compliance-grid">
+            <div class="metric-tile"><strong>—</strong><span>Documents</span></div>
+            <div class="metric-tile metric-warning"><strong>—</strong><span>Expiring</span></div>
+            <div class="metric-tile metric-danger">
+              <strong>{{ openTodoCount() ?? '—' }}</strong
+              ><span>Open todos</span>
+            </div>
+            <div class="metric-tile"><strong>—</strong><span>Compliance</span></div>
+          </div>
+        </section>
+
+        <section class="summary-section summary-section-bordered">
+          <div class="summary-heading">Client status</div>
+          <dl class="status-grid">
+            <dt>Eligibility</dt>
+            <dd>
+              <span
+                class="rounded-status bg-surface-muted px-2 py-0.5 text-[9.5px] font-semibold text-text-secondary ring-1 ring-inset ring-border"
+                >{{ client.eligibility }}</span
+              >
+            </dd>
+            <dt>Last checked</dt>
+            <dd>{{ client.eligibilityChecked }}</dd>
+            <dt>Record status</dt>
+            <dd>{{ client.status }}</dd>
+          </dl>
+        </section>
+      </div>
+    </section>
+
+    <div class="client-record-layout">
+      <aside
+        class="client-record-rail client-vertical-nav-card"
+        aria-label="Client record navigation"
+      >
+        @for (group of navigationGroups(); track group.label) {
+          @if (group.items.length) {
+            <section class="client-record-nav-group">
+              <h2 class="client-record-nav-label client-vertical-nav-heading">
+                {{ group.label }}
+              </h2>
+              @for (item of group.items; track item.id) {
+                <button
+                  type="button"
+                  class="client-record-nav-item client-vertical-nav-item"
+                  [class.active]="activeTab() === item.id"
+                  [attr.aria-current]="activeTab() === item.id ? 'page' : null"
+                  (click)="setTab(item.id)"
+                >
+                  {{ item.label }}
+                </button>
+              }
+            </section>
+          }
+        }
+      </aside>
+
+      <div class="client-mobile-section">
+        <label for="client-view-section">Client section</label>
+        <select id="client-view-section" [value]="activeTab()" (change)="selectTab($event)">
+          @for (group of navigationGroups(); track group.label) {
+            @if (group.items.length) {
+              <optgroup [label]="group.label">
+                @for (item of group.items; track item.id) {
+                  <option [value]="item.id">{{ item.label }}</option>
+                }
+              </optgroup>
+            }
+          }
+        </select>
+      </div>
+
+      <main class="client-record-content">
+        @if (activeTab() === 'overview') {
+          <app-client-view-overview
+            [client]="client"
+            [documents]="documents"
+            [canEditClient]="canEditClient()"
+            [hasSsn]="hasSsn()"
+            [canRevealSsn]="canRevealSsn()"
+            [ssn]="ssn()"
+            [ssnRevealing]="ssnRevealing()"
+            [ssnError]="ssnError()"
+            (revealRequested)="revealSsn()"
+            (hideRequested)="hideSsn()"
+          />
+        } @else if (activeTab() === 'primary-caregivers') {
+          <app-client-intake-profile [clientId]="client.id" section="caregivers" />
+        } @else if (activeTab() === 'contacts') {
+          <app-client-intake-profile [clientId]="client.id" section="contacts" />
+        } @else if (activeTab() === 'care-coordinators') {
+          <app-client-intake-profile [clientId]="client.id" section="coordinators" />
+        } @else if (activeTab() === 'consultation-providers') {
+          <app-client-intake-profile [clientId]="client.id" section="providers" />
+        } @else if (activeTab() === 'doctors') {
+          <app-client-intake-profile [clientId]="client.id" section="physicians" />
+        } @else if (activeTab() === 'responsible-parties') {
+          <app-client-intake-profile [clientId]="client.id" section="responsible-parties" />
+        } @else if (activeTab() === 'hospitalizations') {
+          <app-client-intake-profile [clientId]="client.id" section="hospitalizations" />
+        } @else {
+          @if (activeTab() === 'quick-notes') {
+            <section class="panel-card">
+              <header class="panel-header">
+                <div>
+                  <h2>Quick Notes</h2>
+                  <p>Internal notes, case updates and client communication history.</p>
+                </div>
+                @if (hasPermission(permissions.ClientQuickNote.Create)) {
+                  <button class="primary-action" type="button" (click)="openDialog('note')">
+                    Add note
+                  </button>
+                }
+              </header>
+              <div class="overflow-x-auto">
+                <table class="compact-table min-w-[70rem]">
+                  <thead>
+                    <tr>
+                      <th>Subject</th>
+                      <th>Type</th>
+                      <th>Tagged employee</th>
+                      <th>Created by</th>
+                      <th>Created</th>
+                      <th>Attachment</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of quickNotes; track row.subject) {
+                      <tr>
+                        <td class="font-medium text-text-primary">{{ row.subject }}</td>
+                        <td>{{ row.type }}</td>
+                        <td>{{ row.tagged }}</td>
+                        <td>{{ row.createdBy }}</td>
+                        <td>{{ row.created }}</td>
+                        <td class="text-primary">{{ row.attachment }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          } @else if (activeTab() === 'todos') {
+            <app-client-todos
+              [clientId]="client.id"
+              (openCountChange)="openTodoCount.set($event)"
+            />
+          } @else if (activeTab() === 'service-agreements') {
+            <section class="panel-card">
+              <header class="panel-header">
+                <div>
+                  <h2>Service Agreements</h2>
+                  <p>Service authorizations, effective periods and signed agreement files.</p>
+                </div>
+                @if (hasPermission(permissions.ClientServiceAgreement.Create)) {
+                  <button
+                    class="primary-action"
+                    type="button"
+                    (click)="openDialog('service-agreement')"
+                  >
+                    Add service agreement
+                  </button>
+                }
+              </header>
+              <div class="overflow-x-auto">
+                <table class="compact-table min-w-[68rem]">
+                  <thead>
+                    <tr>
+                      <th>Service</th>
+                      <th>Start date</th>
+                      <th>End date</th>
+                      <th>Authorized hours</th>
+                      <th>Status</th>
+                      <th>Document</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of serviceAgreements; track row.document) {
+                      <tr>
+                        <td class="font-medium text-text-primary">{{ row.service }}</td>
+                        <td>{{ row.start }}</td>
+                        <td>{{ row.end }}</td>
+                        <td>{{ row.hours }}</td>
+                        <td>
+                          <span class="status-pill" [class]="statusClass(row.status)">{{
+                            row.status
+                          }}</span>
+                        </td>
+                        <td class="text-primary">{{ row.document }}</td>
+                        <td>
+                          @if (hasPermission(permissions.ClientServiceAgreement.Edit)) {
+                            <button class="table-link">Edit</button>
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          } @else if (activeTab() === 'forms') {
+            <section class="panel-card">
+              <header class="panel-header">
+                <div>
+                  <h2>Forms</h2>
+                  <p>Client-related forms and completion status.</p>
+                </div>
+                @if (hasPermission(permissions.ClientForm.Create)) {
+                  <button class="primary-action" type="button" (click)="openDialog('form')">
+                    Add form
+                  </button>
+                }
+              </header>
+              <div class="overflow-x-auto">
+                <table class="compact-table min-w-[54rem]">
+                  <thead>
+                    <tr>
+                      <th>Form</th>
+                      <th>Category</th>
+                      <th>Status</th>
+                      <th>Due date</th>
+                      <th>Updated</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of forms; track row.form) {
+                      <tr>
+                        <td class="font-medium text-text-primary">{{ row.form }}</td>
+                        <td>{{ row.category }}</td>
+                        <td>
+                          <span class="status-pill" [class]="statusClass(row.status)">{{
+                            row.status
+                          }}</span>
+                        </td>
+                        <td>{{ row.due }}</td>
+                        <td>{{ row.updated }}</td>
+                        <td>
+                          @if (hasPermission(permissions.ClientForm.Edit)) {
+                            <button class="table-link">Open</button>
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          } @else if (activeTab() === 'documents') {
+            <section class="panel-card">
+              <header class="panel-header">
+                <div>
+                  <h2>Documents</h2>
+                  <p>Secure client documents, metadata, expiry and review status.</p>
+                </div>
+                @if (canUploadDocuments()) {
+                  <button class="primary-action" type="button" (click)="openDialog('document')">
+                    Upload document
+                  </button>
+                }
+              </header>
+              <div class="overflow-x-auto">
+                <table class="compact-table min-w-[80rem]">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Type</th>
+                      <th>Document</th>
+                      <th>Size</th>
+                      <th>Status</th>
+                      <th>Expiry</th>
+                      <th>Created by</th>
+                      <th>Created</th>
+                      <th>Updated</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of documents; track row.file) {
+                      <tr>
+                        <td class="font-medium text-text-primary">{{ row.name }}</td>
+                        <td>{{ row.type }}</td>
+                        <td class="text-primary">{{ row.file }}</td>
+                        <td>{{ row.size }}</td>
+                        <td>
+                          <span class="status-pill" [class]="statusClass(row.status)">{{
+                            row.status
+                          }}</span>
+                        </td>
+                        <td>{{ row.expiry }}</td>
+                        <td>{{ row.createdBy }}</td>
+                        <td>{{ row.created }}</td>
+                        <td>{{ row.updated }}</td>
+                        <td>
+                          @if (hasPermission(permissions.ClientDocument.View)) {
+                            <button class="table-link">View</button>
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          } @else if (activeTab() === 'email-logs') {
+            <section class="panel-card">
+              <header class="panel-header">
+                <div>
+                  <h2>Email Logs</h2>
+                  <p>
+                    Notification delivery history related to this client. Email content is not
+                    displayed here.
+                  </p>
+                </div>
+              </header>
+              <div class="overflow-x-auto">
+                <table class="compact-table min-w-[68rem]">
+                  <thead>
+                    <tr>
+                      <th>Subject</th>
+                      <th>Recipient</th>
+                      <th>Type</th>
+                      <th>Sent by</th>
+                      <th>Sent at</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of emailLogs; track row.subject) {
+                      <tr>
+                        <td class="font-medium text-text-primary">{{ row.subject }}</td>
+                        <td>{{ row.recipient }}</td>
+                        <td>{{ row.type }}</td>
+                        <td>{{ row.sentBy }}</td>
+                        <td>{{ row.sentAt }}</td>
+                        <td>
+                          <span class="status-pill" [class]="statusClass(row.status)">{{
+                            row.status
+                          }}</span>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          } @else if (activeTab() === 'employee-services') {
+            <section class="panel-card">
+              <header class="panel-header">
+                <div>
+                  <h2>Employee Services / Care Team</h2>
+                  <p>Employees and caregivers assigned to this client's services.</p>
+                </div>
+                @if (hasPermission(permissions.ClientEmployeeService.Create)) {
+                  <button
+                    class="primary-action"
+                    type="button"
+                    (click)="openDialog('employee-service')"
+                  >
+                    Assign employee
+                  </button>
+                }
+              </header>
+              <div class="overflow-x-auto">
+                <table class="compact-table min-w-[68rem]">
+                  <thead>
+                    <tr>
+                      <th>Employee</th>
+                      <th>Title</th>
+                      <th>Service</th>
+                      <th>Start of service</th>
+                      <th>Last working date</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of employeeServices; track row.employee + row.service) {
+                      <tr>
+                        <td class="font-medium text-text-primary">{{ row.employee }}</td>
+                        <td>{{ row.title }}</td>
+                        <td>{{ row.service }}</td>
+                        <td>{{ row.start }}</td>
+                        <td>{{ row.lastWorked }}</td>
+                        <td>
+                          <span class="status-pill" [class]="statusClass(row.status)">{{
+                            row.status
+                          }}</span>
+                        </td>
+                        <td>
+                          @if (hasPermission(permissions.ClientEmployeeService.Edit)) {
+                            <button class="table-link">Edit</button>
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          }
+        }
+      </main>
+    </div>
+  </div>
+
+  @if (activeDialog(); as dialog) {
+    <app-client-view-dialog
+      [dialog]="dialog"
+      [definition]="dialogDefinition()"
+      [draft]="draft"
+      (closed)="closeDialog()"
+      (submitted)="submitDialog()"
+    />
+  }
+</div>

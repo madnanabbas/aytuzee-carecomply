@@ -4,6 +4,8 @@ import { API_BASE_URL, APP_CONFIG, AppConfig, provideAppConfig } from './app-con
 describe('provideAppConfig', () => {
   const config: Readonly<AppConfig> = {
     apiBaseUrl: '/api',
+    postalLookupBaseUrl: 'https://api.zippopotam.us',
+    geographyBaseUrl: 'https://countriesnow.space/api/v0.1',
   };
 
   beforeEach(() => {
@@ -22,7 +24,11 @@ describe('provideAppConfig', () => {
 
   it('should allow the application configuration to be overridden in tests', () => {
     TestBed.overrideProvider(APP_CONFIG, {
-      useValue: { apiBaseUrl: '/test-api' } satisfies AppConfig,
+      useValue: {
+        apiBaseUrl: '/test-api',
+        postalLookupBaseUrl: 'https://postal.example.test',
+        geographyBaseUrl: 'https://geography.example.test',
+      } satisfies AppConfig,
     });
 
     expect(TestBed.inject(API_BASE_URL)).toBe('/test-api');

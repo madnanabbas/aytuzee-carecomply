@@ -1,5 +1,12 @@
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRouteSnapshot, GuardResult, provideRouter, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
+import {
+  ActivatedRouteSnapshot,
+  GuardResult,
+  provideRouter,
+  Router,
+  RouterStateSnapshot,
+  UrlTree,
+} from '@angular/router';
 import { firstValueFrom, isObservable } from 'rxjs';
 import { AuthSessionService } from '../auth/auth-session.service';
 import { AuthenticatedLandingService } from '../auth/authenticated-landing.service';
@@ -18,13 +25,16 @@ describe('MFA route guards', () => {
 
   beforeEach(() => {
     authenticated = false;
-    context = { status: 'mfaRequired' };
+    context = { status: 'mfaRequired', method: 'Authenticator' };
     vi.clearAllMocks();
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
         { provide: AuthSessionService, useValue: session },
-        { provide: AuthenticatedLandingService, useValue: { firstAllowedPath: () => '/dashboard' } },
+        {
+          provide: AuthenticatedLandingService,
+          useValue: { firstAllowedPath: () => '/dashboard' },
+        },
       ],
     });
     router = TestBed.inject(Router);
@@ -34,7 +44,7 @@ describe('MFA route guards', () => {
     await expect(runGuard(mfaChallengeGuard)).resolves.toBe(true);
     expectUrl(await runGuard(mfaEnrollmentGuard), '/auth/mfa');
 
-    context = { status: 'mfaEnrollmentRequired' };
+    context = { status: 'mfaEnrollmentRequired', method: 'Authenticator' };
     await expect(runGuard(mfaEnrollmentGuard)).resolves.toBe(true);
     expectUrl(await runGuard(mfaChallengeGuard), '/auth/mfa/setup');
   });

@@ -5,11 +5,13 @@ import { API_BASE_URL } from '../config/app-config';
 import {
   CsrfTokenResponse,
   CurrentUserResponse,
+  ForgotPasswordResponse,
   LoginCredentials,
   MfaContextResponse,
   MfaEnrollmentConfirmedResponse,
   MfaEnrollmentResponse,
   MfaRequiredResponse,
+  ResetPasswordRequest,
 } from './auth.models';
 
 @Injectable({
@@ -23,6 +25,14 @@ export class AuthApiService {
     return this.http.post<MfaRequiredResponse>(this.authUrl('login'), credentials, {
       observe: 'response',
     });
+  }
+
+  requestPasswordReset(email: string): Observable<ForgotPasswordResponse> {
+    return this.http.post<ForgotPasswordResponse>(this.authUrl('password/forgot'), { email });
+  }
+
+  resetPassword(request: ResetPasswordRequest): Observable<void> {
+    return this.http.post<void>(this.authUrl('password/reset'), request);
   }
 
   getCurrentUser(): Observable<CurrentUserResponse> {
@@ -46,10 +56,9 @@ export class AuthApiService {
   }
 
   confirmMfaEnrollment(code: string): Observable<MfaEnrollmentConfirmedResponse> {
-    return this.http.post<MfaEnrollmentConfirmedResponse>(
-      this.authUrl('mfa/enrollment/confirm'),
-      { code },
-    );
+    return this.http.post<MfaEnrollmentConfirmedResponse>(this.authUrl('mfa/enrollment/confirm'), {
+      code,
+    });
   }
 
   verifyMfa(code: string): Observable<void> {
@@ -58,6 +67,10 @@ export class AuthApiService {
 
   verifyMfaRecoveryCode(recoveryCode: string): Observable<void> {
     return this.http.post<void>(this.authUrl('mfa/recovery'), { recoveryCode });
+  }
+
+  resendMfaEmailCode(): Observable<void> {
+    return this.http.post<void>(this.authUrl('mfa/email/resend'), null);
   }
 
   cancelMfa(): Observable<void> {

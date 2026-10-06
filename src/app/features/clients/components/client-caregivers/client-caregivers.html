@@ -1,0 +1,164 @@
+<section class="panel-card">
+  <header class="panel-header">
+    <div>
+      <h2>Primary caregivers</h2>
+      <p>Manage the client's primary and backup care team assignments.</p>
+    </div>
+  </header>
+  @if (!canView()) {
+    <div class="p-8 text-center text-text-muted">
+      You do not have permission to view caregiver assignments.
+    </div>
+  } @else {
+    @if (error()) {
+      <div class="border-b border-danger/20 bg-danger/5 px-4 py-2 text-danger" role="alert">
+        {{ error() }}
+      </div>
+    }
+    @if (canCreate() || editing()) {
+      <div class="space-y-4 border-b border-border p-4">
+        <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <label
+            ><span class="form-label">Caregiver *</span
+            ><select class="form-control" [(ngModel)]="draft.userId" [disabled]="!!editing()">
+              <option value="">Select caregiver</option>
+              @for (person of candidates(); track person.id) {
+                <option [value]="person.id">{{ person.name }} — {{ person.title }}</option>
+              }
+            </select></label
+          >
+          <label
+            ><span class="form-label">Assignment type *</span
+            ><select class="form-control" [(ngModel)]="draft.type">
+              <option value="Primary">Primary</option>
+              <option value="Backup">Backup</option>
+            </select></label
+          >
+          <label
+            ><span class="form-label">Start date *</span
+            ><input class="form-control" type="date" [(ngModel)]="draft.startDate"
+          /></label>
+          <label
+            ><span class="form-label">End date</span
+            ><input
+              class="form-control"
+              type="date"
+              [min]="draft.startDate"
+              [(ngModel)]="draft.endDate"
+          /></label>
+          <label
+            ><span class="form-label">Relationship *</span
+            ><select class="form-control" [(ngModel)]="draft.relationshipToClient">
+              <option value="">Select relationship</option>
+              @for (relationship of relationshipOptions; track relationship) {
+                <option [value]="relationship">{{ relationship }}</option>
+              }
+            </select></label
+          >
+          <label
+            ><span class="form-label">Lives with client? *</span
+            ><select class="form-control" [(ngModel)]="draft.livesWithClient">
+              <option [ngValue]="null">Select an answer</option>
+              <option [ngValue]="true">Yes</option>
+              <option [ngValue]="false">No</option>
+            </select></label
+          >
+          <label
+            ><span class="form-label">Assigned services</span
+            ><input class="form-control" [(ngModel)]="draft.services" placeholder="Services"
+          /></label>
+          <label
+            ><span class="form-label">Notes</span
+            ><input class="form-control" [(ngModel)]="draft.notes" placeholder="Optional notes"
+          /></label>
+        </div>
+        @if (invalidDates()) {
+          <p class="text-danger">End date cannot be before the start date.</p>
+        }
+        <label class="flex items-center gap-2"
+          ><input type="checkbox" [(ngModel)]="draft.isPreferred" /> Client preference</label
+        >
+        <div class="flex justify-end gap-2">
+          @if (editing()) {
+            <button class="secondary-action" type="button" (click)="close()">Cancel edit</button>
+          }
+          <button class="primary-action" type="button" [disabled]="saving()" (click)="save()">
+            {{ saving() ? 'Saving…' : editing() ? 'Update caregiver' : 'Add caregiver' }}
+          </button>
+        </div>
+      </div>
+    }
+    @if (!loading()) {
+      <div class="assignment-summary">
+        <div>
+          <span>Active</span><strong>{{ activeCount() }}</strong>
+        </div>
+        <div>
+          <span>Primary</span><strong>{{ primaryCount() }}</strong>
+        </div>
+        <div>
+          <span>Backup</span><strong>{{ backupCount() }}</strong>
+        </div>
+      </div>
+    }
+    @if (loading()) {
+      <div class="p-8 text-center">Loading caregivers…</div>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="compact-table min-w-[60rem]">
+          <thead>
+            <tr>
+              <th>Caregiver</th>
+              <th>Title</th>
+              <th>Assignment</th>
+              <th>Services</th>
+              <th>Effective dates</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of assignments(); track row.id) {
+              <tr>
+                <td>
+                  <strong>{{ row.name }}</strong>
+                  <div class="text-text-muted">
+                    {{ row.relationshipToClient }} ·
+                    {{ row.livesWithClient ? 'Lives with client' : 'Does not live with client' }}
+                  </div>
+                </td>
+                <td>{{ row.title }}</td>
+                <td>{{ row.type }}</td>
+                <td>{{ row.services || '—' }}</td>
+                <td>{{ date(row.startDate) }} – {{ date(row.endDate) }}</td>
+                <td>{{ effectiveStatus(row) }}</td>
+                <td>
+                  <div class="row-actions">
+                    @if (canEdit()) {
+                      <button class="row-action" type="button" (click)="edit(row)">Edit</button>
+                      @if (effectiveStatus(row) === 'Active') {
+                        <button
+                          class="row-action row-action-danger"
+                          type="button"
+                          (click)="end(row)"
+                        >
+                          End
+                        </button>
+                      }
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7" class="py-8 text-center text-text-muted">
+                  No caregiver assignments recorded.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</section>

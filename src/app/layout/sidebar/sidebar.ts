@@ -1,6 +1,5 @@
 import {
   Component,
-  computed,
   effect,
   ElementRef,
   inject,
@@ -10,23 +9,11 @@ import {
   viewChild,
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import {
-  Router,
-  RouterLink,
-  RouterLinkActive,
-} from '@angular/router';
-import {
-  LucideChevronDown,
-  LucideDynamicIcon,
-  LucideX,
-} from '@lucide/angular';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { LucideChevronDown, LucideDynamicIcon, LucideX } from '@lucide/angular';
 
-import { AuthorizationService } from '../../core/authorization/authorization.service';
-import {
-  APP_NAVIGATION_GROUPS,
-  canViewNavigationItem,
-  NavigationItem,
-} from '../../core/navigation/app-navigation';
+import { NavigationItem } from '../../core/navigation/navigation.models';
+import { NavigationService } from '../../core/navigation/navigation.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -45,13 +32,10 @@ import {
   },
 })
 export class SidebarComponent {
-  private readonly authorization = inject(AuthorizationService);
+  private readonly navigation = inject(NavigationService);
   private readonly router = inject(Router);
 
-  private readonly closeButton =
-    viewChild<ElementRef<HTMLButtonElement>>(
-      'closeButton',
-    );
+  private readonly closeButton = viewChild<ElementRef<HTMLButtonElement>>('closeButton');
 
   readonly mobileOpen = input(false);
 
@@ -59,31 +43,10 @@ export class SidebarComponent {
 
   readonly collapsed = signal(false);
 
-  readonly expandedModules = signal<
-    ReadonlySet<string>
-  >(new Set<string>());
+  readonly expandedModules = signal<ReadonlySet<string>>(new Set<string>());
 
-  readonly visibleGroups = computed(() =>
-    APP_NAVIGATION_GROUPS
-      .map((group) => ({
-        ...group,
-
-        items: group.items
-          .map((item) =>
-            this.createVisibleItem(item),
-          )
-          .filter(
-            (
-              item,
-            ): item is NavigationItem =>
-              item !== null,
-          ),
-      }))
-      .filter(
-        (group) =>
-          group.items.length > 0,
-      ),
-  );
+  readonly groups = this.navigation.groups;
+  readonly navigationStatus = this.navigation.status;
 
   constructor() {
     effect(() => {
@@ -98,68 +61,43 @@ export class SidebarComponent {
   }
 
   toggleCollapsed(): void {
-    this.collapsed.update(
-      (collapsed) => !collapsed,
-    );
+    this.collapsed.update((collapsed) => !collapsed);
   }
 
-  toggleModule(
-    itemId: string,
-  ): void {
-    this.expandedModules.update(
-      (current) => {
-        const next = new Set(current);
+  toggleModule(itemId: string): void {
+    this.expandedModules.update((current) => {
+      const next = new Set(current);
 
-        if (next.has(itemId)) {
-          next.delete(itemId);
-        } else {
-          next.add(itemId);
-        }
+      if (next.has(itemId)) {
+        next.delete(itemId);
+      } else {
+        next.add(itemId);
+      }
 
-        return next;
-      },
-    );
+      return next;
+    });
   }
 
-  isModuleExpanded(
-    itemId: string,
-  ): boolean {
-    return this.expandedModules().has(
-      itemId,
-    );
+  isModuleExpanded(itemId: string): boolean {
+    return this.expandedModules().has(itemId);
   }
 
-  isChildRouteActive(
-    item: NavigationItem,
-  ): boolean {
-    if (!item.children?.length) {
+  isChildRouteActive(item: NavigationItem): boolean {
+    if (!item.children.length) {
       return false;
     }
 
-    const currentUrl =
-      this.normalizeUrl(
-        this.router.url,
-      );
+    const currentUrl = this.normalizeUrl(this.router.url);
 
-    return item.children.some(
-      (child) => {
-        if (!child.route) {
-          return false;
-        }
+    return item.children.some((child) => {
+      if (!child.route) {
+        return false;
+      }
 
-        const childRoute =
-          this.normalizeUrl(
-            child.route,
-          );
+      const childRoute = this.normalizeUrl(child.route);
 
-        return (
-          currentUrl === childRoute ||
-          currentUrl.startsWith(
-            `${childRoute}/`,
-          )
-        );
-      },
-    );
+      return currentUrl === childRoute || currentUrl.startsWith(`${childRoute}/`);
+    });
   }
 
   close(): void {
@@ -176,61 +114,13 @@ export class SidebarComponent {
     }
   }
 
-  private createVisibleItem(
-    item: NavigationItem,
-  ): NavigationItem | null {
-    const visibleChildren =
-      item.children?.filter(
-        (child) =>
-          canViewNavigationItem(
-            this.authorization,
-            child,
-          ),
-      );
+  private normalizeUrl(url: string): string {
+    const withoutQuery = url.split('?')[0] ?? url;
 
-    const parentVisible =
-      canViewNavigationItem(
-        this.authorization,
-        item,
-      );
+    const withoutFragment = withoutQuery.split('#')[0] ?? withoutQuery;
 
-    const hasVisibleChildren =
-      visibleChildren !== undefined &&
-      visibleChildren.length > 0;
-
-    if (
-      !parentVisible &&
-      !hasVisibleChildren
-    ) {
-      return null;
-    }
-
-    return {
-      ...item,
-
-      children:
-        visibleChildren,
-    };
-  }
-
-  private normalizeUrl(
-    url: string,
-  ): string {
-    const withoutQuery =
-      url.split('?')[0] ?? url;
-
-    const withoutFragment =
-      withoutQuery.split('#')[0] ??
-      withoutQuery;
-
-    if (
-      withoutFragment.length > 1 &&
-      withoutFragment.endsWith('/')
-    ) {
-      return withoutFragment.slice(
-        0,
-        -1,
-      );
+    if (withoutFragment.length > 1 && withoutFragment.endsWith('/')) {
+      return withoutFragment.slice(0, -1);
     }
 
     return withoutFragment;

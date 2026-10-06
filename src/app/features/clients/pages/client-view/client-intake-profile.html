@@ -1,0 +1,219 @@
+<section class="panel-card" [attr.aria-label]="sectionLabel()">
+  <header class="panel-header">
+    <div>
+      <h2>{{ sectionLabel() }}</h2>
+      <p>View-only client information.</p>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <p class="profile-empty">Loading profile information…</p>
+  } @else if (!canView()) {
+    <p class="profile-empty">This information is not available with your current permissions.</p>
+  } @else {
+    <div class="overflow-x-auto">
+      <table class="compact-table profile-table">
+        @switch (section) {
+          @case ('caregivers') {
+            <thead>
+              <tr>
+                <th>Caregiver</th>
+                <th>Assignment</th>
+                <th>Relationship</th>
+                <th>Services</th>
+                <th>Start</th>
+                <th>End</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of caregivers(); track row.id) {
+                <tr>
+                  <td>{{ row.name }}</td>
+                  <td>{{ row.type }}</td>
+                  <td>{{ row.relationshipToClient || '—' }}</td>
+                  <td>{{ row.services || '—' }}</td>
+                  <td>{{ row.startDate }}</td>
+                  <td>{{ row.endDate || '—' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="6" class="profile-empty">No primary caregivers available.</td>
+                </tr>
+              }
+            </tbody>
+          }
+          @case ('contacts') {
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Name</th>
+                <th>Relationship</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of contacts(); track row.id) {
+                <tr>
+                  <td>{{ row.type }}</td>
+                  <td>{{ row.name }}</td>
+                  <td>{{ row.relationship }}</td>
+                  <td>{{ row.phone || '—' }}</td>
+                  <td>{{ row.email || '—' }}</td>
+                  <td>{{ row.isActive ? 'Active' : 'Inactive' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="6" class="profile-empty">No contacts available.</td>
+                </tr>
+              }
+            </tbody>
+          }
+          @case ('coordinators') {
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Company</th>
+                <th>Phone</th>
+                <th>Extension</th>
+                <th>Email</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of coordinators(); track row.id) {
+                <tr>
+                  <td>{{ row.name }}</td>
+                  <td>{{ row.companyName || '—' }}</td>
+                  <td>{{ row.phone || '—' }}</td>
+                  <td>{{ row.phoneExtension || '—' }}</td>
+                  <td>{{ row.email || '—' }}</td>
+                  <td>{{ row.isActive ? 'Active' : 'Inactive' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="6" class="profile-empty">No care coordinators available.</td>
+                </tr>
+              }
+            </tbody>
+          }
+          @case ('providers') {
+            <thead>
+              <tr>
+                <th>Provider</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Support provider</th>
+                <th>Support phone</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of providers(); track row.id) {
+                <tr>
+                  <td>{{ row.name }}</td>
+                  <td>{{ row.phone || '—' }}</td>
+                  <td>{{ row.email || '—' }}</td>
+                  <td>{{ row.secondaryName || '—' }}</td>
+                  <td>{{ row.secondaryPhone || '—' }}</td>
+                  <td>{{ row.isActive ? 'Active' : 'Inactive' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="6" class="profile-empty">No consultation providers available.</td>
+                </tr>
+              }
+            </tbody>
+          }
+          @case ('physicians') {
+            <thead>
+              <tr>
+                <th>Physician</th>
+                <th>NPI</th>
+                <th>Phone</th>
+                <th>Fax</th>
+                <th>Location</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of physicians(); track row.id) {
+                <tr>
+                  <td>{{ row.name }}</td>
+                  <td>{{ row.npi || '—' }}</td>
+                  <td>{{ row.phone || '—' }}</td>
+                  <td>{{ row.fax || '—' }}</td>
+                  <td>{{ row.city || '—' }} {{ row.state }}</td>
+                  <td>{{ row.isActive ? 'Active' : 'Inactive' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="6" class="profile-empty">No doctors available.</td>
+                </tr>
+              }
+            </tbody>
+          }
+          @case ('responsible-parties') {
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Relationship</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Lives with client</th>
+                <th>Spenddown</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of responsibleParties(); track row.id) {
+                <tr>
+                  <td>{{ row.name }}</td>
+                  <td>{{ row.relationship }}</td>
+                  <td>{{ row.phone }}</td>
+                  <td>{{ row.email || '—' }}</td>
+                  <td>
+                    {{ row.livesWithClient === null ? '—' : row.livesWithClient ? 'Yes' : 'No' }}
+                  </td>
+                  <td>{{ row.hasSpenddown === null ? '—' : row.hasSpenddown ? 'Yes' : 'No' }}</td>
+                  <td>{{ row.isActive ? 'Active' : 'Inactive' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="7" class="profile-empty">No responsible parties available.</td>
+                </tr>
+              }
+            </tbody>
+          }
+          @case ('hospitalizations') {
+            <thead>
+              <tr>
+                <th>Hospital</th>
+                <th>Admitted</th>
+                <th>Discharged</th>
+                <th>Reason</th>
+                <th>Diagnosis</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of hospitalizations(); track row.id) {
+                <tr>
+                  <td>{{ row.hospitalName }}</td>
+                  <td>{{ row.admittedAtUtc }}</td>
+                  <td>{{ row.dischargedAtUtc || '—' }}</td>
+                  <td>{{ row.reason || '—' }}</td>
+                  <td>{{ row.diagnosis || '—' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" class="profile-empty">No hospitalizations available.</td>
+                </tr>
+              }
+            </tbody>
+          }
+        }
+      </table>
+    </div>
+  }
+</section>

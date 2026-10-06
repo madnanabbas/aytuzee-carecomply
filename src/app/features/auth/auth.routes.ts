@@ -1,19 +1,14 @@
 import { Routes } from '@angular/router';
 
 import { anonymousOnlyGuard } from '../../core/guards/auth.guard';
-import {
-  mfaChallengeGuard,
-  mfaEnrollmentGuard,
-} from '../../core/guards/mfa-challenge.guard';
+import { mfaChallengeGuard, mfaEnrollmentGuard } from '../../core/guards/mfa-challenge.guard';
 
 export const authRoutes: Routes = [
   {
     path: 'login',
     canActivate: [anonymousOnlyGuard],
     loadComponent: () =>
-      import('./pages/login/login-page').then(
-        (module) => module.LoginPageComponent,
-      ),
+      import('./pages/login/login-page').then((module) => module.LoginPageComponent),
   },
   {
     path: 'forgot-password',
@@ -25,7 +20,6 @@ export const authRoutes: Routes = [
   },
   {
     path: 'reset-password',
-    canActivate: [anonymousOnlyGuard],
     loadComponent: () =>
       import('./pages/reset-password/reset-password-page').then(
         (module) => module.ResetPasswordPageComponent,

@@ -5,6 +5,7 @@ import { AuthSessionService } from '../../core/auth/auth-session.service';
 import { AuthorizationService } from '../../core/authorization/authorization.service';
 import { Permissions } from '../../core/authorization/permissions';
 import { AppShellComponent } from './app-shell';
+import { NavigationService } from '../../core/navigation/navigation.service';
 
 describe('AppShellComponent', () => {
   beforeEach(async () => {
@@ -22,6 +23,14 @@ describe('AppShellComponent', () => {
               permissions: [Permissions.Dashboard.View],
             }).asReadonly(),
             logout: vi.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: NavigationService,
+          useValue: {
+            groups: signal([]).asReadonly(),
+            status: signal('loaded').asReadonly(),
+            findByUrl: () => undefined,
           },
         },
       ],

@@ -6,8 +6,7 @@ import { MfaContextStatus } from '../auth/auth.models';
 
 export const mfaChallengeGuard: CanActivateFn = () => guardMfaContext('mfaRequired');
 
-export const mfaEnrollmentGuard: CanActivateFn = () =>
-  guardMfaContext('mfaEnrollmentRequired');
+export const mfaEnrollmentGuard: CanActivateFn = () => guardMfaContext('mfaEnrollmentRequired');
 
 async function guardMfaContext(expectedStatus: MfaContextStatus): Promise<boolean | UrlTree> {
   const session = inject(AuthSessionService);
