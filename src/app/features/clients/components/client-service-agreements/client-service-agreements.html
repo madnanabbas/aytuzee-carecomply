@@ -1,0 +1,330 @@
+<section class="panel-card">
+  <header class="panel-header">
+    <div>
+      <h2>Service Agreements</h2>
+      <p>Service authorizations, effective periods and approved service lines.</p>
+    </div>
+    @if (canCreate() && !editorOpen()) {
+      <button class="primary-action" type="button" (click)="startCreate()">
+        Add service agreement
+      </button>
+    }
+  </header>
+
+  @if (!canView()) {
+    <div class="p-8 text-center text-text-muted">
+      You do not have permission to view service agreements.
+    </div>
+  } @else {
+    @if (error()) {
+      <div class="border-b border-danger/20 bg-danger/5 px-4 py-2 text-danger" role="alert">
+        {{ error() }}
+      </div>
+    }
+
+    @if (editorOpen()) {
+      <div class="agreement-editor border-b border-border p-4">
+        <div class="editor-heading">
+          <div>
+            <h3>{{ editing() ? 'Edit service agreement' : 'Add service agreement' }}</h3>
+            <p>Enter the authorization details and one or more service lines.</p>
+          </div>
+          <button
+            class="command-button"
+            type="button"
+            [disabled]="saving()"
+            (click)="closeEditor()"
+          >
+            Cancel
+          </button>
+        </div>
+
+        <section class="editor-section">
+          <h4>Agreement details</h4>
+          <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <label
+              ><span class="form-label">Agreement / authorization number</span
+              ><input class="form-control" [(ngModel)]="draft.agreementNumber"
+            /></label>
+            <label
+              ><span class="form-label">Payer</span
+              ><input class="form-control" [(ngModel)]="draft.payerName"
+            /></label>
+            <label
+              ><span class="form-label">Insured / member ID</span
+              ><input class="form-control" [(ngModel)]="draft.insuredMemberId"
+            /></label>
+            <label
+              ><span class="form-label">Prior authorization</span
+              ><input class="form-control" [(ngModel)]="draft.priorAuthorizationNumber"
+            /></label>
+            <label
+              ><span class="form-label">Start date *</span
+              ><input class="form-control" type="date" [(ngModel)]="draft.startDate"
+            /></label>
+            <label>
+              <span class="form-label">End date</span>
+              <input
+                class="form-control"
+                type="date"
+                [min]="draft.startDate"
+                [(ngModel)]="draft.endDate"
+                [attr.aria-invalid]="invalidDates()"
+              />
+              @if (invalidDates()) {
+                <small class="field-error">End date cannot be before start date.</small>
+              }
+            </label>
+            <label
+              ><span class="form-label">Status</span
+              ><input class="form-control" [(ngModel)]="draft.status"
+            /></label>
+            <label class="md:col-span-2 xl:col-span-4"
+              ><span class="form-label">Notes</span
+              ><textarea class="form-control min-h-20" [(ngModel)]="draft.notes"></textarea>
+            </label>
+          </div>
+        </section>
+
+        <section class="editor-section">
+          <div class="line-heading">
+            <div>
+              <h4>Service lines</h4>
+              <p>Each agreement requires at least one service line.</p>
+            </div>
+            <button
+              class="command-button"
+              type="button"
+              [disabled]="lines().length >= 25"
+              (click)="addLine()"
+            >
+              Add service line
+            </button>
+          </div>
+          <div class="line-list">
+            @for (line of lines(); track line.id ?? $index; let index = $index) {
+              <article class="line-card">
+                <header>
+                  <strong>Service line {{ index + 1 }}</strong>
+                  @if (!line.id && lines().length > 1) {
+                    <button class="remove-line" type="button" (click)="removeLine(index)">
+                      Remove
+                    </button>
+                  } @else if (line.id) {
+                    <span>Persisted line</span>
+                  }
+                </header>
+                <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                  <label
+                    ><span class="form-label">Service code *</span
+                    ><input class="form-control" [(ngModel)]="line.serviceCode"
+                  /></label>
+                  <label
+                    ><span class="form-label">Service name *</span
+                    ><input class="form-control" [(ngModel)]="line.serviceName"
+                  /></label>
+                  <label
+                    ><span class="form-label">Unit type</span
+                    ><input class="form-control" [(ngModel)]="line.unitType"
+                  /></label>
+                  <label
+                    ><span class="form-label">Minutes per unit</span
+                    ><input
+                      class="form-control"
+                      type="number"
+                      min="1"
+                      step="1"
+                      [(ngModel)]="line.minutesPerUnit"
+                  /></label>
+                  <label
+                    ><span class="form-label">Authorized units</span
+                    ><input
+                      class="form-control"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      [(ngModel)]="line.authorizedUnits"
+                  /></label>
+                  <label
+                    ><span class="form-label">Rate per unit</span
+                    ><input
+                      class="form-control"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      [(ngModel)]="line.ratePerUnit"
+                  /></label>
+                  <label
+                    ><span class="form-label">Planned hours per visit</span
+                    ><input
+                      class="form-control"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      [(ngModel)]="line.plannedHoursPerVisit"
+                  /></label>
+                  <label
+                    ><span class="form-label">Planned visits per week</span
+                    ><input
+                      class="form-control"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      [(ngModel)]="line.plannedVisitsPerWeek"
+                  /></label>
+                  <label class="md:col-span-2 xl:col-span-3"
+                    ><span class="form-label">Primary diagnosis</span
+                    ><input class="form-control" [(ngModel)]="line.primaryDiagnosisText"
+                  /></label>
+                  <label
+                    ><span class="form-label">ICD code</span
+                    ><input class="form-control" [(ngModel)]="line.icdCode"
+                  /></label>
+                </div>
+              </article>
+            }
+          </div>
+        </section>
+
+        <div class="editor-actions">
+          <button
+            class="command-button"
+            type="button"
+            [disabled]="saving()"
+            (click)="closeEditor()"
+          >
+            Cancel
+          </button>
+          <button
+            class="primary-action"
+            type="button"
+            [disabled]="saving() || !valid()"
+            (click)="save()"
+          >
+            {{ saving() ? 'Saving…' : editing() ? 'Update agreement' : 'Create agreement' }}
+          </button>
+        </div>
+      </div>
+    }
+
+    @if (loading() || loadingEditor()) {
+      <p class="px-4 py-8 text-center text-[11px] text-text-muted">Loading service agreements…</p>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="compact-table min-w-[70rem]">
+          <thead>
+            <tr>
+              <th>Agreement / Authorization</th>
+              <th>Payer</th>
+              <th>Period</th>
+              <th>Status</th>
+              <th>Services</th>
+              <th>Authorized units</th>
+              <th>Estimated budget</th>
+              <th class="text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of items(); track row.id) {
+              <tr>
+                <td class="font-medium text-text-primary">
+                  {{ row.agreementNumber || row.priorAuthorizationNumber || '—' }}
+                </td>
+                <td>{{ row.payerName || '—' }}</td>
+                <td>{{ displayDate(row.startDate) }} – {{ displayDate(row.endDate) }}</td>
+                <td>
+                  <span class="status-pill">{{ row.status || '—' }}</span>
+                </td>
+                <td>
+                  <div class="max-w-64 truncate" [title]="servicesSummary(row)">
+                    {{ servicesSummary(row) }}
+                  </div>
+                </td>
+                <td>{{ authorizedUnitsSummary(row) }}</td>
+                <td>{{ estimatedBudgetSummary(row) }}</td>
+                <td class="text-right">
+                  <div class="row-actions">
+                    <button class="table-link" type="button" (click)="toggleDetails(row.id)">
+                      {{ expandedId() === row.id ? 'Hide details' : 'View details' }}
+                    </button>
+                    @if (canEdit()) {
+                      <button class="table-link" type="button" (click)="startEdit(row)">
+                        Edit
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+              @if (expandedId() === row.id) {
+                <tr class="details-row">
+                  <td colspan="8">
+                    <div class="line-details">
+                      @for (line of row.lines; track line.id) {
+                        <article>
+                          <strong
+                            >{{ line.serviceName }} <span>{{ line.serviceCode }}</span></strong
+                          >
+                          <dl>
+                            <div>
+                              <dt>Unit type</dt>
+                              <dd>{{ line.unitType || '—' }}</dd>
+                            </div>
+                            <div>
+                              <dt>Minutes/unit</dt>
+                              <dd>{{ number(line.minutesPerUnit) }}</dd>
+                            </div>
+                            <div>
+                              <dt>Authorized units</dt>
+                              <dd>{{ number(line.authorizedUnits) }}</dd>
+                            </div>
+                            <div>
+                              <dt>Rate/unit</dt>
+                              <dd>{{ currency(line.ratePerUnit) }}</dd>
+                            </div>
+                            <div>
+                              <dt>Planned hours/visit</dt>
+                              <dd>{{ number(line.plannedHoursPerVisit) }}</dd>
+                            </div>
+                            <div>
+                              <dt>Visits/week</dt>
+                              <dd>{{ number(line.plannedVisitsPerWeek) }}</dd>
+                            </div>
+                            <div>
+                              <dt>Planned hours/week</dt>
+                              <dd>{{ number(line.plannedHoursPerWeek) }}</dd>
+                            </div>
+                            <div>
+                              <dt>Planned units/week</dt>
+                              <dd>{{ number(line.plannedUnitsPerWeek) }}</dd>
+                            </div>
+                            <div>
+                              <dt>Estimated budget</dt>
+                              <dd>{{ currency(line.estimatedBudget) }}</dd>
+                            </div>
+                            <div>
+                              <dt>Diagnosis / ICD</dt>
+                              <dd>
+                                {{ line.primaryDiagnosisText || '—'
+                                }}{{ line.icdCode ? ' / ' + line.icdCode : '' }}
+                              </dd>
+                            </div>
+                          </dl>
+                        </article>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            } @empty {
+              <tr>
+                <td colspan="8" class="py-8 text-center text-text-muted">
+                  No service agreements have been added yet.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</section>

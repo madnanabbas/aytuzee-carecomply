@@ -31,14 +31,7 @@ export interface ClientTabDefinition {
 }
 
 export type ClientDialog =
-  | 'note'
-  | 'service-agreement'
-  | 'hospitalization'
-  | 'document'
-  | 'employee-service'
-  | 'visit'
-  | 'form'
-  | null;
+  'note' | 'hospitalization' | 'document' | 'employee-service' | 'visit' | 'form' | null;
 
 export interface DialogDefinition {
   title: string;
@@ -52,11 +45,6 @@ export interface ClientDialogDraft {
   note: string;
   taggedEmployee: string;
   attachment: string;
-  service: string;
-  agreementStart: string;
-  agreementEnd: string;
-  authorizedHours: string;
-  agreementFile: string;
   hospital: string;
   hospitalizedIn: string;
   inTime: string;

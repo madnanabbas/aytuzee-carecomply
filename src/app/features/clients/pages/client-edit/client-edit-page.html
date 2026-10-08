@@ -141,6 +141,8 @@
               <app-client-responsible-parties [clientId]="clientId" />
             } @else if (section() === 'hospitalizations') {
               <app-client-hospitalizations [clientId]="clientId" />
+            } @else if (section() === 'service-agreements') {
+              <app-client-service-agreements [clientId]="clientId" />
             }
           </div>
 

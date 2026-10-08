@@ -4,6 +4,8 @@ import { NEVER, of } from 'rxjs';
 import { LocationLookupService } from '../../../../core/lookups/location-lookup.service';
 import { ClientApiService } from '../../data-access/client-api.service';
 import { ClientDetails, UpdateClientRequest } from '../../models/client-api.models';
+import { AuthorizationService } from '../../../../core/authorization/authorization.service';
+import { Permissions } from '../../../../core/authorization/permissions';
 import { ClientEditPageComponent } from './client-edit-page';
 
 describe('ClientEditPageComponent wizard navigation', () => {
@@ -27,7 +29,7 @@ describe('ClientEditPageComponent wizard navigation', () => {
 
     expect(element.querySelector('app-client-wizard-sidebar')).toBeTruthy();
     expect(element.querySelector('app-client-wizard-stepper')).toBeNull();
-    expect(element.querySelectorAll('.client-wizard-sidebar li')).toHaveLength(10);
+    expect(element.querySelectorAll('.client-wizard-sidebar li')).toHaveLength(11);
     const sidebar = element.querySelector('.client-wizard-sidebar');
     const active = sidebar?.querySelector('[aria-current="step"]');
     expect(sidebar?.querySelector('.client-vertical-nav-heading')?.textContent?.trim()).toBe(
@@ -127,6 +129,40 @@ describe('ClientEditPageComponent wizard navigation', () => {
 
     expect(page.section()).toBe('contact');
     expect(page.activeStepIndex()).toBe(2);
+  });
+
+  it('navigates to Step 11 and reuses the shared Service Agreements component for this client', async () => {
+    const listClientServiceAgreements = vi.fn(() => of([]));
+    await TestBed.configureTestingModule({
+      imports: [ClientEditPageComponent],
+      providers: [
+        provideRouter([]),
+        {
+          provide: ClientApiService,
+          useValue: { getClient: () => NEVER, listClientServiceAgreements },
+        },
+        {
+          provide: AuthorizationService,
+          useValue: {
+            hasPermission: (permission: string) =>
+              permission === Permissions.ClientServiceAgreement.View,
+          },
+        },
+        { provide: LocationLookupService, useValue: { list: () => NEVER } },
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: convertToParamMap({ clientId: 'client-1' }) } },
+        },
+      ],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(ClientEditPageComponent);
+    fixture.componentInstance.loading.set(false);
+    fixture.componentInstance.selectSection(10);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.section()).toBe('service-agreements');
+    expect(fixture.nativeElement.querySelector('app-client-service-agreements')).toBeTruthy();
+    expect(listClientServiceAgreements).toHaveBeenCalledWith('client-1');
   });
 
   it('hydrates persisted assignments and submits the selected location and supervisor IDs', () => {

@@ -228,7 +228,95 @@ describe('ClientApiService', () => {
       expiresAtUtc: '2026-10-07T00:00:00Z',
     });
   });
+
+  it('uses the focused service-agreement endpoints and preserves update concurrency data', () => {
+    api.listClientServiceAgreements('client/1').subscribe();
+    const list = http.expectOne('/api/clients/client%2F1/service-agreements');
+    expect(list.request.method).toBe('GET');
+    list.flush([]);
+
+    api.getClientServiceAgreement('client/1', 'agreement/1').subscribe();
+    const get = http.expectOne('/api/clients/client%2F1/service-agreements/agreement%2F1');
+    expect(get.request.method).toBe('GET');
+    get.flush(serviceAgreementResponse());
+
+    const createRequest = {
+      agreementNumber: 'AGR-1',
+      payerName: 'County',
+      insuredMemberId: null,
+      priorAuthorizationNumber: null,
+      startDate: '2026-10-01',
+      endDate: null,
+      status: 'Active',
+      notes: null,
+      lines: [
+        {
+          serviceCode: 'SVC',
+          serviceName: 'Service',
+          unitType: 'Hours',
+          minutesPerUnit: 60,
+          authorizedUnits: 10,
+          ratePerUnit: 20,
+          plannedHoursPerVisit: 2,
+          plannedVisitsPerWeek: 3,
+          primaryDiagnosisText: null,
+          icdCode: null,
+        },
+      ],
+    };
+    api.createClientServiceAgreement('client-1', createRequest).subscribe();
+    const create = http.expectOne('/api/clients/client-1/service-agreements');
+    expect(create.request.method).toBe('POST');
+    expect(create.request.body.lines).toHaveLength(1);
+    create.flush(serviceAgreementResponse());
+
+    api
+      .updateClientServiceAgreement('client-1', 'agreement-1', {
+        ...createRequest,
+        editorVersion: 'version-1',
+        lines: [{ ...createRequest.lines[0], id: 'line-1' }],
+      })
+      .subscribe();
+    const update = http.expectOne('/api/clients/client-1/service-agreements/agreement-1');
+    expect(update.request.method).toBe('PUT');
+    expect(update.request.body.editorVersion).toBe('version-1');
+    expect(update.request.body.lines[0].id).toBe('line-1');
+    update.flush(serviceAgreementResponse());
+  });
 });
+
+function serviceAgreementResponse() {
+  return {
+    id: 'agreement-1',
+    agreementNumber: 'AGR-1',
+    payerName: 'County',
+    insuredMemberId: null,
+    priorAuthorizationNumber: null,
+    startDate: '2026-10-01',
+    endDate: null,
+    status: 'Active',
+    notes: null,
+    editorVersion: 'version-1',
+    lines: [
+      {
+        id: 'line-1',
+        serviceCode: 'SVC',
+        serviceName: 'Service',
+        unitType: 'Hours',
+        minutesPerUnit: 60,
+        authorizedUnits: 10,
+        ratePerUnit: 20,
+        plannedHoursPerVisit: 2,
+        plannedVisitsPerWeek: 3,
+        primaryDiagnosisText: null,
+        icdCode: null,
+        estimatedBudget: 200,
+        plannedHoursPerWeek: 6,
+        plannedUnitsPerWeek: 6,
+      },
+    ],
+  };
+}
 
 function createRequest(): CreateClientRequest {
   return {

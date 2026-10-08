@@ -88,7 +88,10 @@ describe('ClientViewPageComponent record navigation', () => {
           useValue: { snapshot: { paramMap: convertToParamMap({ clientId: details.id }) } },
         },
         { provide: AuthorizationService, useValue: { hasPermission } },
-        { provide: ClientApiService, useValue: { getClient: () => of(details) } },
+        {
+          provide: ClientApiService,
+          useValue: { getClient: () => of(details), listClientServiceAgreements: relatedList },
+        },
         {
           provide: ClientTodoApiService,
           useValue: { list: () => of([]), assignees: () => of([]) },

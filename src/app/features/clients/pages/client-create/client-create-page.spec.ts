@@ -7,6 +7,8 @@ import { PostalLookupService } from '../../data-access/postal-lookup.service';
 import { LocationLookupService } from '../../../../core/lookups/location-lookup.service';
 import { ClientCreatePageComponent } from './client-create-page';
 import { ClientDetails } from '../../models/client-api.models';
+import { AuthorizationService } from '../../../../core/authorization/authorization.service';
+import { Permissions } from '../../../../core/authorization/permissions';
 
 describe('ClientCreatePageComponent', () => {
   it('renders the canonical vertical sidebar while preserving the Step 1 form and actions', async () => {
@@ -36,14 +38,14 @@ describe('ClientCreatePageComponent', () => {
 
     expect(element.querySelector('app-client-wizard-sidebar')).toBeTruthy();
     expect(element.querySelector('app-client-wizard-stepper')).toBeNull();
-    expect(element.querySelectorAll('.client-wizard-sidebar li')).toHaveLength(10);
+    expect(element.querySelectorAll('.client-wizard-sidebar li')).toHaveLength(11);
     const sidebar = element.querySelector('.client-wizard-sidebar');
     const active = sidebar?.querySelector('[aria-current="step"]');
     expect(sidebar?.querySelector('.client-vertical-nav-heading')?.textContent?.trim()).toBe(
       'Client setup',
     );
     expect(sidebar?.querySelector('.client-wizard-sidebar-number')).toBeNull();
-    expect(sidebar?.querySelectorAll('button:disabled')).toHaveLength(9);
+    expect(sidebar?.querySelectorAll('button:disabled')).toHaveLength(10);
     expect(active?.textContent).toContain('Basic details');
     expect(active?.classList).toContain('client-vertical-nav-item');
     expect(active?.classList).toContain('active');
@@ -303,7 +305,7 @@ describe('ClientCreatePageComponent', () => {
     const page = TestBed.runInInjectionContext(() => new ClientCreatePageComponent());
     page.createdClientId.set('client-1');
     page.editorVersion.set('a'.repeat(64));
-    page.stepIndex.set(9);
+    page.stepIndex.set(10);
     page.draft.status = 'Active';
 
     page.finish();
@@ -330,13 +332,15 @@ describe('ClientCreatePageComponent', () => {
     });
   });
 
-  it('requires identity/version and blocks completion when Hospitalizations has unsaved data', () => {
+  it('requires identity/version but does not require a Service Agreement to complete', () => {
     const api = {
       supervisorCandidates: vi.fn(() => of([])),
       createClientBasicDetails: vi.fn(),
       updateClientAdditionalInformation: vi.fn(),
       updateClientContactInformation: vi.fn(),
-      completeClientCreation: vi.fn(),
+      completeClientCreation: vi.fn(() =>
+        of({ id: 'client-1', status: 'Active' as const, editorVersion: 'b'.repeat(64) }),
+      ),
     };
     TestBed.configureTestingModule({
       providers: [
@@ -355,15 +359,12 @@ describe('ClientCreatePageComponent', () => {
     expect(page.errorMessage()).toContain('Save the client details');
     page.createdClientId.set('client-1');
     page.editorVersion.set('a'.repeat(64));
-    const canLeaveStep = vi.fn(() => false);
-    Object.defineProperty(page, 'hospitalizationsSection', {
-      value: () => ({ canLeaveStep }),
-    });
+    page.stepIndex.set(10);
 
     page.finish();
 
-    expect(canLeaveStep).toHaveBeenCalledTimes(1);
-    expect(api.completeClientCreation).not.toHaveBeenCalled();
+    expect(api.completeClientCreation).toHaveBeenCalledTimes(1);
+    expect(page.completionDialog()?.title).toBe('Client created successfully');
   });
 
   it('applies the authenticated staff selected discharged status after completing creation', () => {
@@ -388,7 +389,7 @@ describe('ClientCreatePageComponent', () => {
     const page = TestBed.runInInjectionContext(() => new ClientCreatePageComponent());
     page.createdClientId.set('client-1');
     page.editorVersion.set('a'.repeat(64));
-    page.stepIndex.set(9);
+    page.stepIndex.set(10);
     page.draft.status = 'Discharged';
     page.draft.dischargeDate = '2026-10-01';
     page.draft.dischargeReason = 'Care completed';
@@ -406,7 +407,7 @@ describe('ClientCreatePageComponent', () => {
     expect(page.completionDialog()?.title).toBe('Client created successfully');
   });
 
-  it('remains on Hospitalizations and preserves identity/version when completion fails', () => {
+  it('remains on Service agreements and preserves identity/version when completion fails', () => {
     const api = {
       supervisorCandidates: vi.fn(() => of([])),
       createClientBasicDetails: vi.fn(),
@@ -431,11 +432,11 @@ describe('ClientCreatePageComponent', () => {
     const page = TestBed.runInInjectionContext(() => new ClientCreatePageComponent());
     page.createdClientId.set('client-1');
     page.editorVersion.set('a'.repeat(64));
-    page.stepIndex.set(9);
+    page.stepIndex.set(10);
 
     page.finish();
 
-    expect(page.stepIndex()).toBe(9);
+    expect(page.stepIndex()).toBe(10);
     expect(page.createdClientId()).toBe('client-1');
     expect(page.editorVersion()).toBe('a'.repeat(64));
     expect(page.completionDialog()).toBeNull();
@@ -643,6 +644,96 @@ describe('ClientCreatePageComponent', () => {
     expect(page.stepIndex()).toBe(3);
     expect(page.furthestStepIndex()).toBe(4);
     expect(api.advanceClientCreationProgress).toHaveBeenCalledTimes(1);
+  });
+
+  it('moves from Hospitalizations to optional Step 11 without sending unsupported progress 11', () => {
+    const api = {
+      supervisorCandidates: vi.fn(() => of([])),
+      advanceClientCreationProgress: vi.fn(),
+      completeClientCreation: vi.fn(() =>
+        of({ id: 'client-1', status: 'Active' as const, editorVersion: 'b'.repeat(64) }),
+      ),
+    };
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: ClientApiService, useValue: api },
+        { provide: LocationLookupService, useValue: { list: () => of([]) } },
+        { provide: PostalLookupService, useValue: { lookupPostalCode: () => of(null) } },
+        {
+          provide: GeographyDirectoryService,
+          useValue: { states: () => of([]), cities: () => of([]) },
+        },
+        { provide: Router, useValue: { navigate: vi.fn() } },
+      ],
+    });
+    const page = TestBed.runInInjectionContext(() => new ClientCreatePageComponent());
+    page.createdClientId.set('client-1');
+    page.editorVersion.set('a'.repeat(64));
+    page.stepIndex.set(9);
+    page.furthestStepIndex.set(9);
+
+    page.next();
+
+    expect(page.activeStep().id).toBe('service-agreements');
+    expect(page.stepIndex()).toBe(10);
+    expect(page.furthestStepIndex()).toBe(10);
+    expect(api.advanceClientCreationProgress).not.toHaveBeenCalled();
+
+    page.finish();
+    expect(api.completeClientCreation).toHaveBeenCalledTimes(1);
+  });
+
+  it('resumes server progress 10 into the optional Service agreements step and reuses the shared component', async () => {
+    const listClientServiceAgreements = vi.fn(() => of([]));
+    await TestBed.configureTestingModule({
+      imports: [ClientCreatePageComponent],
+      providers: [
+        provideRouter([]),
+        {
+          provide: ClientApiService,
+          useValue: {
+            supervisorCandidates: () => of([]),
+            listClientServiceAgreements,
+            getClientCreationState: () =>
+              of({
+                id: 'client-1',
+                status: 'Pending',
+                currentStep: 10,
+                editorVersion: 'a'.repeat(64),
+                client: resumedClient(),
+              }),
+          },
+        },
+        {
+          provide: AuthorizationService,
+          useValue: {
+            hasPermission: (permission: string) =>
+              permission === Permissions.ClientServiceAgreement.View,
+          },
+        },
+        { provide: LocationLookupService, useValue: { list: () => of([]) } },
+        { provide: PostalLookupService, useValue: { lookupPostalCode: () => of(null) } },
+        {
+          provide: GeographyDirectoryService,
+          useValue: { states: () => of([]), cities: () => of([]) },
+        },
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: convertToParamMap({ clientId: 'client-1' }) } },
+        },
+      ],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(ClientCreatePageComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.activeStep().id).toBe('service-agreements');
+    expect(fixture.nativeElement.querySelector('app-client-service-agreements')).toBeTruthy();
+    expect(listClientServiceAgreements).toHaveBeenCalledWith('client-1');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'No service agreements have been added yet.',
+    );
   });
 
   it('redirects a non-Pending resume to the existing Client view', () => {

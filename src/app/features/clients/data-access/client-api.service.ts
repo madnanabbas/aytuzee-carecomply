@@ -25,6 +25,11 @@ import {
   UpdateClientContactInformationRequest,
   SendClientGuestInvitationResponse,
 } from '../models/client-api.models';
+import {
+  ClientServiceAgreement,
+  CreateClientServiceAgreementRequest,
+  UpdateClientServiceAgreementRequest,
+} from '../models/client-service-agreement.models';
 
 @Injectable({ providedIn: 'root' })
 export class ClientApiService {
@@ -198,6 +203,42 @@ export class ClientApiService {
     return this.http.post<SendClientGuestInvitationResponse>(
       `${this.clientsUrl()}/guest-invitations/${encodeURIComponent(invitationId)}/send`,
       { token },
+    );
+  }
+
+  listClientServiceAgreements(clientId: string): Observable<readonly ClientServiceAgreement[]> {
+    return this.http.get<readonly ClientServiceAgreement[]>(
+      `${this.clientsUrl()}/${encodeURIComponent(clientId)}/service-agreements`,
+    );
+  }
+
+  getClientServiceAgreement(
+    clientId: string,
+    agreementId: string,
+  ): Observable<ClientServiceAgreement> {
+    return this.http.get<ClientServiceAgreement>(
+      `${this.clientsUrl()}/${encodeURIComponent(clientId)}/service-agreements/${encodeURIComponent(agreementId)}`,
+    );
+  }
+
+  createClientServiceAgreement(
+    clientId: string,
+    request: CreateClientServiceAgreementRequest,
+  ): Observable<ClientServiceAgreement> {
+    return this.http.post<ClientServiceAgreement>(
+      `${this.clientsUrl()}/${encodeURIComponent(clientId)}/service-agreements`,
+      request,
+    );
+  }
+
+  updateClientServiceAgreement(
+    clientId: string,
+    agreementId: string,
+    request: UpdateClientServiceAgreementRequest,
+  ): Observable<ClientServiceAgreement> {
+    return this.http.put<ClientServiceAgreement>(
+      `${this.clientsUrl()}/${encodeURIComponent(clientId)}/service-agreements/${encodeURIComponent(agreementId)}`,
+      request,
     );
   }
 

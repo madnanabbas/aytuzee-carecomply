@@ -56,6 +56,7 @@ import { ClientCareCoordinatorsComponent } from '../../components/client-care-co
 import { ClientClinicalContactsComponent } from '../../components/client-clinical-contacts/client-clinical-contacts';
 import { ClientResponsiblePartiesComponent } from '../../components/client-responsible-parties/client-responsible-parties';
 import { ClientHospitalizationsComponent } from '../../components/client-hospitalizations/client-hospitalizations';
+import { ClientServiceAgreementsComponent } from '../../components/client-service-agreements/client-service-agreements';
 import { ClientCreateAdditionalSectionComponent } from './client-create-additional-section';
 import { ClientCreateBasicSectionComponent } from './client-create-basic-section';
 import { ClientCreateContactSectionComponent } from './client-create-contact-section';
@@ -79,6 +80,7 @@ import {
     ClientClinicalContactsComponent,
     ClientResponsiblePartiesComponent,
     ClientHospitalizationsComponent,
+    ClientServiceAgreementsComponent,
     ClientCreateAdditionalSectionComponent,
     ClientCreateBasicSectionComponent,
     ClientCreateContactSectionComponent,
@@ -299,6 +301,15 @@ export class ClientCreatePageComponent {
 
     if (this.activeStep().id === 'contact') {
       this.saveContactInformation();
+      return;
+    }
+
+    if (this.activeStep().id === 'hospitalizations') {
+      if (!this.canLeaveCurrentStep()) return;
+      this.furthestStepIndex.set(this.steps.length - 1);
+      this.stepIndex.set(this.steps.length - 1);
+      this.clearMessages();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
@@ -614,9 +625,6 @@ export class ClientCreatePageComponent {
       this.errorMessage.set('Save the client details before finishing setup.');
       return;
     }
-    const hospitalizations = this.hospitalizationsSection();
-    if (hospitalizations && !hospitalizations.canLeaveStep()) return;
-
     this.clearMessages();
     this.saving.set(true);
     this.api
@@ -669,7 +677,10 @@ export class ClientCreatePageComponent {
           Object.assign(this.draft, clientDetailsToForm(state.client), { ssn: '' });
           this.createdClientId.set(state.id);
           this.editorVersion.set(state.editorVersion);
-          const restoredIndex = Math.min(Math.max(state.currentStep - 1, 0), this.steps.length - 1);
+          const restoredIndex =
+            state.currentStep >= 10
+              ? this.steps.length - 1
+              : Math.min(Math.max(state.currentStep - 1, 0), this.steps.length - 1);
           this.furthestStepIndex.set(restoredIndex);
           this.stepIndex.set(restoredIndex);
           if (this.draft.locationId) this.selectLocation(this.draft.locationId);

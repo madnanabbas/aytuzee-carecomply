@@ -10,3 +10,8 @@ export const CLIENT_WIZARD_STEP_TITLES = [
   'Responsible parties',
   'Hospitalizations',
 ] as const;
+
+export const AUTHENTICATED_CLIENT_WIZARD_STEP_TITLES = [
+  ...CLIENT_WIZARD_STEP_TITLES,
+  'Service agreements',
+] as const;

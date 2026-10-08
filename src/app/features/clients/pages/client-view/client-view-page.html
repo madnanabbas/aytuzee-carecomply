@@ -279,59 +279,7 @@
               (openCountChange)="openTodoCount.set($event)"
             />
           } @else if (activeTab() === 'service-agreements') {
-            <section class="panel-card">
-              <header class="panel-header">
-                <div>
-                  <h2>Service Agreements</h2>
-                  <p>Service authorizations, effective periods and signed agreement files.</p>
-                </div>
-                @if (hasPermission(permissions.ClientServiceAgreement.Create)) {
-                  <button
-                    class="primary-action"
-                    type="button"
-                    (click)="openDialog('service-agreement')"
-                  >
-                    Add service agreement
-                  </button>
-                }
-              </header>
-              <div class="overflow-x-auto">
-                <table class="compact-table min-w-[68rem]">
-                  <thead>
-                    <tr>
-                      <th>Service</th>
-                      <th>Start date</th>
-                      <th>End date</th>
-                      <th>Authorized hours</th>
-                      <th>Status</th>
-                      <th>Document</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (row of serviceAgreements; track row.document) {
-                      <tr>
-                        <td class="font-medium text-text-primary">{{ row.service }}</td>
-                        <td>{{ row.start }}</td>
-                        <td>{{ row.end }}</td>
-                        <td>{{ row.hours }}</td>
-                        <td>
-                          <span class="status-pill" [class]="statusClass(row.status)">{{
-                            row.status
-                          }}</span>
-                        </td>
-                        <td class="text-primary">{{ row.document }}</td>
-                        <td>
-                          @if (hasPermission(permissions.ClientServiceAgreement.Edit)) {
-                            <button class="table-link">Edit</button>
-                          }
-                        </td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            </section>
+            <app-client-service-agreements [clientId]="client.id" />
           } @else if (activeTab() === 'forms') {
             <section class="panel-card">
               <header class="panel-header">

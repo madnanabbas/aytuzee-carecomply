@@ -8,6 +8,7 @@ import { ClientApiService } from '../../data-access/client-api.service';
 import { ClientTodoApiService } from '../../data-access/client-todo-api.service';
 import { ClientDetails } from '../../models/client-api.models';
 import { ClientTodosComponent } from '../../components/client-todos/client-todos';
+import { ClientServiceAgreementsComponent } from '../../components/client-service-agreements/client-service-agreements';
 import {
   ClientDialog,
   ClientTabDefinition,
@@ -28,6 +29,7 @@ import { ClientIntakeProfileComponent } from './client-intake-profile';
   imports: [
     RouterLink,
     ClientTodosComponent,
+    ClientServiceAgreementsComponent,
     ClientViewOverviewComponent,
     ClientViewDialogComponent,
     ClientIntakeProfileComponent,
@@ -203,7 +205,6 @@ export class ClientViewPageComponent {
   // Related-record APIs are not available yet. Keep these collections empty so
   // the client screen never represents demonstration data as persisted data.
   readonly quickNotes: readonly RelatedRecordPreviewRow[] = [];
-  readonly serviceAgreements: readonly RelatedRecordPreviewRow[] = [];
   readonly hospitalizations: readonly RelatedRecordPreviewRow[] = [];
   readonly documents: readonly RelatedRecordPreviewRow[] = [];
   readonly employeeServices: readonly RelatedRecordPreviewRow[] = [];
@@ -217,11 +218,6 @@ export class ClientViewPageComponent {
       title: 'Add quick note',
       description: 'Record an internal client note and optionally tag a staff member.',
       submitLabel: 'Add note',
-    },
-    'service-agreement': {
-      title: 'Add service agreement',
-      description: 'Record the approved service, effective dates and supporting agreement.',
-      submitLabel: 'Add agreement',
     },
     hospitalization: {
       title: 'Add hospitalization',
@@ -256,11 +252,6 @@ export class ClientViewPageComponent {
     note: '',
     taggedEmployee: '',
     attachment: '',
-    service: '',
-    agreementStart: '',
-    agreementEnd: '',
-    authorizedHours: '',
-    agreementFile: '',
     hospital: '',
     hospitalizedIn: '',
     inTime: '',

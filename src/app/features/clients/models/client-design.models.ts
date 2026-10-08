@@ -39,6 +39,7 @@ export interface ClientCreateStep {
     | 'consultation-providers'
     | 'doctors'
     | 'responsible-parties'
-    | 'hospitalizations';
+    | 'hospitalizations'
+    | 'service-agreements';
   title: string;
 }

@@ -162,6 +162,11 @@
                 <app-client-hospitalizations #hospitalizationsSection [clientId]="clientId" />
               }
             }
+            @case ('service-agreements') {
+              @if (createdClientId(); as clientId) {
+                <app-client-service-agreements [clientId]="clientId" />
+              }
+            }
           }
         </div>
 

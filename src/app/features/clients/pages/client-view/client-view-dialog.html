@@ -74,35 +74,6 @@
             /></label>
           </div>
         }
-        @case ('service-agreement') {
-          <div class="form-grid">
-            <label class="col-span-2"
-              ><span class="form-label">Service *</span
-              ><select class="form-control" [(ngModel)]="draft.service">
-                <option value="">Select service</option>
-                <option>Individualized Home Supports</option>
-                <option>PCA</option>
-                <option>CFSS</option>
-                <option>Respite</option>
-              </select></label
-            ><label
-              ><span class="form-label">Start date *</span
-              ><input class="form-control" type="date" [(ngModel)]="draft.agreementStart" /></label
-            ><label
-              ><span class="form-label">End date</span
-              ><input class="form-control" type="date" [(ngModel)]="draft.agreementEnd" /></label
-            ><label class="col-span-2"
-              ><span class="form-label">Authorized hours / units</span
-              ><input
-                class="form-control"
-                [(ngModel)]="draft.authorizedHours"
-                placeholder="e.g. 32 hours / week" /></label
-            ><label class="col-span-2"
-              ><span class="form-label">Signed agreement *</span
-              ><input class="form-control py-1" type="file"
-            /></label>
-          </div>
-        }
         @case ('hospitalization') {
           <div class="form-grid">
             <label class="col-span-2"

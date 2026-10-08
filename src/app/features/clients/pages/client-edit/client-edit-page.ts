@@ -38,6 +38,7 @@ import { ClientCareCoordinatorsComponent } from '../../components/client-care-co
 import { ClientClinicalContactsComponent } from '../../components/client-clinical-contacts/client-clinical-contacts';
 import { ClientResponsiblePartiesComponent } from '../../components/client-responsible-parties/client-responsible-parties';
 import { ClientHospitalizationsComponent } from '../../components/client-hospitalizations/client-hospitalizations';
+import { ClientServiceAgreementsComponent } from '../../components/client-service-agreements/client-service-agreements';
 import { ClientEditAdditionalSectionComponent } from './client-edit-additional-section';
 import { ClientEditBasicSectionComponent } from './client-edit-basic-section';
 import {
@@ -60,6 +61,7 @@ import { CLIENT_EDIT_STEPS, ClientEditSection } from './client-edit-options';
     ClientClinicalContactsComponent,
     ClientResponsiblePartiesComponent,
     ClientHospitalizationsComponent,
+    ClientServiceAgreementsComponent,
     ClientEditAdditionalSectionComponent,
     ClientEditBasicSectionComponent,
   ],
