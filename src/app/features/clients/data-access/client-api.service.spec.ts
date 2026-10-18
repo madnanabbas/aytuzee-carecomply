@@ -10,6 +10,7 @@ import {
   CreateClientRequest,
   UpdateClientRequest,
 } from '../models/client-api.models';
+import { CreateClientServiceAgreementRequest } from '../models/client-service-agreement.models';
 import { ClientApiService } from './client-api.service';
 
 describe('ClientApiService', () => {
@@ -240,7 +241,7 @@ describe('ClientApiService', () => {
     expect(get.request.method).toBe('GET');
     get.flush(serviceAgreementResponse());
 
-    const createRequest = {
+    const createRequest: CreateClientServiceAgreementRequest = {
       agreementNumber: 'AGR-1',
       payerName: 'County',
       insuredMemberId: null,
@@ -248,19 +249,25 @@ describe('ClientApiService', () => {
       startDate: '2026-10-01',
       endDate: null,
       status: 'Active',
+      priority: 'High',
+      isDummy: false,
       notes: null,
       lines: [
         {
           serviceCode: 'SVC',
           serviceName: 'Service',
-          unitType: 'Hours',
+          unitType: 'Hour',
           minutesPerUnit: 60,
           authorizedUnits: 10,
           ratePerUnit: 20,
+          startDate: '2026-10-01',
+          endDate: null,
+          rateEffectiveFrom: null,
+          rateEffectiveTo: null,
+          authorizedBudgetAmount: 200,
           plannedHoursPerVisit: 2,
           plannedVisitsPerWeek: 3,
-          primaryDiagnosisText: null,
-          icdCode: null,
+          diagnoses: [],
         },
       ],
     };
@@ -295,6 +302,8 @@ function serviceAgreementResponse() {
     startDate: '2026-10-01',
     endDate: null,
     status: 'Active',
+    priority: 'High',
+    isDummy: false,
     notes: null,
     editorVersion: 'version-1',
     lines: [
@@ -302,14 +311,18 @@ function serviceAgreementResponse() {
         id: 'line-1',
         serviceCode: 'SVC',
         serviceName: 'Service',
-        unitType: 'Hours',
+        unitType: 'Hour',
         minutesPerUnit: 60,
         authorizedUnits: 10,
         ratePerUnit: 20,
+        startDate: '2026-10-01',
+        endDate: null,
+        rateEffectiveFrom: null,
+        rateEffectiveTo: null,
+        authorizedBudgetAmount: 200,
         plannedHoursPerVisit: 2,
         plannedVisitsPerWeek: 3,
-        primaryDiagnosisText: null,
-        icdCode: null,
+        diagnoses: [],
         estimatedBudget: 200,
         plannedHoursPerWeek: 6,
         plannedUnitsPerWeek: 6,

@@ -21,6 +21,23 @@
         {{ error() }}
       </div>
     }
+    @if (saveWarnings().length) {
+      <div
+        class="border-b border-warning/30 bg-warning/5 px-4 py-3 text-[11px] text-text-primary"
+        role="status"
+      >
+        <strong class="text-warning">Review overlapping authorization</strong>
+        <p class="mt-1">
+          Another active authorization for this service overlaps this date period. Confirm that the
+          authorization periods are intentional.
+        </p>
+        <ul class="mt-1 list-disc pl-4">
+          @for (warning of saveWarnings(); track warning.overlappingLineId) {
+            <li>{{ warning.serviceCode }}: {{ overlapPeriod(warning) }}</li>
+          }
+        </ul>
+      </div>
+    }
 
     @if (editorOpen()) {
       <div class="agreement-editor border-b border-border p-4">
@@ -46,10 +63,31 @@
               ><span class="form-label">Agreement / authorization number</span
               ><input class="form-control" [(ngModel)]="draft.agreementNumber"
             /></label>
-            <label
-              ><span class="form-label">Payer</span
-              ><input class="form-control" [(ngModel)]="draft.payerName"
-            /></label>
+            <label>
+              <span class="form-label">Client coverage</span>
+              <select
+                class="form-control"
+                [ngModel]="draft.manualPayerMode ? '__manual__' : draft.clientCoverageId"
+                (ngModelChange)="selectCoverage($event)"
+              >
+                <option value="">No coverage selected</option>
+                @for (coverage of coverages(); track coverage.id) {
+                  <option [value]="coverage.id">
+                    {{ coverage.payerName }}{{ coverage.isPrimary ? ' · Primary' : '' }}
+                  </option>
+                }
+                <option value="__manual__">Manual payer entry</option>
+              </select>
+            </label>
+            <label>
+              <span class="form-label">Payer{{ draft.manualPayerMode ? ' *' : '' }}</span>
+              <input
+                class="form-control"
+                [(ngModel)]="draft.payerName"
+                [disabled]="!draft.manualPayerMode"
+                [placeholder]="draft.manualPayerMode ? 'Enter payer name' : 'Derived from coverage'"
+              />
+            </label>
             <label
               ><span class="form-label">Insured / member ID</span
               ><input class="form-control" [(ngModel)]="draft.insuredMemberId"
@@ -60,7 +98,11 @@
             /></label>
             <label
               ><span class="form-label">Start date *</span
-              ><input class="form-control" type="date" [(ngModel)]="draft.startDate"
+              ><input
+                class="form-control"
+                type="date"
+                [ngModel]="draft.startDate"
+                (ngModelChange)="setAgreementStartDate($event)"
             /></label>
             <label>
               <span class="form-label">End date</span>
@@ -75,10 +117,28 @@
                 <small class="field-error">End date cannot be before start date.</small>
               }
             </label>
-            <label
-              ><span class="form-label">Status</span
-              ><input class="form-control" [(ngModel)]="draft.status"
-            /></label>
+            <label>
+              <span class="form-label">Status</span>
+              <select class="form-control" [(ngModel)]="draft.status">
+                <option value="">Select status</option>
+                @for (option of statusOptions; track option.value) {
+                  <option [value]="option.value">{{ option.label }}</option>
+                }
+              </select>
+            </label>
+            <label>
+              <span class="form-label">Priority</span>
+              <select class="form-control" [(ngModel)]="draft.priority">
+                <option value="">Select priority</option>
+                @for (option of priorityOptions; track option) {
+                  <option [value]="option">{{ option }}</option>
+                }
+              </select>
+            </label>
+            <!-- <label class="flex items-center gap-2 pt-6">
+              <input type="checkbox" [(ngModel)]="draft.isDummy" />
+              <span>Dummy agreement (non-billable)</span>
+            </label> -->
             <label class="md:col-span-2 xl:col-span-4"
               ><span class="form-label">Notes</span
               ><textarea class="form-control min-h-20" [(ngModel)]="draft.notes"></textarea>
@@ -123,10 +183,15 @@
                     ><span class="form-label">Service name *</span
                     ><input class="form-control" [(ngModel)]="line.serviceName"
                   /></label>
-                  <label
-                    ><span class="form-label">Unit type</span
-                    ><input class="form-control" [(ngModel)]="line.unitType"
-                  /></label>
+                  <label>
+                    <span class="form-label">Unit type</span>
+                    <select class="form-control" [(ngModel)]="line.unitType">
+                      <option value="">Select unit type</option>
+                      @for (option of unitTypeOptions; track option.value) {
+                        <option [value]="option.value">{{ option.label }}</option>
+                      }
+                    </select>
+                  </label>
                   <label
                     ><span class="form-label">Minutes per unit</span
                     ><input
@@ -172,14 +237,106 @@
                       step="0.01"
                       [(ngModel)]="line.plannedVisitsPerWeek"
                   /></label>
-                  <label class="md:col-span-2 xl:col-span-3"
-                    ><span class="form-label">Primary diagnosis</span
-                    ><input class="form-control" [(ngModel)]="line.primaryDiagnosisText"
+                  <label
+                    ><span class="form-label">Line start date *</span
+                    ><input class="form-control" type="date" [(ngModel)]="line.startDate"
                   /></label>
                   <label
-                    ><span class="form-label">ICD code</span
-                    ><input class="form-control" [(ngModel)]="line.icdCode"
+                    ><span class="form-label">Line end date</span
+                    ><input
+                      class="form-control"
+                      type="date"
+                      [min]="line.startDate"
+                      [(ngModel)]="line.endDate"
+                      [attr.aria-invalid]="!!line.endDate && line.endDate < line.startDate"
+                    />
+                    @if (line.endDate && line.endDate < line.startDate) {
+                      <small class="field-error">End date cannot be before start date.</small>
+                    }
+                  </label>
+                  <label
+                    ><span class="form-label">Rate effective from</span
+                    ><input class="form-control" type="date" [(ngModel)]="line.rateEffectiveFrom"
                   /></label>
+                  <label
+                    ><span class="form-label">Rate effective to</span
+                    ><input
+                      class="form-control"
+                      type="date"
+                      [min]="line.rateEffectiveFrom"
+                      [(ngModel)]="line.rateEffectiveTo"
+                      [attr.aria-invalid]="
+                        !!line.rateEffectiveFrom &&
+                        !!line.rateEffectiveTo &&
+                        line.rateEffectiveTo < line.rateEffectiveFrom
+                      "
+                    />
+                    @if (
+                      line.rateEffectiveFrom &&
+                      line.rateEffectiveTo &&
+                      line.rateEffectiveTo < line.rateEffectiveFrom
+                    ) {
+                      <small class="field-error">
+                        Rate effective-to date cannot be before the effective-from date.
+                      </small>
+                    }
+                  </label>
+                  <label
+                    ><span class="form-label">Authorized budget amount</span
+                    ><input
+                      class="form-control"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      [(ngModel)]="line.authorizedBudgetAmount"
+                  /></label>
+                </div>
+                <div class="mt-4">
+                  <div class="line-heading">
+                    <strong>Diagnoses</strong>
+                    <button class="command-button" type="button" (click)="addDiagnosis(line)">
+                      Add diagnosis
+                    </button>
+                  </div>
+                  @for (
+                    diagnosis of line.diagnoses;
+                    track diagnosis.id ?? $index;
+                    let diagnosisIndex = $index
+                  ) {
+                    <div class="mt-2 grid gap-3 md:grid-cols-[1fr_12rem_auto_auto]">
+                      <label
+                        ><span class="form-label">Diagnosis</span
+                        ><input class="form-control" [(ngModel)]="diagnosis.diagnosisText"
+                      /></label>
+                      <label
+                        ><span class="form-label">ICD code</span
+                        ><input class="form-control" [(ngModel)]="diagnosis.icdCode"
+                      /></label>
+                      <label class="flex items-center gap-2 pt-6">
+                        <input
+                          type="checkbox"
+                          [checked]="diagnosis.isPrimary"
+                          (change)="
+                            selectPrimaryDiagnosis(
+                              line,
+                              diagnosisIndex,
+                              $any($event.target).checked
+                            )
+                          "
+                        />
+                        <span>Primary</span>
+                      </label>
+                      <button
+                        class="table-link self-end"
+                        type="button"
+                        (click)="removeDiagnosis(line, diagnosisIndex)"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  } @empty {
+                    <p class="mt-2 text-text-muted">No diagnoses added.</p>
+                  }
                 </div>
               </article>
             }
@@ -211,13 +368,14 @@
       <p class="px-4 py-8 text-center text-[11px] text-text-muted">Loading service agreements…</p>
     } @else {
       <div class="overflow-x-auto">
-        <table class="compact-table min-w-[70rem]">
+        <table class="compact-table min-w-[75rem]">
           <thead>
             <tr>
               <th>Agreement / Authorization</th>
               <th>Payer</th>
               <th>Period</th>
               <th>Status</th>
+              <th>Priority</th>
               <th>Services</th>
               <th>Authorized units</th>
               <th>Estimated budget</th>
@@ -229,16 +387,29 @@
               <tr>
                 <td class="font-medium text-text-primary">
                   {{ row.agreementNumber || row.priorAuthorizationNumber || '—' }}
+                  @if (row.isDummy) {
+                    <div class="mt-1 text-[10px] font-normal text-text-muted">
+                      Non-billable dummy
+                    </div>
+                  }
                 </td>
                 <td>{{ row.payerName || '—' }}</td>
                 <td>{{ displayDate(row.startDate) }} – {{ displayDate(row.endDate) }}</td>
                 <td>
-                  <span class="status-pill">{{ row.status || '—' }}</span>
+                  <span class="status-pill">{{ optionLabel(statusOptions, row.status) }}</span>
                 </td>
+                <td>{{ row.priority || '—' }}</td>
                 <td>
                   <div class="max-w-64 truncate" [title]="servicesSummary(row)">
                     {{ servicesSummary(row) }}
                   </div>
+                  @if (row.warnings.length) {
+                    <span
+                      class="mt-1 inline-block rounded-status bg-warning/10 px-2 py-0.5 font-semibold text-warning"
+                      title="Another active authorization overlaps a service-line period."
+                      >Review overlap</span
+                    >
+                  }
                 </td>
                 <td>{{ authorizedUnitsSummary(row) }}</td>
                 <td>{{ estimatedBudgetSummary(row) }}</td>
@@ -257,17 +428,34 @@
               </tr>
               @if (expandedId() === row.id) {
                 <tr class="details-row">
-                  <td colspan="8">
+                  <td colspan="9">
                     <div class="line-details">
                       @for (line of row.lines; track line.id) {
                         <article>
                           <strong
                             >{{ line.serviceName }} <span>{{ line.serviceCode }}</span></strong
                           >
+                          @if (warningsForLine(row, line.id).length) {
+                            <div
+                              class="mt-2 rounded-control border border-warning/30 bg-warning/5 px-3 py-2 text-[10px] text-text-primary"
+                            >
+                              <strong class="text-warning">Overlapping active authorization</strong>
+                              <p class="mt-1">
+                                Another active authorization for this service overlaps this date
+                                period. Confirm that the authorization periods are intentional.
+                              </p>
+                              @for (
+                                warning of warningsForLine(row, line.id);
+                                track warning.overlappingLineId
+                              ) {
+                                <p>{{ overlapPeriod(warning) }}</p>
+                              }
+                            </div>
+                          }
                           <dl>
                             <div>
                               <dt>Unit type</dt>
-                              <dd>{{ line.unitType || '—' }}</dd>
+                              <dd>{{ unitTypeLabel(line.unitType) }}</dd>
                             </div>
                             <div>
                               <dt>Minutes/unit</dt>
@@ -298,14 +486,38 @@
                               <dd>{{ number(line.plannedUnitsPerWeek) }}</dd>
                             </div>
                             <div>
+                              <dt>Line period</dt>
+                              <dd>
+                                {{ displayDate(line.startDate) }} – {{ displayDate(line.endDate) }}
+                              </dd>
+                            </div>
+                            <div>
+                              <dt>Rate effective period</dt>
+                              <dd>
+                                {{ displayDate(line.rateEffectiveFrom) }} –
+                                {{ displayDate(line.rateEffectiveTo) }}
+                              </dd>
+                            </div>
+                            <div>
+                              <dt>Authorized budget</dt>
+                              <dd>{{ currency(line.authorizedBudgetAmount) }}</dd>
+                            </div>
+                            <div>
                               <dt>Estimated budget</dt>
                               <dd>{{ currency(line.estimatedBudget) }}</dd>
                             </div>
                             <div>
-                              <dt>Diagnosis / ICD</dt>
+                              <dt>Diagnoses</dt>
                               <dd>
-                                {{ line.primaryDiagnosisText || '—'
-                                }}{{ line.icdCode ? ' / ' + line.icdCode : '' }}
+                                @for (diagnosis of line.diagnoses; track diagnosis.id) {
+                                  <div>
+                                    {{ diagnosis.isPrimary ? 'Primary: ' : 'Additional: ' }}
+                                    {{ diagnosis.diagnosisText || '—' }}
+                                    {{ diagnosis.icdCode ? ' / ' + diagnosis.icdCode : '' }}
+                                  </div>
+                                } @empty {
+                                  —
+                                }
                               </dd>
                             </div>
                           </dl>
@@ -317,7 +529,7 @@
               }
             } @empty {
               <tr>
-                <td colspan="8" class="py-8 text-center text-text-muted">
+                <td colspan="9" class="py-8 text-center text-text-muted">
                   No service agreements have been added yet.
                 </td>
               </tr>

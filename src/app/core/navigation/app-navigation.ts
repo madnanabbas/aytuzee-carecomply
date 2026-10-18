@@ -28,6 +28,7 @@ export const APP_ROUTE_METADATA = {
   notifications: route('notifications', '/notifications', [Permissions.Notification.View]),
   reports: route('reports', '/reports', [Permissions.FinancialReport.View]),
   companies: route('companies', '/access-control/companies', [Permissions.Company.View]),
+  payers: route('payers', '/access-control/payers', [Permissions.Payer.View]),
   accessControl: route('access-management', '/access-control', [
     Permissions.User.View,
     Permissions.User.Manage,

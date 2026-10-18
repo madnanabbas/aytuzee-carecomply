@@ -35,6 +35,16 @@ export const Permissions = {
     Create: 'ClientServiceAgreement.Create',
     Edit: 'ClientServiceAgreement.Edit',
   },
+  ClientCoverage: {
+    View: 'ClientCoverage.View',
+    Create: 'ClientCoverage.Create',
+    Edit: 'ClientCoverage.Edit',
+  },
+  Payer: {
+    View: 'Payer.View',
+    Create: 'Payer.Create',
+    Edit: 'Payer.Edit',
+  },
   ClientCaregiver: {
     View: 'ClientCaregiver.View',
     Create: 'ClientCaregiver.Create',

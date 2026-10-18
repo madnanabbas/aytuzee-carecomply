@@ -18,6 +18,7 @@ export type ClientViewTab =
   | 'hospitalizations'
   | 'quick-notes'
   | 'todos'
+  | 'coverage'
   | 'service-agreements'
   | 'forms'
   | 'documents'

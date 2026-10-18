@@ -6,36 +6,57 @@ import { finalize } from 'rxjs';
 import { AuthorizationService } from '../../../../core/authorization/authorization.service';
 import { Permissions } from '../../../../core/authorization/permissions';
 import { ClientApiService } from '../../data-access/client-api.service';
+import { ClientCoverage } from '../../models/client-coverage.models';
 import {
   ClientServiceAgreement,
   ClientServiceAgreementLine,
+  ClientServiceAgreementPriority,
+  ClientServiceAgreementStatus,
+  ClientServiceAgreementUnitType,
+  ClientServiceAgreementWarning,
   CreateClientServiceAgreementRequest,
   UpdateClientServiceAgreementRequest,
 } from '../../models/client-service-agreement.models';
 
 interface AgreementDraft {
   agreementNumber: string;
+  payerId: string;
+  clientCoverageId: string;
+  manualPayerMode: boolean;
   payerName: string;
   insuredMemberId: string;
   priorAuthorizationNumber: string;
   startDate: string;
   endDate: string;
-  status: string;
+  status: ClientServiceAgreementStatus | '';
+  priority: ClientServiceAgreementPriority | '';
+  isDummy: boolean;
   notes: string;
+}
+
+interface DiagnosisDraft {
+  id?: string;
+  diagnosisText: string;
+  icdCode: string;
+  isPrimary: boolean;
 }
 
 export interface AgreementLineDraft {
   id?: string;
   serviceCode: string;
   serviceName: string;
-  unitType: string;
+  unitType: ClientServiceAgreementUnitType | '';
   minutesPerUnit: number | null;
   authorizedUnits: number | null;
   ratePerUnit: number | null;
   plannedHoursPerVisit: number | null;
   plannedVisitsPerWeek: number | null;
-  primaryDiagnosisText: string;
-  icdCode: string;
+  startDate: string;
+  endDate: string;
+  rateEffectiveFrom: string;
+  rateEffectiveTo: string;
+  authorizedBudgetAmount: number | null;
+  diagnoses: DiagnosisDraft[];
 }
 
 @Component({
@@ -46,6 +67,29 @@ export interface AgreementLineDraft {
   styleUrls: ['../client-related-section.css', './client-service-agreements.css'],
 })
 export class ClientServiceAgreementsComponent implements OnInit {
+  readonly statusOptions: readonly { value: ClientServiceAgreementStatus; label: string }[] = [
+    { value: 'Draft', label: 'Draft' },
+    { value: 'PendingAuthorization', label: 'Pending authorization' },
+    { value: 'Active', label: 'Active' },
+    { value: 'OnHold', label: 'On hold' },
+    { value: 'Expired', label: 'Expired' },
+    { value: 'Terminated', label: 'Terminated' },
+    { value: 'Cancelled', label: 'Cancelled' },
+  ];
+  readonly priorityOptions: readonly ClientServiceAgreementPriority[] = [
+    'Normal',
+    'High',
+    'Urgent',
+  ];
+  readonly unitTypeOptions: readonly { value: ClientServiceAgreementUnitType; label: string }[] = [
+    { value: 'FifteenMinutes', label: '15 Minutes' },
+    { value: 'Hour', label: 'Hour' },
+    { value: 'Visit', label: 'Visit' },
+    { value: 'Day', label: 'Day' },
+    { value: 'PerDiem', label: 'Per Diem' },
+    { value: 'ServiceUnit', label: 'Service Unit' },
+    { value: 'DollarAmount', label: 'Dollar Amount' },
+  ];
   readonly clientId = input.required<string>();
   private readonly api = inject(ClientApiService);
   private readonly authorization = inject(AuthorizationService);
@@ -60,6 +104,8 @@ export class ClientServiceAgreementsComponent implements OnInit {
   readonly editing = signal<ClientServiceAgreement | null>(null);
   readonly expandedId = signal<string | null>(null);
   readonly lines = signal<AgreementLineDraft[]>([]);
+  readonly coverages = signal<readonly ClientCoverage[]>([]);
+  readonly saveWarnings = signal<readonly ClientServiceAgreementWarning[]>([]);
 
   readonly canView = computed(() =>
     this.authorization.hasPermission(Permissions.ClientServiceAgreement.View),
@@ -70,11 +116,15 @@ export class ClientServiceAgreementsComponent implements OnInit {
   readonly canEdit = computed(() =>
     this.authorization.hasPermission(Permissions.ClientServiceAgreement.Edit),
   );
+  readonly canViewCoverage = computed(() =>
+    this.authorization.hasPermission(Permissions.ClientCoverage.View),
+  );
 
   readonly draft: AgreementDraft = this.emptyDraft();
 
   ngOnInit(): void {
     if (this.canView()) this.load();
+    if (this.canViewCoverage()) this.loadCoverages();
   }
 
   load(): void {
@@ -97,8 +147,12 @@ export class ClientServiceAgreementsComponent implements OnInit {
     if (!this.canCreate() || this.saving()) return;
     this.editing.set(null);
     Object.assign(this.draft, this.emptyDraft());
+    const preferredCoverage =
+      this.coverages().find((coverage) => coverage.isPrimary) ?? this.coverages()[0];
+    if (preferredCoverage) this.selectCoverage(preferredCoverage.id);
     this.lines.set([this.emptyLine()]);
     this.error.set(null);
+    this.saveWarnings.set([]);
     this.editorOpen.set(true);
   }
 
@@ -106,6 +160,7 @@ export class ClientServiceAgreementsComponent implements OnInit {
     if (!this.canEdit() || this.loadingEditor()) return;
     this.loadingEditor.set(true);
     this.error.set(null);
+    this.saveWarnings.set([]);
     this.api
       .getClientServiceAgreement(this.clientId(), item.id)
       .pipe(
@@ -117,12 +172,17 @@ export class ClientServiceAgreementsComponent implements OnInit {
           this.editing.set(agreement);
           Object.assign(this.draft, {
             agreementNumber: agreement.agreementNumber ?? '',
+            payerId: agreement.payerId ?? '',
+            clientCoverageId: agreement.clientCoverageId ?? '',
+            manualPayerMode: !agreement.clientCoverageId && !agreement.payerId,
             payerName: agreement.payerName ?? '',
             insuredMemberId: agreement.insuredMemberId ?? '',
             priorAuthorizationNumber: agreement.priorAuthorizationNumber ?? '',
             startDate: agreement.startDate,
             endDate: agreement.endDate ?? '',
             status: agreement.status ?? '',
+            priority: agreement.priority ?? '',
+            isDummy: agreement.isDummy,
             notes: agreement.notes ?? '',
           });
           this.lines.set(agreement.lines.map((line) => this.toDraft(line)));
@@ -152,30 +212,58 @@ export class ClientServiceAgreementsComponent implements OnInit {
     this.lines.update((lines) => lines.filter((_, current) => current !== index));
   }
 
+  addDiagnosis(line: AgreementLineDraft): void {
+    if (line.diagnoses.length >= 25) return;
+    line.diagnoses.push({ diagnosisText: '', icdCode: '', isPrimary: false });
+  }
+
+  removeDiagnosis(line: AgreementLineDraft, index: number): void {
+    line.diagnoses.splice(index, 1);
+  }
+
+  selectPrimaryDiagnosis(line: AgreementLineDraft, selectedIndex: number, isPrimary = true): void {
+    line.diagnoses.forEach((diagnosis, index) => {
+      diagnosis.isPrimary = isPrimary && index === selectedIndex;
+    });
+  }
+
   save(): void {
     if (this.saving() || !this.valid()) return;
     const current = this.editing();
     const base = {
       agreementNumber: this.optional(this.draft.agreementNumber),
+      payerId: this.draft.manualPayerMode ? null : this.draft.payerId || null,
+      clientCoverageId: this.draft.manualPayerMode ? null : this.draft.clientCoverageId || null,
       payerName: this.optional(this.draft.payerName),
       insuredMemberId: this.optional(this.draft.insuredMemberId),
       priorAuthorizationNumber: this.optional(this.draft.priorAuthorizationNumber),
       startDate: this.draft.startDate,
       endDate: this.draft.endDate || null,
-      status: this.optional(this.draft.status),
+      status: this.draft.status || null,
+      priority: this.draft.priority || null,
+      isDummy: this.draft.isDummy,
       notes: this.optional(this.draft.notes),
       lines: this.lines().map((line) => ({
         ...(line.id ? { id: line.id } : {}),
         serviceCode: line.serviceCode.trim(),
         serviceName: line.serviceName.trim(),
-        unitType: this.optional(line.unitType),
+        unitType: line.unitType || null,
         minutesPerUnit: line.minutesPerUnit,
         authorizedUnits: line.authorizedUnits,
         ratePerUnit: line.ratePerUnit,
         plannedHoursPerVisit: line.plannedHoursPerVisit,
         plannedVisitsPerWeek: line.plannedVisitsPerWeek,
-        primaryDiagnosisText: this.optional(line.primaryDiagnosisText),
-        icdCode: this.optional(line.icdCode),
+        startDate: line.startDate,
+        endDate: line.endDate || null,
+        rateEffectiveFrom: line.rateEffectiveFrom || null,
+        rateEffectiveTo: line.rateEffectiveTo || null,
+        authorizedBudgetAmount: line.authorizedBudgetAmount,
+        diagnoses: line.diagnoses.map((diagnosis) => ({
+          ...(diagnosis.id ? { id: diagnosis.id } : {}),
+          diagnosisText: this.optional(diagnosis.diagnosisText),
+          icdCode: this.optional(diagnosis.icdCode),
+          isPrimary: diagnosis.isPrimary,
+        })),
       })),
     };
     this.saving.set(true);
@@ -201,6 +289,7 @@ export class ClientServiceAgreementsComponent implements OnInit {
               ? items.map((item) => (item.id === saved.id ? saved : item))
               : [saved, ...items],
           );
+          this.saveWarnings.set(saved.warnings);
           this.editorOpen.set(false);
           this.editing.set(null);
           this.lines.set([]);
@@ -219,6 +308,7 @@ export class ClientServiceAgreementsComponent implements OnInit {
   valid(): boolean {
     return (
       !!this.draft.startDate &&
+      (!this.draft.manualPayerMode || !!this.draft.payerName.trim()) &&
       (!this.draft.endDate || this.draft.endDate >= this.draft.startDate) &&
       this.lines().length > 0 &&
       this.lines().every((line) => this.validLine(line))
@@ -231,8 +321,43 @@ export class ClientServiceAgreementsComponent implements OnInit {
     );
   }
 
+  selectCoverage(value: string): void {
+    if (value === '__manual__') {
+      this.draft.manualPayerMode = true;
+      this.draft.clientCoverageId = '';
+      this.draft.payerId = '';
+      this.draft.payerName = '';
+      this.draft.insuredMemberId = '';
+      return;
+    }
+    this.draft.manualPayerMode = false;
+    this.draft.clientCoverageId = value;
+    const coverage = this.coverages().find((item) => item.id === value);
+    this.draft.payerId = coverage?.payerId ?? '';
+    this.draft.payerName = coverage?.payerName ?? '';
+    this.draft.insuredMemberId = coverage?.memberId ?? '';
+  }
+
+  setAgreementStartDate(value: string): void {
+    this.draft.startDate = value;
+    this.lines.update((lines) =>
+      lines.map((line) => (line.startDate ? line : { ...line, startDate: value })),
+    );
+  }
+
   toggleDetails(id: string): void {
     this.expandedId.update((current) => (current === id ? null : id));
+  }
+
+  warningsForLine(
+    item: ClientServiceAgreement,
+    lineId: string,
+  ): readonly ClientServiceAgreementWarning[] {
+    return item.warnings.filter((warning) => warning.serviceLineId === lineId);
+  }
+
+  overlapPeriod(warning: ClientServiceAgreementWarning): string {
+    return `${this.displayDate(warning.overlapStartDate)} – ${this.displayDate(warning.overlapEndDate)}`;
   }
 
   servicesSummary(item: ClientServiceAgreement): string {
@@ -247,7 +372,7 @@ export class ClientServiceAgreementsComponent implements OnInit {
     );
     if (unitTypes.size > 1) return 'Multiple unit types';
     const total = values.reduce((sum, line) => sum + (line.authorizedUnits ?? 0), 0);
-    return `${this.number(total)} ${values[0].unitType?.trim() || 'units'}`;
+    return `${this.number(total)} (${this.unitTypeLabel(values[0].unitType)})`;
   }
 
   estimatedBudgetSummary(item: ClientServiceAgreement): string {
@@ -276,10 +401,24 @@ export class ClientServiceAgreementsComponent implements OnInit {
       : new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
   }
 
+  optionLabel(options: readonly { value: string; label: string }[], value: string | null): string {
+    return options.find((option) => option.value === value)?.label ?? value ?? '—';
+  }
+
+  unitTypeLabel(value: ClientServiceAgreementUnitType | null): string {
+    return value ? this.optionLabel(this.unitTypeOptions, value) : 'Units';
+  }
+
   private validLine(line: AgreementLineDraft): boolean {
     return (
       !!line.serviceCode.trim() &&
       !!line.serviceName.trim() &&
+      !!line.startDate &&
+      (!line.endDate || line.endDate >= line.startDate) &&
+      (!line.rateEffectiveFrom ||
+        !line.rateEffectiveTo ||
+        line.rateEffectiveTo >= line.rateEffectiveFrom) &&
+      (line.authorizedBudgetAmount === null || line.authorizedBudgetAmount >= 0) &&
       (line.authorizedUnits === null || line.authorizedUnits >= 0) &&
       (line.ratePerUnit === null || line.ratePerUnit >= 0) &&
       (line.minutesPerUnit === null || line.minutesPerUnit > 0) &&
@@ -295,12 +434,17 @@ export class ClientServiceAgreementsComponent implements OnInit {
   private emptyDraft(): AgreementDraft {
     return {
       agreementNumber: '',
+      payerId: '',
+      clientCoverageId: '',
+      manualPayerMode: false,
       payerName: '',
       insuredMemberId: '',
       priorAuthorizationNumber: '',
       startDate: '',
       endDate: '',
       status: '',
+      priority: '',
+      isDummy: false,
       notes: '',
     };
   }
@@ -315,8 +459,12 @@ export class ClientServiceAgreementsComponent implements OnInit {
       ratePerUnit: null,
       plannedHoursPerVisit: null,
       plannedVisitsPerWeek: null,
-      primaryDiagnosisText: '',
-      icdCode: '',
+      startDate: this.draft.startDate,
+      endDate: '',
+      rateEffectiveFrom: '',
+      rateEffectiveTo: '',
+      authorizedBudgetAmount: null,
+      diagnoses: [],
     };
   }
 
@@ -331,8 +479,27 @@ export class ClientServiceAgreementsComponent implements OnInit {
       ratePerUnit: line.ratePerUnit,
       plannedHoursPerVisit: line.plannedHoursPerVisit,
       plannedVisitsPerWeek: line.plannedVisitsPerWeek,
-      primaryDiagnosisText: line.primaryDiagnosisText ?? '',
-      icdCode: line.icdCode ?? '',
+      startDate: line.startDate,
+      endDate: line.endDate ?? '',
+      rateEffectiveFrom: line.rateEffectiveFrom ?? '',
+      rateEffectiveTo: line.rateEffectiveTo ?? '',
+      authorizedBudgetAmount: line.authorizedBudgetAmount,
+      diagnoses: line.diagnoses.map((diagnosis) => ({
+        id: diagnosis.id,
+        diagnosisText: diagnosis.diagnosisText ?? '',
+        icdCode: diagnosis.icdCode ?? '',
+        isPrimary: diagnosis.isPrimary,
+      })),
     };
+  }
+
+  private loadCoverages(): void {
+    this.api
+      .listClientCoverages(this.clientId())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (items) => this.coverages.set(items),
+        error: () => this.coverages.set([]),
+      });
   }
 }

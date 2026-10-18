@@ -30,6 +30,11 @@ import {
   CreateClientServiceAgreementRequest,
   UpdateClientServiceAgreementRequest,
 } from '../models/client-service-agreement.models';
+import {
+  ClientCoverage,
+  SaveClientCoverageRequest,
+  UpdateClientCoverageRequest,
+} from '../models/client-coverage.models';
 
 @Injectable({ providedIn: 'root' })
 export class ClientApiService {
@@ -203,6 +208,33 @@ export class ClientApiService {
     return this.http.post<SendClientGuestInvitationResponse>(
       `${this.clientsUrl()}/guest-invitations/${encodeURIComponent(invitationId)}/send`,
       { token },
+    );
+  }
+
+  listClientCoverages(clientId: string): Observable<readonly ClientCoverage[]> {
+    return this.http.get<readonly ClientCoverage[]>(
+      `${this.clientsUrl()}/${encodeURIComponent(clientId)}/coverages`,
+    );
+  }
+
+  createClientCoverage(
+    clientId: string,
+    request: SaveClientCoverageRequest,
+  ): Observable<ClientCoverage> {
+    return this.http.post<ClientCoverage>(
+      `${this.clientsUrl()}/${encodeURIComponent(clientId)}/coverages`,
+      request,
+    );
+  }
+
+  updateClientCoverage(
+    clientId: string,
+    coverageId: string,
+    request: UpdateClientCoverageRequest,
+  ): Observable<ClientCoverage> {
+    return this.http.put<ClientCoverage>(
+      `${this.clientsUrl()}/${encodeURIComponent(clientId)}/coverages/${encodeURIComponent(coverageId)}`,
+      request,
     );
   }
 

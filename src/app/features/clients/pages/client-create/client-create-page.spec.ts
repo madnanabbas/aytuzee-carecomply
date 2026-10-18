@@ -685,6 +685,9 @@ describe('ClientCreatePageComponent', () => {
 
   it('resumes server progress 10 into the optional Service agreements step and reuses the shared component', async () => {
     const listClientServiceAgreements = vi.fn(() => of([]));
+    const completeClientCreation = vi.fn(() =>
+      of({ id: 'client-1', status: 'Active' as const, editorVersion: 'b'.repeat(64) }),
+    );
     await TestBed.configureTestingModule({
       imports: [ClientCreatePageComponent],
       providers: [
@@ -694,6 +697,7 @@ describe('ClientCreatePageComponent', () => {
           useValue: {
             supervisorCandidates: () => of([]),
             listClientServiceAgreements,
+            completeClientCreation,
             getClientCreationState: () =>
               of({
                 id: 'client-1',
@@ -734,6 +738,14 @@ describe('ClientCreatePageComponent', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).toContain(
       'No service agreements have been added yet.',
     );
+    const finishButton = [...fixture.nativeElement.querySelectorAll('button')].find(
+      (button: HTMLButtonElement) => button.textContent?.trim() === 'Finish Client Setup',
+    ) as HTMLButtonElement | undefined;
+    expect(finishButton).toBeTruthy();
+    expect(finishButton?.disabled).toBe(false);
+
+    finishButton?.click();
+    expect(completeClientCreation).toHaveBeenCalledTimes(1);
   });
 
   it('redirects a non-Pending resume to the existing Client view', () => {

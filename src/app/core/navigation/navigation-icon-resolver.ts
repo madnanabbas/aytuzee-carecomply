@@ -29,6 +29,7 @@ const NAVIGATION_ICONS: Readonly<Record<string, LucideIcon>> = {
   notifications: LucideBell,
   reports: LucideChartNoAxesColumn,
   companies: LucideBuilding2,
+  payers: LucideBuilding2,
   'access-management': LucideUserRoundCog,
   users: LucideUsers,
   roles: LucideShieldCheck,

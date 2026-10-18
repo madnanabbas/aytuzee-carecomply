@@ -377,6 +377,7 @@ export class PublicClientIntakePageComponent implements OnInit, OnDestroy {
     this.saving.set(true);
     this.submitError.set(null);
     try {
+      debugger;
       const result = await this.intake.updateContactInformation({
         contactInformation: {
           email: optional(this.draft.email),
@@ -388,7 +389,7 @@ export class PublicClientIntakePageComponent implements OnInit, OnDestroy {
           state: optional(this.draft.state),
           postalCode: optional(this.draft.zip),
           county: optional(this.draft.county),
-          country: optional(this.draft.country),
+          country: "United States",
           preferredLanguages: this.draft.languages.map((name, index) => ({
             languageCode: languageCode(name),
             languageName: name,

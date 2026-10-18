@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { AuthorizationService } from '../../../../core/authorization/authorization.service';
+import { PayerLookupService } from '../../../../core/lookups/payer-lookup.service';
 import { ClientApiService } from '../../data-access/client-api.service';
 import { ClientCareCoordinatorApiService } from '../../data-access/client-care-coordinator-api.service';
 import { ClientCaregiverApiService } from '../../data-access/client-caregiver-api.service';
@@ -28,6 +29,7 @@ describe('ClientViewPageComponent record navigation', () => {
   const operationItems = [
     'Quick notes',
     'To-dos',
+    'Coverage',
     'Service agreements',
     'Forms',
     'Documents',
@@ -88,9 +90,14 @@ describe('ClientViewPageComponent record navigation', () => {
           useValue: { snapshot: { paramMap: convertToParamMap({ clientId: details.id }) } },
         },
         { provide: AuthorizationService, useValue: { hasPermission } },
+        { provide: PayerLookupService, useValue: { list: relatedList } },
         {
           provide: ClientApiService,
-          useValue: { getClient: () => of(details), listClientServiceAgreements: relatedList },
+          useValue: {
+            getClient: () => of(details),
+            listClientCoverages: relatedList,
+            listClientServiceAgreements: relatedList,
+          },
         },
         {
           provide: ClientTodoApiService,
@@ -186,6 +193,7 @@ describe('ClientViewPageComponent record navigation', () => {
     ['Hospitalizations', 'Hospitalizations'],
     ['Quick notes', 'Quick Notes'],
     ['To-dos', 'To-dos'],
+    ['Coverage', 'Client Coverage'],
     ['Service agreements', 'Service Agreements'],
     ['Forms', 'Forms'],
     ['Documents', 'Documents'],

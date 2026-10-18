@@ -1,0 +1,112 @@
+<div class="mx-auto w-full max-w-[88rem]">
+  <header class="flex items-center justify-between border-b border-border pb-5">
+    <div>
+      <h1 class="text-page-title text-text-primary">Payers</h1>
+      <p class="mt-1 text-body text-text-secondary">
+        Manage the company payer list used for verified client coverage.
+      </p>
+    </div>
+    @if (canCreate()) {
+      <button
+        class="h-control rounded-control bg-primary px-4 text-button font-semibold text-on-primary"
+        (click)="open()"
+      >
+        + Add payer
+      </button>
+    }
+  </header>
+  @if (error()) {
+    <div
+      class="mt-4 rounded-control border border-danger/30 bg-danger/5 px-4 py-3 text-small text-danger"
+    >
+      {{ error() }}
+    </div>
+  }
+  <section
+    class="mt-section overflow-hidden rounded-surface border border-border bg-surface shadow-sm"
+  >
+    <table class="w-full text-left">
+      <thead
+        class="border-b border-border bg-surface-muted/80 text-table-heading uppercase text-text-secondary"
+      >
+        <tr>
+          <th class="px-4 py-2.5">Payer</th>
+          <th class="px-4 py-2.5">Status</th>
+          <th class="px-4 py-2.5 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-border">
+        @if (loading()) {
+          <tr>
+            <td colspan="3" class="px-4 py-12 text-center text-small">Loading payers…</td>
+          </tr>
+        }
+        @for (payer of payers(); track payer.id) {
+          <tr>
+            <td class="px-4 py-3 font-medium">{{ payer.name }}</td>
+            <td class="px-4 py-3">
+              <span
+                class="rounded-status px-2 py-1 text-helper"
+                [class.bg-success-subtle]="payer.isActive"
+                [class.text-success]="payer.isActive"
+              >
+                {{ payer.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-right">
+              @if (canEdit()) {
+                <button class="text-small font-medium text-primary" (click)="open(payer)">
+                  Edit
+                </button>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="3" class="px-4 py-12 text-center text-small">No payers found.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
+</div>
+@if (editor()) {
+  <div class="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
+    <form
+      class="w-full max-w-lg rounded-surface bg-surface shadow-xl"
+      [formGroup]="form"
+      (ngSubmit)="save()"
+    >
+      <header class="border-b border-border px-5 py-4">
+        <h2 class="text-card-title">{{ editor() === 'new' ? 'Add payer' : 'Edit payer' }}</h2>
+      </header>
+      <div class="space-y-4 p-5">
+        <label class="block text-small font-medium"
+          >Payer name *<input
+            class="mt-1 h-control w-full rounded-control border border-border-strong px-3"
+            formControlName="name"
+        /></label>
+        @if (editor() !== 'new') {
+          <label class="flex items-center gap-2 text-small"
+            ><input type="checkbox" formControlName="isActive" /> Active payer</label
+          >
+        }
+      </div>
+      <footer class="flex justify-end gap-2 border-t border-border px-5 py-4">
+        <button
+          type="button"
+          class="h-control rounded-control border border-border px-4"
+          (click)="close()"
+        >
+          Cancel
+        </button>
+        <button
+          class="h-control rounded-control bg-primary px-4 font-semibold text-on-primary"
+          [disabled]="saving()"
+        >
+          {{ saving() ? 'Saving…' : 'Save payer' }}
+        </button>
+      </footer>
+    </form>
+  </div>
+}

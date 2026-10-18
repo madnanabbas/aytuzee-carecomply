@@ -278,6 +278,8 @@
               [clientId]="client.id"
               (openCountChange)="openTodoCount.set($event)"
             />
+          } @else if (activeTab() === 'coverage') {
+            <app-client-coverages [clientId]="client.id" />
           } @else if (activeTab() === 'service-agreements') {
             <app-client-service-agreements [clientId]="client.id" />
           } @else if (activeTab() === 'forms') {

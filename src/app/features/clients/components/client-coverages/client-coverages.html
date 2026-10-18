@@ -1,0 +1,150 @@
+<section class="panel-card">
+  <header class="panel-header">
+    <div>
+      <h2>Client Coverage</h2>
+      <p>Verified payer coverage, member identifiers and effective periods.</p>
+    </div>
+    @if (canCreate() && !editor()) {
+      <button class="primary-action" type="button" (click)="open()">Add coverage</button>
+    }
+  </header>
+  @if (!canView()) {
+    <div class="p-8 text-center text-text-muted">
+      You do not have permission to view client coverage.
+    </div>
+  } @else {
+    @if (error()) {
+      <div class="border-b border-danger/20 bg-danger/5 px-4 py-2 text-danger" role="alert">
+        {{ error() }}
+      </div>
+    }
+    @if (editor()) {
+      <div class="border-b border-border bg-surface-muted p-4">
+        <div class="mb-4 flex items-center justify-between">
+          <h3 class="font-semibold">{{ editor() === 'new' ? 'Add coverage' : 'Edit coverage' }}</h3>
+          <button class="command-button" type="button" (click)="close()">Cancel</button>
+        </div>
+        <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <label class="flex items-center gap-2"
+            ><input
+              type="radio"
+              name="payerMode"
+              [checked]="!draft.manualMode"
+              (change)="setManualMode(false)"
+            />
+            Payer Master</label
+          >
+          <label class="flex items-center gap-2"
+            ><input
+              type="radio"
+              name="payerMode"
+              [checked]="draft.manualMode"
+              (change)="setManualMode(true)"
+            />
+            Manual payer</label
+          >
+          @if (!draft.manualMode) {
+            <label class="md:col-span-2"
+              ><span class="form-label">Payer *</span
+              ><select class="form-control" [(ngModel)]="draft.payerId">
+                <option value="">Select payer</option>
+                @for (payer of payers(); track payer.id) {
+                  <option [value]="payer.id">{{ payer.name }}</option>
+                }
+              </select></label
+            >
+          } @else {
+            <label class="md:col-span-2"
+              ><span class="form-label">Manual payer name *</span
+              ><input class="form-control" [(ngModel)]="draft.manualPayerName" maxlength="200"
+            /></label>
+          }
+          <label
+            ><span class="form-label">Member ID</span
+            ><input class="form-control" [(ngModel)]="draft.memberId" maxlength="100"
+          /></label>
+          <label
+            ><span class="form-label">Medicaid ID</span
+            ><input class="form-control" [(ngModel)]="draft.medicaidId" maxlength="100"
+          /></label>
+          <label
+            ><span class="form-label">Effective from</span
+            ><input class="form-control" type="date" [(ngModel)]="draft.effectiveFrom"
+          /></label>
+          <label
+            ><span class="form-label">Effective to</span
+            ><input
+              class="form-control"
+              type="date"
+              [min]="draft.effectiveFrom"
+              [(ngModel)]="draft.effectiveTo"
+          /></label>
+          <label class="flex items-center gap-2"
+            ><input type="checkbox" [(ngModel)]="draft.isVerified" /> Verified</label
+          >
+          <label class="flex items-center gap-2"
+            ><input type="checkbox" [(ngModel)]="draft.isPrimary" /> Primary coverage</label
+          >
+        </div>
+        <div class="mt-4 flex justify-end">
+          <button
+            class="primary-action"
+            type="button"
+            [disabled]="saving() || !valid()"
+            (click)="save()"
+          >
+            {{ saving() ? 'Saving…' : 'Save coverage' }}
+          </button>
+        </div>
+      </div>
+    }
+    @if (loading()) {
+      <p class="p-8 text-center text-text-muted">Loading client coverage…</p>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="compact-table min-w-[60rem]">
+          <thead>
+            <tr>
+              <th>Payer</th>
+              <th>Member ID</th>
+              <th>Medicaid ID</th>
+              <th>Effective period</th>
+              <th>Status</th>
+              <th class="text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of items(); track item.id) {
+              <tr>
+                <td class="font-medium">
+                  {{ item.payerName }}
+                  @if (!item.payerId) {
+                    <span class="text-text-muted">(Manual)</span>
+                  }
+                </td>
+                <td>{{ item.memberId || '—' }}</td>
+                <td>{{ item.medicaidId || '—' }}</td>
+                <td>{{ displayDate(item.effectiveFrom) }} – {{ displayDate(item.effectiveTo) }}</td>
+                <td>
+                  {{ item.isVerified ? 'Verified' : 'Not verified'
+                  }}{{ item.isPrimary ? ' · Primary' : '' }}
+                </td>
+                <td class="text-right">
+                  @if (canEdit()) {
+                    <button class="table-link" type="button" (click)="open(item)">Edit</button>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="p-8 text-center text-text-muted">
+                  No coverage has been added.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</section>

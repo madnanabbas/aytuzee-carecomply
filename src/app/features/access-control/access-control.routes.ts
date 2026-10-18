@@ -23,6 +23,12 @@ export const accessControlRoutes: Routes = [
     loadComponent: () => import('./companies/company-page').then((m) => m.CompanyPage),
   },
   {
+    path: 'payers',
+    canActivate: [permissionGuard],
+    data: { permissions: [Permissions.Payer.View] } satisfies PermissionRouteData,
+    loadComponent: () => import('./payers/payer-page').then((m) => m.PayerPage),
+  },
+  {
     path: '',
     component: AccessControlPlaceholderComponent,
   },

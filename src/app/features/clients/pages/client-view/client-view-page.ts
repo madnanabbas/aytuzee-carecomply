@@ -9,6 +9,7 @@ import { ClientTodoApiService } from '../../data-access/client-todo-api.service'
 import { ClientDetails } from '../../models/client-api.models';
 import { ClientTodosComponent } from '../../components/client-todos/client-todos';
 import { ClientServiceAgreementsComponent } from '../../components/client-service-agreements/client-service-agreements';
+import { ClientCoveragesComponent } from '../../components/client-coverages/client-coverages';
 import {
   ClientDialog,
   ClientTabDefinition,
@@ -30,6 +31,7 @@ import { ClientIntakeProfileComponent } from './client-intake-profile';
     RouterLink,
     ClientTodosComponent,
     ClientServiceAgreementsComponent,
+    ClientCoveragesComponent,
     ClientViewOverviewComponent,
     ClientViewDialogComponent,
     ClientIntakeProfileComponent,
@@ -173,6 +175,7 @@ export class ClientViewPageComponent {
   private readonly operationTabs: readonly ClientTabDefinition[] = [
     { id: 'quick-notes', label: 'Quick notes', viewPermission: Permissions.ClientQuickNote.View },
     { id: 'todos', label: 'To-dos', viewPermission: Permissions.ClientTodo.View },
+    { id: 'coverage', label: 'Coverage', viewPermission: Permissions.ClientCoverage.View },
     {
       id: 'service-agreements',
       label: 'Service agreements',
