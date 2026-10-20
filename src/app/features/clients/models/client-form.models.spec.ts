@@ -1,4 +1,5 @@
 import {
+  clientFormToAdditionalInformationRequest,
   clientFormToCreateRequest,
   clientFormToUpdateRequest,
   createEmptyClientForm,
@@ -69,6 +70,15 @@ describe('clientFormToCreateRequest', () => {
     expect(request.additionalProfile.programType).toBe('PcaTraditional');
     expect(request).not.toHaveProperty('firstName');
     expect(request).not.toHaveProperty('status');
+  });
+
+  it('maps the step-two program type to the API enum name', () => {
+    const form = createEmptyClientForm();
+    form.programType = '245D';
+
+    const request = clientFormToAdditionalInformationRequest(form, 'a'.repeat(64));
+
+    expect(request.additionalProfile.programType).toBe('Two45D');
   });
 
   it('persists the supervisor employee identifier in create and edit care setup', () => {

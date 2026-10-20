@@ -123,7 +123,9 @@ export interface UpdateClientBasicDetailsRequest extends CreateClientBasicDetail
 }
 
 export interface UpdateClientAdditionalInformationRequest {
-  readonly additionalProfile: ClientAdditionalProfileRequest;
+  readonly additionalProfile: Omit<ClientAdditionalProfileRequest, 'programType'> & {
+    readonly programType: string;
+  };
   readonly editorVersion: string;
 }
 

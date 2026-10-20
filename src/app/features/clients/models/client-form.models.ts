@@ -339,7 +339,13 @@ export function clientFormToAdditionalInformationRequest(
   form: ClientFormModel,
   editorVersion: string,
 ): UpdateClientAdditionalInformationRequest {
-  return { additionalProfile: additionalProfile(form), editorVersion };
+  return {
+    additionalProfile: {
+      ...additionalProfile(form),
+      programType: clientProgramWireValue(form.programType),
+    },
+    editorVersion,
+  };
 }
 
 export function clientFormToContactInformationRequest(
