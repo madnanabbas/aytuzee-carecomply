@@ -1,0 +1,194 @@
+<section class="space-y-section" aria-labelledby="client-forms-title">
+  <header>
+    <p class="text-label font-semibold uppercase tracking-wide text-primary">Clients</p>
+    <h1 id="client-forms-title" class="mt-1 text-page-title text-text-primary">Forms</h1>
+    <p class="mt-1 text-body text-text-secondary">
+      Select a client and a published form template to prepare an editable local copy.
+    </p>
+  </header>
+
+  <div class="rounded-surface border border-border bg-surface p-card">
+    <div class="grid gap-form lg:grid-cols-2">
+      <div class="relative">
+        <label for="client-form-client-search" class="block text-label text-text-primary">
+          Client
+        </label>
+        <input
+          id="client-form-client-search"
+          type="search"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-controls="client-form-client-options"
+          [attr.aria-expanded]="clientDropdownOpen()"
+          [attr.aria-activedescendant]="
+            activeClientIndex() >= 0 ? 'client-form-client-' + activeClientIndex() : null
+          "
+          autocomplete="off"
+          class="mt-1.5 h-control w-full rounded-control border border-border-strong bg-surface px-3 text-body text-text-primary"
+          placeholder="Search clients by name or email"
+          [value]="clientSearch()"
+          (input)="updateClientSearch($event)"
+          (focus)="clientDropdownOpen.set(true)"
+          (keydown)="onClientSearchKeydown($event)"
+        />
+
+        @if (clientDropdownOpen()) {
+          <div
+            id="client-form-client-options"
+            class="absolute z-40 mt-1 w-full rounded-surface border border-border bg-surface p-1 shadow-elevated"
+            role="listbox"
+            aria-label="Client search results"
+          >
+            @if (clientState() === 'loading') {
+              <p class="px-3 py-3 text-small text-text-secondary" role="status">Loading clients…</p>
+            } @else if (clientState() === 'error') {
+              <div class="flex items-center justify-between gap-3 px-3 py-2">
+                <p class="text-small text-danger">Clients could not be loaded.</p>
+                <button type="button" class="text-button text-primary" (click)="retryClients()">
+                  Retry
+                </button>
+              </div>
+            } @else if (clientState() === 'empty') {
+              <p class="px-3 py-3 text-small text-text-secondary">No matching clients.</p>
+            } @else {
+              @for (client of clientResponse()?.items ?? []; track client.id; let index = $index) {
+                <button
+                  type="button"
+                  role="option"
+                  [id]="'client-form-client-' + index"
+                  [attr.aria-selected]="selectedClient()?.id === client.id"
+                  class="block min-h-11 w-full rounded-control px-3 py-2 text-left hover:bg-primary-subtle focus:bg-primary-subtle"
+                  (click)="selectClient(client)"
+                >
+                  <span class="block text-label text-text-primary">{{ client.displayName }}</span>
+                  <span class="block text-helper text-text-muted">
+                    {{ client.location || 'Location not assigned' }}
+                  </span>
+                </button>
+              }
+              @if (clientTotalPages() > 1) {
+                <div class="flex items-center justify-between border-t border-border px-2 py-2">
+                  <button
+                    type="button"
+                    class="h-control-compact rounded-control border border-border-strong px-3 text-button text-text-secondary disabled:opacity-50"
+                    [disabled]="(clientResponse()?.pageNumber ?? 1) <= 1"
+                    (click)="changeClientPage((clientResponse()?.pageNumber ?? 1) - 1)"
+                  >
+                    Previous
+                  </button>
+                  <span class="text-helper text-text-muted">
+                    Page {{ clientResponse()?.pageNumber }} of {{ clientTotalPages() }}
+                  </span>
+                  <button
+                    type="button"
+                    class="h-control-compact rounded-control border border-border-strong px-3 text-button text-text-secondary disabled:opacity-50"
+                    [disabled]="(clientResponse()?.pageNumber ?? 1) >= clientTotalPages()"
+                    (click)="changeClientPage((clientResponse()?.pageNumber ?? 1) + 1)"
+                  >
+                    Next
+                  </button>
+                </div>
+              }
+            }
+          </div>
+        }
+      </div>
+
+      <div>
+        <label for="client-form-template" class="block text-label text-text-primary">
+          Form template
+        </label>
+        <select
+          id="client-form-template"
+          class="mt-1.5 h-control w-full rounded-control border border-border-strong bg-surface px-3 text-body text-text-primary disabled:bg-surface-muted disabled:text-text-muted"
+          [disabled]="templateDisabled()"
+          [value]="selectedTemplateVersionId()"
+          (change)="onTemplateChange($event)"
+        >
+          <option value="">
+            @if (!selectedClient()) {
+              Select a client first
+            } @else if (templateState() === 'loading') {
+              Loading templates…
+            } @else {
+              Select a form template
+            }
+          </option>
+          @for (template of templates(); track template.templateVersionId) {
+            <option [value]="template.templateVersionId">
+              {{ template.name }} — Version {{ template.versionNumber }}
+            </option>
+          }
+        </select>
+        @if (templateState() === 'empty') {
+          <p class="mt-1.5 text-helper text-text-muted">No published templates are available.</p>
+        } @else if (templateState() === 'error') {
+          <button type="button" class="mt-1.5 text-button text-danger" (click)="retryTemplates()">
+            Templates could not be loaded. Retry
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div
+    class="rounded-surface border border-border bg-primary-subtle px-4 py-3 text-small text-text-secondary"
+    role="note"
+  >
+    Review all auto-filled information before use. Signature and acknowledgement fields must be
+    completed manually.
+  </div>
+
+  @if (documentSource(); as source) {
+    @if (documentState() === 'loading') {
+      <p class="text-small text-text-secondary" role="status">Rendering all PDF pages…</p>
+    }
+    <div class="flex flex-wrap items-center justify-end gap-2">
+      <button
+        type="button"
+        class="h-control rounded-control border border-border-strong bg-surface px-4 text-button text-text-primary"
+        (click)="resetToClientData()"
+      >
+        Reset to client data
+      </button>
+      @if (canExport()) {
+        <button
+          type="button"
+          class="h-control rounded-control bg-primary px-4 text-button font-semibold text-on-primary hover:bg-primary-hover"
+          (click)="download()"
+        >
+          Download PDF
+        </button>
+      }
+    </div>
+    <app-client-form-pdf-viewer
+      [source]="source"
+      (ready)="onViewerReady()"
+      (failed)="onViewerFailed()"
+      (dirtyChange)="viewerDirty.set($event)"
+    />
+  } @else if (documentState() === 'loading') {
+    <div
+      class="rounded-surface border border-border bg-surface px-card py-12 text-center text-body text-text-secondary"
+      role="status"
+    >
+      Loading the form…
+    </div>
+  } @else if (documentState() === 'error') {
+    <div class="rounded-surface border border-border bg-surface px-card py-10 text-center">
+      <p class="text-body text-danger">The form could not be loaded.</p>
+      <button type="button" class="mt-3 text-button text-primary" (click)="retryDocument()">
+        Retry
+      </button>
+    </div>
+  } @else {
+    <div
+      class="rounded-surface border border-dashed border-border-strong px-card py-14 text-center"
+    >
+      <h2 class="text-card-title text-text-primary">Choose a client and form template</h2>
+      <p class="mt-1 text-small text-text-secondary">
+        The editable PDF will open here without saving field values to CareComply.
+      </p>
+    </div>
+  }
+</section>

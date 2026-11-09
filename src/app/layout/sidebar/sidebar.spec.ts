@@ -22,6 +22,8 @@ describe('SidebarComponent', () => {
         provideRouter([
           { path: 'dashboard', component: EmptyRouteComponent },
           { path: 'employees', component: EmptyRouteComponent },
+          { path: 'clients/list', component: EmptyRouteComponent },
+          { path: 'clients/forms', component: EmptyRouteComponent },
         ]),
         { provide: NavigationService, useValue: { groups, status } },
       ],
@@ -84,21 +86,33 @@ describe('SidebarComponent', () => {
     expect(close).toHaveBeenCalledTimes(3);
   });
 
-  it('should preserve nested navigation and collapse behavior', () => {
+  it('should toggle a parent group and expose ordered Client List and Forms links', () => {
     groups.set([
-      group('administration', 'Administration', [
+      group('people', 'Clients', [
         {
-          ...item('access-management', 'Access Management', '/access-control'),
-          children: [item('users', 'Users', '/access-control/users')],
+          ...item('clients', 'Client Management', '/clients'),
+          children: [
+            item('client-list', 'Client List', '/clients/list', 5),
+            item('client-forms', 'Forms', '/clients/forms', 10),
+          ],
         },
       ]),
     ]);
     const fixture = TestBed.createComponent(SidebarComponent);
     fixture.detectChanges();
 
-    fixture.componentInstance.toggleModule('access-management');
+    fixture.componentInstance.toggleModule('clients');
     fixture.detectChanges();
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Users');
+    const element = fixture.nativeElement as HTMLElement;
+    const links = [...element.querySelectorAll<HTMLAnchorElement>('nav ul ul a')];
+    expect(links.map((link) => link.textContent?.trim())).toEqual(['Client List', 'Forms']);
+    expect(links.map((link) => link.getAttribute('href'))).toEqual([
+      '/clients/list',
+      '/clients/forms',
+    ]);
+    expect(element.querySelector('button[aria-expanded="true"]')?.textContent).toContain(
+      'Client Management',
+    );
 
     fixture.componentInstance.toggleCollapsed();
     expect(fixture.componentInstance.collapsed()).toBe(true);
@@ -119,13 +133,18 @@ function group(key: string, label: string, items: NavigationGroup['items']): Nav
   return { key, label, sortOrder: 10, items };
 }
 
-function item(id: string, label: string, route: string): NavigationGroup['items'][number] {
+function item(
+  id: string,
+  label: string,
+  route: string,
+  sortOrder = 10,
+): NavigationGroup['items'][number] {
   return {
     id,
     label,
     route,
     icon: resolveNavigationIcon(id),
-    sortOrder: 10,
+    sortOrder,
     children: [],
   };
 }

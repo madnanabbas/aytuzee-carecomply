@@ -11,7 +11,9 @@ export interface RegisteredNavigationRoute {
  * labels, groups, ordering and icon keys come from the navigation API. */
 export const APP_ROUTE_METADATA = {
   dashboard: route('dashboard', '/dashboard', [Permissions.Dashboard.View]),
-  clients: route('clients', '/clients', [Permissions.Client.View]),
+  clients: route('clients', '/clients', [Permissions.Client.View, Permissions.ClientForm.View]),
+  clientList: route('client-list', '/clients/list', [Permissions.Client.View]),
+  clientForms: route('client-forms', '/clients/forms', [Permissions.ClientForm.View]),
   employees: route('employees', '/employees', [Permissions.Employee.View]),
   dhsLibrary: route('dhs-library', '/dhs-library', [Permissions.DHSLibrary.View]),
   documents: route('documents', '/documents', [

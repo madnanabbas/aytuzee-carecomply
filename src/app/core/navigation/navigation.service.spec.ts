@@ -79,6 +79,65 @@ describe('NavigationService', () => {
     expect(navigation.groups()[0]?.items[0]?.route).toBe('/access-control/companies');
   });
 
+  it('retains the Clients container and its Forms child for ClientForm.View alone', async () => {
+    TestBed.inject(AuthorizationService).setPermissions([Permissions.ClientForm.View]);
+    api.getNavigation.mockReturnValue(
+      of([
+        module('people', 'People', 20, [
+          feature('clients', 'Clients', '/clients', 10, [
+            feature('client-forms', 'Forms', '/clients/forms', 10),
+          ]),
+        ]),
+      ]),
+    );
+    const navigation = TestBed.inject(NavigationService);
+
+    await navigation.loadForSession('user-1');
+
+    const clients = navigation.findByUrl('/clients');
+    expect(clients?.label).toBe('Clients');
+    expect(clients?.children.map((child) => child.id)).toEqual(['client-forms']);
+    expect(navigation.findByUrl('/clients/forms')?.label).toBe('Forms');
+  });
+
+  it('orders Client List before Forms and filters each child by its own permission', async () => {
+    const authorization = TestBed.inject(AuthorizationService);
+    authorization.setPermissions([Permissions.Client.View, Permissions.ClientForm.View]);
+    api.getNavigation.mockReturnValue(
+      of([
+        module('people', 'People', 20, [
+          feature('clients', 'Client Management', '/clients', 10, [
+            feature('client-forms', 'Forms', '/clients/forms', 10),
+            feature('client-list', 'Client List', '/clients/list', 5),
+          ]),
+        ]),
+      ]),
+    );
+    const navigation = TestBed.inject(NavigationService);
+
+    await navigation.loadForSession('user-1');
+
+    const clients = navigation.findByUrl('/clients');
+    expect(clients?.children.map((child) => child.id)).toEqual(['client-list', 'client-forms']);
+    expect(navigation.findByUrl('/clients/list')?.label).toBe('Client List');
+
+    authorization.setPermissions([Permissions.Client.View]);
+    api.getNavigation.mockReturnValue(
+      of([
+        module('people', 'People', 20, [
+          feature('clients', 'Client Management', '/clients', 10, [
+            feature('client-list', 'Client List', '/clients/list', 5),
+          ]),
+        ]),
+      ]),
+    );
+    await navigation.loadForSession('user-1');
+
+    expect(navigation.findByUrl('/clients')?.children.map((child) => child.id)).toEqual([
+      'client-list',
+    ]);
+  });
+
   it('refreshes Employees navigation when the same user gains Employee.View', async () => {
     const authorization = TestBed.inject(AuthorizationService);
     authorization.setPermissions([Permissions.Dashboard.View]);

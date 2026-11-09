@@ -81,7 +81,12 @@ export const Permissions = {
     Edit: 'ClientHospitalization.Edit',
   },
   ClientVisit: { View: 'ClientVisit.View', Create: 'ClientVisit.Create', Edit: 'ClientVisit.Edit' },
-  ClientForm: { View: 'ClientForm.View', Create: 'ClientForm.Create', Edit: 'ClientForm.Edit' },
+  ClientForm: {
+    View: 'ClientForm.View',
+    Create: 'ClientForm.Create',
+    Edit: 'ClientForm.Edit',
+    Export: 'ClientForm.Export',
+  },
   ClientEmailLog: { View: 'ClientEmailLog.View' },
   ClientEmployeeService: {
     View: 'ClientEmployeeService.View',

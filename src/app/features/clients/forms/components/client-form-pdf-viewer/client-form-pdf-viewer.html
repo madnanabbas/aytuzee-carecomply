@@ -1,0 +1,34 @@
+<div class="client-form-viewer rounded-surface border border-border bg-surface">
+  <div
+    class="flex min-h-12 flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2"
+    aria-label="PDF viewer controls"
+  >
+    <div class="flex items-center gap-1">
+      <button type="button" class="viewer-control" (click)="zoomOut()" aria-label="Zoom out">
+        −
+      </button>
+      <span class="min-w-14 text-center text-small text-text-secondary" aria-live="polite">
+        {{ zoomPercent() }}%
+      </span>
+      <button type="button" class="viewer-control" (click)="zoomIn()" aria-label="Zoom in">
+        +
+      </button>
+      <button type="button" class="viewer-control px-3" (click)="fitToWidth()">Fit width</button>
+    </div>
+    @if (editedCount() > 0) {
+      <span
+        class="inline-flex items-center gap-1 rounded-status bg-primary-subtle px-2.5 py-1 text-helper font-medium text-primary"
+        role="status"
+      >
+        <span aria-hidden="true">✎</span>
+        {{ editedCount() }} edited {{ editedCount() === 1 ? 'field' : 'fields' }}
+      </span>
+    }
+  </div>
+
+  <div class="relative h-[70vh] min-h-96 overflow-hidden bg-surface-muted">
+    <div #container class="client-form-viewer__scroll absolute inset-0 overflow-auto" tabindex="0">
+      <div #viewer class="pdfViewer"></div>
+    </div>
+  </div>
+</div>

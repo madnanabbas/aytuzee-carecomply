@@ -1,0 +1,38 @@
+.client-form-viewer {
+  .viewer-control {
+    min-width: 2.5rem;
+    height: 2.5rem;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-control);
+    background: var(--color-surface);
+    color: var(--color-text-primary);
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+
+  .pdfViewer {
+    padding: 1rem 0;
+  }
+
+  .pdfViewer .page {
+    margin: 0 auto 1rem;
+  }
+
+  .annotationLayer section.client-form-field-edited {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 1px;
+  }
+
+  .client-form-edited-label {
+    position: absolute;
+    top: -1.25rem;
+    right: 0;
+    padding: 0.125rem 0.25rem;
+    border-radius: var(--radius-control);
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    font-size: 0.625rem;
+    line-height: 0.875rem;
+    white-space: nowrap;
+  }
+}
