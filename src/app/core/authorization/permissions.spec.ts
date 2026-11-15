@@ -2,9 +2,11 @@ import { ALL_PERMISSIONS, isPermission, Permissions } from './permissions';
 
 describe('Permissions', () => {
   it('contains the complete canonical permission catalog', () => {
-    expect(ALL_PERMISSIONS).toHaveLength(104);
+    expect(ALL_PERMISSIONS).toHaveLength(106);
     expect(ALL_PERMISSIONS).toContain(Permissions.Client.GuestInvite);
     expect(ALL_PERMISSIONS).toContain(Permissions.ClientForm.Export);
+    expect(ALL_PERMISSIONS).toContain(Permissions.FormTemplate.View);
+    expect(ALL_PERMISSIONS).toContain(Permissions.FormTemplate.Manage);
   });
 
   it('should contain only unique values', () => {

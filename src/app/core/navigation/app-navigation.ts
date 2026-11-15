@@ -39,6 +39,10 @@ export const APP_ROUTE_METADATA = {
     Permissions.Permission.View,
     Permissions.Permission.Manage,
     Permissions.AuditLog.View,
+    Permissions.FormTemplate.View,
+  ]),
+  formTemplates: route('form-templates', '/access-control/form-templates', [
+    Permissions.FormTemplate.View,
   ]),
   users: route('users', '/access-control/users', [Permissions.User.View]),
   roles: route('roles', '/access-control/roles', [Permissions.Role.View]),

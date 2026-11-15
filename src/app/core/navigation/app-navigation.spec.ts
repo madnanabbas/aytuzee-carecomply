@@ -16,6 +16,7 @@ describe('application route metadata', () => {
       Permissions.ClientForm.View,
     ]);
     expect(APP_ROUTE_METADATA.accessControl.permissions).toContain(Permissions.User.View);
+    expect(APP_ROUTE_METADATA.accessControl.permissions).toContain(Permissions.FormTemplate.View);
     expect(APP_ROUTE_METADATA.companies).toEqual({
       key: 'companies',
       route: '/access-control/companies',
@@ -32,6 +33,23 @@ describe('application route metadata', () => {
       route: '/clients/list',
       permissions: [Permissions.Client.View],
     });
+    expect(APP_ROUTE_METADATA.formTemplates).toEqual({
+      key: 'form-templates',
+      route: '/access-control/form-templates',
+      permissions: [Permissions.FormTemplate.View],
+    });
+  });
+
+  it('accepts the database-owned Form Templates route only with FormTemplate.View', () => {
+    const authorization = TestBed.inject(AuthorizationService);
+    authorization.setPermissions([Permissions.FormTemplate.View]);
+
+    expect(
+      canAccessNavigationRoute(authorization, 'form-templates', '/access-control/form-templates'),
+    ).toBe(true);
+    expect(canAccessNavigationRoute(authorization, 'form-templates', '/form-templates')).toBe(
+      false,
+    );
   });
 
   it('accepts the database-owned Client List key and path only with Client.View', () => {

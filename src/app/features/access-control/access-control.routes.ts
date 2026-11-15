@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { Permissions } from '../../core/authorization/permissions';
 import { permissionGuard, PermissionRouteData } from '../../core/guards/permission-guard';
+import { authGuard } from '../../core/guards/auth.guard';
 import { AccessControlPlaceholderComponent } from './pages/access-control-placeholder/access-control-placeholder';
 import { UserEditorStore } from './users/data-access/user-editor.store';
 
@@ -16,6 +17,33 @@ const userEditorChildren: Routes = [
 ];
 
 export const accessControlRoutes: Routes = [
+  {
+    path: 'form-templates',
+    canActivate: [authGuard, permissionGuard],
+    data: { permissions: [Permissions.FormTemplate.View] } satisfies PermissionRouteData,
+    loadComponent: () =>
+      import('./form-templates/pages/form-template-list/form-template-list-page').then(
+        (component) => component.FormTemplateListPageComponent,
+      ),
+  },
+  {
+    path: 'form-templates/:templateId/versions/:versionId/mappings',
+    canActivate: [authGuard, permissionGuard],
+    data: { permissions: [Permissions.FormTemplate.Manage] } satisfies PermissionRouteData,
+    loadComponent: () =>
+      import('./form-templates/pages/form-template-mapping/form-template-mapping-page').then(
+        (component) => component.FormTemplateMappingPageComponent,
+      ),
+  },
+  {
+    path: 'form-templates/:templateId',
+    canActivate: [authGuard, permissionGuard],
+    data: { permissions: [Permissions.FormTemplate.View] } satisfies PermissionRouteData,
+    loadComponent: () =>
+      import('./form-templates/pages/form-template-detail/form-template-detail-page').then(
+        (component) => component.FormTemplateDetailPageComponent,
+      ),
+  },
   {
     path: 'companies',
     canActivate: [permissionGuard],

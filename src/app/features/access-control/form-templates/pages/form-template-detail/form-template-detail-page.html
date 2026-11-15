@@ -1,0 +1,219 @@
+<div class="mx-auto w-full max-w-[88rem]">
+  <a
+    routerLink="/access-control/form-templates"
+    class="text-button font-medium text-primary hover:text-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+    >← Back to form templates</a
+  >
+
+  @if (loading()) {
+    <div class="mt-section p-8 text-center" role="status">
+      <p class="text-body text-text-secondary">Loading template…</p>
+    </div>
+  } @else if (loadFailed() || !template()) {
+    <div
+      class="mt-section rounded-surface border border-border bg-surface p-8 text-center"
+      role="alert"
+    >
+      <h1 class="text-section-title text-text-primary">Template could not be loaded</h1>
+      <p class="mt-1 text-small text-text-secondary">Try again or return to the template list.</p>
+      <button
+        type="button"
+        class="mt-4 h-control rounded-control border border-border-strong px-4 text-button font-medium hover:bg-surface-muted"
+        (click)="load()"
+      >
+        Try again
+      </button>
+    </div>
+  } @else if (template(); as currentTemplate) {
+    <header
+      class="mt-5 flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-start sm:justify-between"
+    >
+      <div>
+        <p class="text-label text-primary">{{ currentTemplate.category }}</p>
+        <h1 class="mt-1 text-page-title text-text-primary">{{ currentTemplate.name }}</h1>
+        <p class="mt-1 text-small text-text-secondary">{{ currentTemplate.key }}</p>
+        @if (currentTemplate.description) {
+          <p class="mt-2 max-w-3xl text-body text-text-secondary">
+            {{ currentTemplate.description }}
+          </p>
+        }
+      </div>
+      @if (canManage()) {
+        <button
+          type="button"
+          class="h-control rounded-control bg-primary px-4 text-button font-semibold text-on-primary hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          (click)="showUpload.set(true)"
+        >
+          Upload new version
+        </button>
+      }
+    </header>
+
+    @if (operationError()) {
+      <p
+        class="mt-4 rounded-control border border-danger/30 bg-danger/10 p-3 text-small text-danger"
+        role="alert"
+      >
+        {{ operationError() }}
+      </p>
+    }
+
+    <section
+      aria-labelledby="version-list-title"
+      class="mt-section overflow-hidden rounded-surface border border-border bg-surface"
+    >
+      <div class="border-b border-border px-4 py-4">
+        <h2 id="version-list-title" class="text-section-title text-text-primary">Versions</h2>
+        <p class="mt-1 text-small text-text-secondary">
+          Draft: not visible to staff until published.
+        </p>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full border-collapse text-left text-table">
+          <thead
+            class="bg-surface-muted text-table-heading uppercase tracking-wide text-text-secondary"
+          >
+            <tr>
+              <th class="px-4 py-3">Version</th>
+              <th class="px-4 py-3">Status</th>
+              <th class="px-4 py-3">Pages</th>
+              <th class="px-4 py-3">Fields</th>
+              <th class="px-4 py-3">Technology</th>
+              <th class="px-4 py-3">Uploaded</th>
+              <th class="px-4 py-3"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            @for (version of currentTemplate.versions; track version.id) {
+              <tr>
+                <td class="px-4 py-3 font-medium text-text-primary">
+                  v{{ version.versionNumber }}
+                </td>
+                <td class="px-4 py-3">
+                  <span
+                    class="inline-flex items-center gap-1.5 text-small font-medium text-text-primary"
+                    ><span aria-hidden="true">{{
+                      version.status === 'Published'
+                        ? '✓'
+                        : version.status === 'Retired'
+                          ? '■'
+                          : '●'
+                    }}</span
+                    >{{ version.status }}</span
+                  >
+                </td>
+                <td class="px-4 py-3 text-text-secondary">{{ version.pageCount }}</td>
+                <td class="px-4 py-3 text-text-secondary">{{ version.fieldCount }}</td>
+                <td class="px-4 py-3 text-text-secondary">{{ version.technology }}</td>
+                <td class="px-4 py-3 text-text-secondary">
+                  {{ version.uploadedAtUtc | date: 'medium' }}
+                </td>
+                <td class="px-4 py-3">
+                  <div class="flex justify-end gap-3">
+                    @if (canManage()) {
+                      <a
+                        [routerLink]="[
+                          '/access-control/form-templates',
+                          templateId,
+                          'versions',
+                          version.id,
+                          'mappings',
+                        ]"
+                        class="text-button font-semibold text-primary hover:text-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                      >
+                        {{ version.status === 'Draft' ? 'Map fields' : 'View mappings' }}
+                      </a>
+                    }
+                    <button
+                      type="button"
+                      class="text-button font-semibold text-primary hover:text-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                      (click)="viewFields(version)"
+                    >
+                      Fields
+                    </button>
+                    @if (canManage() && version.status === 'Published') {
+                      <button
+                        type="button"
+                        class="text-button font-semibold text-danger hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger"
+                        (click)="retireCandidate.set(version)"
+                      >
+                        Retire
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7" class="px-4 py-8 text-center text-small text-text-secondary">
+                  No versions found.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    @if (fieldsLoading()) {
+      <p class="mt-section text-small text-text-secondary" role="status">Loading fields…</p>
+    }
+    @if (fieldsFailed()) {
+      <p
+        class="mt-section rounded-control border border-danger/30 bg-danger/10 p-3 text-small text-danger"
+        role="alert"
+      >
+        Fields could not be loaded. Try again.
+      </p>
+    }
+    @if (selectedVersion() && !fieldsLoading() && !fieldsFailed()) {
+      <div class="mt-section"><app-form-template-field-list [fields]="fields()" /></div>
+    }
+  }
+</div>
+
+@if (showUpload() && canManage()) {
+  <app-form-template-upload
+    mode="version"
+    [templateId]="templateId"
+    (closed)="showUpload.set(false)"
+    (completed)="load()"
+  />
+}
+
+@if (retireCandidate(); as version) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-text-primary/45 p-4">
+    <section
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="retire-title"
+      aria-describedby="retire-description"
+      class="w-full max-w-md rounded-surface border border-border bg-surface p-5"
+    >
+      <h2 id="retire-title" class="text-section-title text-text-primary">
+        Retire version {{ version.versionNumber }}?
+      </h2>
+      <p id="retire-description" class="mt-2 text-body text-text-secondary">
+        Staff will no longer be able to select this version. This action does not delete its
+        history.
+      </p>
+      <div class="mt-5 flex justify-end gap-3">
+        <button
+          type="button"
+          class="h-control rounded-control border border-border-strong px-4 text-button font-medium hover:bg-surface-muted"
+          [disabled]="retiring()"
+          (click)="retireCandidate.set(null)"
+        >
+          Cancel</button
+        ><button
+          type="button"
+          class="h-control rounded-control bg-danger px-4 text-button font-semibold text-on-primary disabled:opacity-60"
+          [disabled]="retiring()"
+          (click)="retire()"
+        >
+          {{ retiring() ? 'Retiring…' : 'Retire version' }}
+        </button>
+      </div>
+    </section>
+  </div>
+}

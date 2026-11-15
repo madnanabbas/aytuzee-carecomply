@@ -1,0 +1,117 @@
+<div class="mx-auto w-full max-w-[88rem]">
+  <header
+    class="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-center sm:justify-between"
+  >
+    <div>
+      <h1 class="text-page-title text-text-primary">Form Templates</h1>
+      <p class="mt-1 text-body text-text-secondary">
+        Manage platform fillable PDF templates and their versions.
+      </p>
+    </div>
+    @if (canManage()) {
+      <button
+        type="button"
+        class="h-control rounded-control bg-primary px-4 text-button font-semibold text-on-primary hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        (click)="showUpload.set(true)"
+      >
+        Upload template
+      </button>
+    }
+  </header>
+
+  <section
+    aria-labelledby="template-directory-title"
+    class="mt-section overflow-hidden rounded-surface border border-border bg-surface"
+  >
+    <h2 id="template-directory-title" class="sr-only">Template directory</h2>
+    @if (loading()) {
+      <div class="flex min-h-64 items-center justify-center p-8 text-center" role="status">
+        <p class="text-body text-text-secondary">Loading form templates…</p>
+      </div>
+    } @else if (loadFailed()) {
+      <div class="flex min-h-64 items-center justify-center p-8 text-center" role="alert">
+        <div>
+          <h3 class="text-card-title text-text-primary">Form templates could not be loaded</h3>
+          <p class="mt-1 text-small text-text-secondary">
+            Try again. If the problem continues, contact your administrator.
+          </p>
+          <button
+            type="button"
+            class="mt-4 h-control rounded-control border border-border-strong px-4 text-button font-medium text-text-primary hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            (click)="load()"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    } @else if (templates().length === 0) {
+      <div class="flex min-h-64 items-center justify-center p-8 text-center">
+        <div>
+          <h3 class="text-card-title text-text-primary">No form templates</h3>
+          <p class="mt-1 text-small text-text-secondary">Uploaded templates will appear here.</p>
+        </div>
+      </div>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="min-w-full border-collapse text-left text-table">
+          <thead
+            class="bg-surface-muted text-table-heading uppercase tracking-wide text-text-secondary"
+          >
+            <tr>
+              <th class="px-4 py-3">Name</th>
+              <th class="px-4 py-3">Key</th>
+              <th class="px-4 py-3">Category</th>
+              <th class="px-4 py-3">Latest version</th>
+              <th class="px-4 py-3">Status</th>
+              <th class="px-4 py-3">Last uploaded</th>
+              <th class="px-4 py-3"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            @for (template of templates(); track template.id) {
+              <tr>
+                <td class="px-4 py-3 font-medium text-text-primary">{{ template.name }}</td>
+                <td class="px-4 py-3 text-text-secondary">{{ template.key }}</td>
+                <td class="px-4 py-3 text-text-secondary">{{ template.category }}</td>
+                <td class="px-4 py-3 text-text-secondary">
+                  {{ template.latestVersionNumber ? 'v' + template.latestVersionNumber : '—' }}
+                </td>
+                <td class="px-4 py-3">
+                  <span
+                    class="inline-flex items-center gap-1.5 text-small font-medium text-text-primary"
+                    ><span aria-hidden="true">{{
+                      template.latestVersionStatus === 'Published'
+                        ? '✓'
+                        : template.latestVersionStatus === 'Retired'
+                          ? '■'
+                          : '●'
+                    }}</span
+                    >{{ template.latestVersionStatus ?? 'No versions' }}</span
+                  >
+                </td>
+                <td class="px-4 py-3 text-text-secondary">
+                  {{
+                    template.latestVersionUploadedAtUtc
+                      ? (template.latestVersionUploadedAtUtc | date: 'mediumDate')
+                      : '—'
+                  }}
+                </td>
+                <td class="px-4 py-3 text-right">
+                  <a
+                    [routerLink]="['/access-control/form-templates', template.id]"
+                    class="text-button font-semibold text-primary hover:text-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    >View</a
+                  >
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</div>
+
+@if (showUpload() && canManage()) {
+  <app-form-template-upload mode="new" (closed)="showUpload.set(false)" (completed)="load()" />
+}

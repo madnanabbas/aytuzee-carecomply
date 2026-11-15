@@ -1,0 +1,263 @@
+<div class="mx-auto w-full max-w-[88rem]">
+  <a
+    [routerLink]="['/access-control/form-templates', templateId]"
+    class="text-button font-medium text-primary hover:text-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+    >← Back to template</a
+  >
+
+  @if (loading()) {
+    <p class="mt-section text-body text-text-secondary" role="status">Loading field mappings…</p>
+  } @else if (loadFailed() || !mappingSet()) {
+    <div class="mt-section rounded-surface border border-border bg-surface p-6" role="alert">
+      <h1 class="text-section-title text-text-primary">Field mappings could not be loaded</h1>
+      <button
+        type="button"
+        class="mt-4 h-control rounded-control border border-border-strong px-4"
+        (click)="load()"
+      >
+        Try again
+      </button>
+    </div>
+  } @else if (mappingSet(); as set) {
+    <header
+      class="mt-5 flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between"
+    >
+      <div>
+        <p class="text-label text-primary">
+          {{ set.templateKey }} · Version {{ set.versionNumber }}
+        </p>
+        <h1 class="mt-1 text-page-title text-text-primary">Field mapping</h1>
+        <p class="mt-1 text-small text-text-secondary">
+          Connect PDF fields only to the approved client data catalog.
+        </p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button
+          type="button"
+          class="h-control rounded-control border border-border-strong px-4 text-button font-medium"
+          (click)="preview()"
+        >
+          Preview
+        </button>
+        @if (isDraft()) {
+          <button
+            type="button"
+            class="h-control rounded-control border border-primary px-4 text-button font-semibold text-primary"
+            [disabled]="saving()"
+            (click)="save()"
+          >
+            {{ saving() ? 'Saving…' : 'Save mappings' }}
+          </button>
+          <button
+            type="button"
+            class="h-control rounded-control bg-primary px-4 text-button font-semibold text-on-primary"
+            (click)="showPublish.set(true)"
+          >
+            Publish
+          </button>
+        }
+      </div>
+    </header>
+
+    @if (!isDraft()) {
+      <p
+        class="mt-4 rounded-control border border-border bg-surface-muted p-3 text-small text-text-secondary"
+      >
+        This {{ set.status.toLowerCase() }} version is read-only.
+      </p>
+    }
+    @if (operationError()) {
+      <p
+        class="mt-4 rounded-control border border-danger/30 bg-danger/10 p-3 text-small text-danger"
+        role="alert"
+      >
+        {{ operationError() }}
+      </p>
+    }
+
+    <section
+      class="mt-section rounded-surface border border-border bg-surface"
+      aria-labelledby="mapping-title"
+    >
+      <div
+        class="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-end sm:justify-between"
+      >
+        <div>
+          <h2 id="mapping-title" class="text-section-title text-text-primary">PDF fields</h2>
+          <p class="text-small text-text-secondary">
+            Suggestions are advisory until you save them.
+          </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+          <label class="text-label text-text-secondary"
+            >Search
+            <input
+              class="ml-2 h-control rounded-control border border-border px-3"
+              type="search"
+              [ngModel]="search()"
+              (ngModelChange)="search.set($event)"
+          /></label>
+          <label class="flex items-center gap-2 text-label"
+            ><input
+              type="checkbox"
+              [ngModel]="unmappedOnly()"
+              (ngModelChange)="unmappedOnly.set($event)"
+            />
+            Manual only</label
+          >
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full border-collapse text-left text-table">
+          <thead
+            class="bg-surface-muted text-table-heading uppercase tracking-wide text-text-secondary"
+          >
+            <tr>
+              <th class="px-4 py-3">PDF field</th>
+              <th class="px-4 py-3">Type</th>
+              <th class="px-4 py-3">Purpose</th>
+              <th class="px-4 py-3">Binding</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            @for (mapping of filteredMappings(); track mapping.id) {
+              <tr>
+                <td class="px-4 py-3 text-text-primary">
+                  <span class="break-all">{{ mapping.pdfFieldName }}</span>
+                  @if (mapping.suggestedPurpose) {
+                    <button
+                      type="button"
+                      class="mt-1 block text-helper font-medium text-primary underline"
+                      [disabled]="!isDraft()"
+                      (click)="applySuggestion(mapping)"
+                    >
+                      Suggested: {{ mapping.suggestedPurpose }}
+                    </button>
+                  }
+                </td>
+                <td class="px-4 py-3 text-text-secondary">{{ mapping.pdfFieldType }}</td>
+                <td class="px-4 py-3">
+                  <select
+                    class="h-control rounded-control border border-border px-2"
+                    [disabled]="!isDraft()"
+                    [ngModel]="mapping.fieldPurpose"
+                    (ngModelChange)="setPurpose(mapping, $event)"
+                  >
+                    <option value="Manual">Manual</option>
+                    <option value="Data">Data</option>
+                    <option value="Signature">Signature</option>
+                    <option value="Attestation">Attestation</option>
+                  </select>
+                </td>
+                <td class="px-4 py-3">
+                  <select
+                    class="h-control min-w-64 rounded-control border border-border px-2"
+                    [disabled]="!isDraft() || mapping.fieldPurpose !== 'Data'"
+                    [(ngModel)]="mapping.bindingKey"
+                  >
+                    <option [ngValue]="null">Select an approved field</option>
+                    @for (group of catalog().groups; track group.label) {
+                      <optgroup [label]="group.label">
+                        @for (item of group.items; track item.key) {
+                          @if (item.allowedPdfFieldTypes.includes(mapping.pdfFieldType)) {
+                            <option [value]="item.key">{{ item.label }}</option>
+                          }
+                        }
+                      </optgroup>
+                    }
+                  </select>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="4" class="px-4 py-8 text-center text-small text-text-secondary">
+                  No fields match the filters.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    @if (previewLoading()) {
+      <p class="mt-section text-small text-text-secondary" role="status">
+        Preparing synthetic preview…
+      </p>
+    }
+    @if (previewFailed()) {
+      <p
+        class="mt-section rounded-control border border-danger/30 bg-danger/10 p-3 text-small text-danger"
+        role="alert"
+      >
+        Preview could not be loaded.
+      </p>
+    }
+    @if (previewSource(); as source) {
+      <section class="mt-section" aria-labelledby="preview-title">
+        <div class="mb-3 rounded-control border border-info/30 bg-info/10 p-3">
+          <h2 id="preview-title" class="text-card-title text-text-primary">
+            Synthetic data preview
+          </h2>
+          <p class="text-small text-text-secondary">
+            All displayed values are generated test data, never real client data.
+          </p>
+        </div>
+        <app-client-form-pdf-viewer [source]="source" (failed)="previewFailed.set(true)" />
+      </section>
+    }
+  }
+</div>
+
+@if (showPublish() && mappingSet(); as set) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-text-primary/45 p-4">
+    <section
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="publish-title"
+      class="w-full max-w-lg rounded-surface border border-border bg-surface p-5"
+    >
+      <h2 id="publish-title" class="text-section-title text-text-primary">
+        Publish version {{ set.versionNumber }}?
+      </h2>
+      <p class="mt-2 text-body text-text-secondary">
+        Publishing makes this version visible to staff and automatically retires the previously
+        published version.
+      </p>
+      @if (set.requiresWarningAcknowledgement) {
+        <div class="mt-4 rounded-control border border-warning/30 bg-warning/10 p-3">
+          <p class="text-small text-text-primary">
+            Review before publishing: this PDF has hybrid XFA or approved Adobe version-check
+            warnings.
+          </p>
+          <label class="mt-3 flex items-start gap-2 text-label"
+            ><input
+              type="checkbox"
+              [ngModel]="warningsAcknowledged()"
+              (ngModelChange)="warningsAcknowledged.set($event)"
+            />
+            I reviewed and acknowledge these validation warnings.</label
+          >
+        </div>
+      }
+      <div class="mt-5 flex justify-end gap-3">
+        <button
+          type="button"
+          class="h-control rounded-control border border-border-strong px-4"
+          (click)="showPublish.set(false)"
+        >
+          Cancel</button
+        ><button
+          type="button"
+          class="h-control rounded-control bg-primary px-4 font-semibold text-on-primary disabled:opacity-50"
+          [disabled]="
+            publishing() || (set.requiresWarningAcknowledgement && !warningsAcknowledged())
+          "
+          (click)="publish()"
+        >
+          {{ publishing() ? 'Publishing…' : 'Publish version' }}
+        </button>
+      </div>
+    </section>
+  </div>
+}

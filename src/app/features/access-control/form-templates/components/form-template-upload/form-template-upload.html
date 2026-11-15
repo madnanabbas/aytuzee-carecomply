@@ -1,0 +1,193 @@
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-text-primary/45 p-4">
+  <section
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="template-upload-title"
+    class="max-h-[calc(100vh-2rem)] w-full max-w-2xl overflow-y-auto rounded-surface border border-border bg-surface"
+  >
+    <header class="flex items-start justify-between border-b border-border px-5 py-4">
+      <div>
+        <h2 id="template-upload-title" class="text-section-title text-text-primary">
+          {{ mode === 'new' ? 'Upload form template' : 'Upload new version' }}
+        </h2>
+        <p class="mt-1 text-small text-text-secondary">
+          The server validates every PDF before it is stored as a Draft.
+        </p>
+      </div>
+      <button
+        type="button"
+        aria-label="Close upload"
+        class="flex size-10 items-center justify-center rounded-control text-text-secondary hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        [disabled]="uploading()"
+        (click)="closed.emit()"
+      >
+        <span aria-hidden="true" class="text-xl">&times;</span>
+      </button>
+    </header>
+
+    @if (result(); as uploadResult) {
+      <div class="space-y-4 p-5" aria-live="polite">
+        <div class="rounded-control border border-success/30 bg-success/10 p-4">
+          <h3 class="text-card-title text-text-primary">Upload validated</h3>
+          <p class="mt-1 text-small text-text-secondary">
+            Version {{ uploadResult.version?.versionNumber }} was stored as Draft.
+          </p>
+        </div>
+        @if (uploadResult.warnings.length) {
+          <section
+            aria-labelledby="upload-warning-title"
+            class="rounded-control border border-warning/40 bg-warning/10 p-4"
+          >
+            <h3 id="upload-warning-title" class="text-card-title text-text-primary">
+              Review before publishing
+            </h3>
+            <ul class="mt-2 list-disc space-y-1 pl-5 text-small text-text-secondary">
+              @for (warning of uploadResult.warnings; track warning.code) {
+                <li>{{ warningMessage(warning.code) }}</li>
+              }
+            </ul>
+          </section>
+        }
+        <div class="flex justify-end">
+          <button
+            type="button"
+            class="h-control rounded-control bg-primary px-4 text-button font-semibold text-on-primary hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            (click)="closed.emit()"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    } @else {
+      <form
+        #uploadForm
+        class="space-y-5 p-5"
+        (submit)="$event.preventDefault(); submit(uploadForm)"
+      >
+        @if (mode === 'new') {
+          <div class="grid gap-4 sm:grid-cols-2">
+            <label class="text-label text-text-primary"
+              >Template name
+              <input
+                name="name"
+                required
+                maxlength="200"
+                class="mt-1 h-control w-full rounded-control border border-border-strong bg-surface px-3 text-body focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+              />
+            </label>
+            <label class="text-label text-text-primary"
+              >Template key
+              <input
+                name="key"
+                required
+                maxlength="100"
+                pattern="[A-Za-z0-9][A-Za-z0-9._-]*"
+                aria-describedby="template-key-help"
+                class="mt-1 h-control w-full rounded-control border border-border-strong bg-surface px-3 text-body focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+              />
+              <span id="template-key-help" class="mt-1 block text-helper text-text-muted"
+                >Letters, numbers, periods, underscores and hyphens.</span
+              >
+            </label>
+          </div>
+          <label class="block text-label text-text-primary"
+            >Category
+            <input
+              name="category"
+              required
+              maxlength="100"
+              list="form-template-categories"
+              class="mt-1 h-control w-full rounded-control border border-border-strong bg-surface px-3 text-body focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+            />
+            <datalist id="form-template-categories">
+              <option value="PCA"></option>
+              <option value="CFSS"></option>
+              <option value="245D"></option>
+              <option value="Other"></option>
+            </datalist>
+          </label>
+          <label class="block text-label text-text-primary"
+            >Description <span class="font-normal text-text-muted">(optional)</span>
+            <textarea
+              name="description"
+              maxlength="1000"
+              rows="3"
+              class="mt-1 w-full rounded-control border border-border-strong bg-surface px-3 py-2 text-body focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+            ></textarea>
+          </label>
+        } @else {
+          <p class="rounded-control bg-surface-muted p-3 text-small text-text-secondary">
+            Name, key, category and description are inherited from the template.
+          </p>
+        }
+
+        <div
+          class="rounded-surface border-2 border-dashed p-5 text-center transition-colors"
+          [class.border-primary]="dragging()"
+          [class.border-border-strong]="!dragging()"
+          (dragover)="dragOver($event)"
+          (dragleave)="dragging.set(false)"
+          (drop)="drop($event)"
+        >
+          <label
+            for="template-pdf"
+            class="cursor-pointer text-button font-semibold text-primary hover:text-primary-hover"
+            >Choose a PDF</label
+          >
+          <span class="text-small text-text-secondary"> or drag and drop</span>
+          <input
+            id="template-pdf"
+            type="file"
+            accept="application/pdf,.pdf"
+            class="sr-only"
+            (change)="chooseFile($event)"
+          />
+          <p class="mt-2 text-helper text-text-muted">Fillable PDF, up to 10 MB</p>
+          @if (selectedFile()) {
+            <p class="mt-2 text-small font-medium text-text-primary">PDF selected</p>
+          }
+          @if (fileError()) {
+            <p class="mt-2 text-small text-danger" role="alert">{{ fileError() }}</p>
+          }
+        </div>
+
+        @if (uploading()) {
+          <div role="status" aria-live="polite">
+            <div class="h-2 overflow-hidden rounded-full bg-surface-muted">
+              <div class="h-full bg-primary" [style.width.%]="progress()"></div>
+            </div>
+            <p class="mt-1 text-helper text-text-secondary">
+              Uploading and validating {{ progress() }}%
+            </p>
+          </div>
+        }
+        @if (submitError()) {
+          <p
+            class="rounded-control border border-danger/30 bg-danger/10 p-3 text-small text-danger"
+            role="alert"
+          >
+            {{ submitError() }}
+          </p>
+        }
+
+        <footer class="flex justify-end gap-3 border-t border-border pt-4">
+          <button
+            type="button"
+            class="h-control rounded-control border border-border-strong px-4 text-button font-medium text-text-primary hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            [disabled]="uploading()"
+            (click)="closed.emit()"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="h-control rounded-control bg-primary px-4 text-button font-semibold text-on-primary hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            [disabled]="uploading()"
+          >
+            {{ uploading() ? 'Validating…' : 'Upload PDF' }}
+          </button>
+        </footer>
+      </form>
+    }
+  </section>
+</div>

@@ -1,4 +1,4 @@
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { AuthorizationService } from '../../../../../core/authorization/authorization.service';
 import { Permissions } from '../../../../../core/authorization/permissions';
@@ -57,6 +57,7 @@ describe('ClientFormsPageComponent', () => {
   };
 
   beforeEach(() => {
+    vi.useFakeTimers();
     clientsApi.listClients.mockReset().mockReturnValue(of(clientResponse));
     formsApi.listTemplates.mockReset().mockReturnValue(of({ templates: [template] }));
     formsApi.getContent.mockReset().mockReturnValue(of(new ArrayBuffer(8)));
@@ -75,12 +76,17 @@ describe('ClientFormsPageComponent', () => {
     });
   });
 
-  it('moves from client search to templates and a loaded document', fakeAsync(() => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  it('moves from client search to templates and a loaded document', () => {
     const page = TestBed.runInInjectionContext(() => new ClientFormsPageComponent());
     expect(page.selectedClient()).toBeNull();
     expect(page.templateDisabled()).toBe(true);
 
-    tick(300);
+    vi.advanceTimersByTime(300);
     expect(page.clientState()).toBe('loaded');
     page.selectClient(client);
     expect(page.templateState()).toBe('loaded');
@@ -91,11 +97,11 @@ describe('ClientFormsPageComponent', () => {
     expect(page.documentSource()?.bindings[0]?.value).toBe('Synthetic');
     page.onViewerReady();
     expect(page.documentState()).toBe('loaded');
-  }));
+  });
 
-  it('keeps the current client or template when edited-field confirmation is declined', fakeAsync(() => {
+  it('keeps the current client or template when edited-field confirmation is declined', () => {
     const page = TestBed.runInInjectionContext(() => new ClientFormsPageComponent());
-    tick(300);
+    vi.advanceTimersByTime(300);
     page.selectClient(client);
     page.selectTemplate('version-1');
     page.viewerDirty.set(true);
@@ -106,11 +112,11 @@ describe('ClientFormsPageComponent', () => {
 
     expect(page.selectedClient()?.id).toBe('client-1');
     expect(page.selectedTemplateVersionId()).toBe('version-1');
-  }));
+  });
 
-  it('delegates reset and clears the page dirty state', fakeAsync(() => {
+  it('delegates reset and clears the page dirty state', () => {
     const page = TestBed.runInInjectionContext(() => new ClientFormsPageComponent());
-    tick(300);
+    vi.advanceTimersByTime(300);
     const viewer = new ClientFormPdfViewerComponent();
     const reset = vi.spyOn(viewer, 'resetToClientData');
     page.viewer = viewer;
@@ -120,12 +126,12 @@ describe('ClientFormsPageComponent', () => {
 
     expect(reset).toHaveBeenCalledOnce();
     expect(page.viewerDirty()).toBe(false);
-  }));
+  });
 
-  it('hides export unless the canonical export permission is present', fakeAsync(() => {
+  it('hides export unless the canonical export permission is present', () => {
     const fixture = TestBed.createComponent(ClientFormsPageComponent);
     const authorization = TestBed.inject(AuthorizationService);
-    tick(300);
+    vi.advanceTimersByTime(300);
     fixture.componentInstance.selectClient(client);
     fixture.componentInstance.selectTemplate('version-1');
     fixture.componentInstance.onViewerReady();
@@ -135,12 +141,12 @@ describe('ClientFormsPageComponent', () => {
     authorization.setPermissions([Permissions.ClientForm.Export]);
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Download PDF');
-  }));
+  });
 
-  it('downloads with a generic template-and-date filename containing no client data', fakeAsync(() => {
+  it('downloads with a generic template-and-date filename containing no client data', () => {
     const page = TestBed.runInInjectionContext(() => new ClientFormsPageComponent());
     TestBed.inject(AuthorizationService).setPermissions([Permissions.ClientForm.Export]);
-    tick(300);
+    vi.advanceTimersByTime(300);
     page.selectClient(client);
     page.selectTemplate('version-1');
     const viewer = new ClientFormPdfViewerComponent();
@@ -153,35 +159,35 @@ describe('ClientFormsPageComponent', () => {
     expect(filename).toMatch(/^DHS-TEST-\d{4}-\d{2}-\d{2}\.pdf$/u);
     expect(filename).not.toContain('Synthetic');
     expect(filename).not.toContain('TEST-1');
-  }));
+  });
 
-  it('exposes client empty and failure states without sensitive error detail', fakeAsync(() => {
+  it('exposes client empty and failure states without sensitive error detail', () => {
     clientsApi.listClients.mockReturnValueOnce(of({ ...clientResponse, items: [], totalCount: 0 }));
     const empty = TestBed.runInInjectionContext(() => new ClientFormsPageComponent());
-    tick(300);
+    vi.advanceTimersByTime(300);
     expect(empty.clientState()).toBe('empty');
 
     clientsApi.listClients.mockReturnValueOnce(
       throwError(() => new Error('sensitive upstream detail')),
     );
     const failed = TestBed.runInInjectionContext(() => new ClientFormsPageComponent());
-    tick(300);
+    vi.advanceTimersByTime(300);
     expect(failed.clientState()).toBe('error');
-  }));
+  });
 
-  it('exposes template empty and document failure states', fakeAsync(() => {
+  it('exposes template empty and document failure states', () => {
     formsApi.listTemplates.mockReturnValueOnce(of({ templates: [] }));
     const empty = TestBed.runInInjectionContext(() => new ClientFormsPageComponent());
-    tick(300);
+    vi.advanceTimersByTime(300);
     empty.selectClient(client);
     expect(empty.templateState()).toBe('empty');
 
     formsApi.getContent.mockReturnValueOnce(throwError(() => new Error('upstream detail')));
     const failed = TestBed.runInInjectionContext(() => new ClientFormsPageComponent());
-    tick(300);
+    vi.advanceTimersByTime(300);
     failed.selectClient(client);
     failed.selectTemplate('version-1');
     expect(failed.documentState()).toBe('error');
     expect(failed.documentSource()).toBeNull();
-  }));
+  });
 });

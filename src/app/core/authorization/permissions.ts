@@ -87,6 +87,10 @@ export const Permissions = {
     Edit: 'ClientForm.Edit',
     Export: 'ClientForm.Export',
   },
+  FormTemplate: {
+    View: 'FormTemplate.View',
+    Manage: 'FormTemplate.Manage',
+  },
   ClientEmailLog: { View: 'ClientEmailLog.View' },
   ClientEmployeeService: {
     View: 'ClientEmployeeService.View',

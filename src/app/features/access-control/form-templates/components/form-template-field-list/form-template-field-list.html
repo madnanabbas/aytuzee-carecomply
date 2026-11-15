@@ -1,0 +1,48 @@
+<section aria-labelledby="field-list-title" class="border-t border-border pt-5">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <h2 id="field-list-title" class="text-section-title text-text-primary">Discovered fields</h2>
+      <p class="mt-1 text-small text-text-secondary">
+        Read-only PDF field inventory. Mapping is handled in a later task.
+      </p>
+    </div>
+    <label class="text-label text-text-primary"
+      >Search fields
+      <input
+        type="search"
+        class="mt-1 h-control w-full rounded-control border border-border-strong bg-surface px-3 text-body sm:w-72 focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+        [value]="search()"
+        (input)="updateSearch($event)"
+      />
+    </label>
+  </div>
+
+  <div class="mt-4 overflow-x-auto rounded-surface border border-border">
+    <table class="min-w-full border-collapse text-left text-table">
+      <thead
+        class="bg-surface-muted text-table-heading uppercase tracking-wide text-text-secondary"
+      >
+        <tr>
+          <th class="px-4 py-3">PDF field name</th>
+          <th class="px-4 py-3">Type</th>
+          <th class="px-4 py-3">Current purpose</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-border">
+        @for (field of filteredFields(); track field.id) {
+          <tr>
+            <td class="px-4 py-3 font-medium text-text-primary">{{ field.pdfFieldName }}</td>
+            <td class="px-4 py-3 text-text-secondary">{{ field.pdfFieldType }}</td>
+            <td class="px-4 py-3 text-text-secondary">{{ field.fieldPurpose }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="3" class="px-4 py-8 text-center text-small text-text-secondary">
+              No fields match this search.
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
