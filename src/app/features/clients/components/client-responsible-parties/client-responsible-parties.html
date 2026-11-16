@@ -29,6 +29,39 @@
               autocomplete="name"
             />
           </label>
+          <fieldset class="md:col-span-2 xl:col-span-4">
+            <legend class="form-label">Structured name (optional)</legend>
+            <div class="grid gap-3 md:grid-cols-3">
+              <label>
+                <span class="form-label">First name</span>
+                <input
+                  class="form-control"
+                  [(ngModel)]="draft.firstName"
+                  maxlength="100"
+                  autocomplete="given-name"
+                />
+              </label>
+              <label>
+                <span class="form-label">Middle name</span>
+                <input
+                  class="form-control"
+                  [(ngModel)]="draft.middleName"
+                  maxlength="100"
+                  autocomplete="additional-name"
+                />
+              </label>
+              <label>
+                <span class="form-label">Last name</span>
+                <input
+                  class="form-control"
+                  [(ngModel)]="draft.lastName"
+                  maxlength="100"
+                  autocomplete="family-name"
+                />
+              </label>
+            </div>
+            <p class="mt-1 text-helper text-text-muted">Used to fill DHS forms</p>
+          </fieldset>
           <label>
             <span class="form-label">Relationship to client *</span>
             <select class="form-control" [(ngModel)]="draft.relationship">
@@ -151,6 +184,11 @@
               <tr>
                 <td class="font-medium text-text-primary">
                   {{ party.name }}
+                  @if (structuredName(party)) {
+                    <div class="mt-1 text-[10px] font-normal text-text-muted">
+                      DHS forms: {{ structuredName(party) }}
+                    </div>
+                  }
                   @if (party.address) {
                     <div
                       class="mt-1 max-w-56 truncate text-[10px] font-normal text-text-muted"

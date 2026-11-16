@@ -12,6 +12,9 @@ describe('ClientResponsiblePartiesComponent', () => {
   const existing: ResponsibleParty = {
     id: 'party-1',
     name: 'Jordan Northstar',
+    firstName: 'Jordan',
+    middleName: 'Avery',
+    lastName: 'Northstar',
     relationship: 'Guardian',
     phone: '6125550100',
     email: 'jordan@example.test',
@@ -60,8 +63,10 @@ describe('ClientResponsiblePartiesComponent', () => {
     const element = fixture.nativeElement as HTMLElement;
     expect(element.querySelector('[role="dialog"]')).toBeNull();
     expect(element.textContent).toContain('Full name');
+    expect(element.textContent).toContain('Used to fill DHS forms');
     expect(element.textContent).toContain('Spenddown responsibility');
     expect(element.textContent).toContain(existing.name);
+    expect(element.textContent).toContain('DHS forms: Jordan Avery Northstar');
   });
 
   it('renders the compact table empty state', () => {
@@ -85,11 +90,59 @@ describe('ClientResponsiblePartiesComponent', () => {
     expect(api.create).toHaveBeenCalledTimes(1);
     expect(api.create).toHaveBeenCalledWith(
       'client-1',
-      expect.not.objectContaining({ companyId: expect.anything() }),
+      expect.objectContaining({
+        name: 'New Responsible Party',
+        firstName: 'New',
+        middleName: 'Structured',
+        lastName: 'Name',
+      }),
     );
+    expect(api.create.mock.calls[0][1]).not.toHaveProperty('companyId');
     expect(component.parties()).toEqual([existing]);
     expect(component.draft.name).toBe('');
+    expect(component.draft.firstName).toBe('');
     expect(component.editing()).toBeNull();
+  });
+
+  it('allows blank structured names and sends them as null', () => {
+    fillDraft(component);
+    component.draft.firstName = '   ';
+    component.draft.middleName = '';
+    component.draft.lastName = ' ';
+
+    expect(component.valid()).toBe(true);
+    component.save();
+
+    expect(api.create).toHaveBeenCalledWith(
+      'client-1',
+      expect.objectContaining({ firstName: null, middleName: null, lastName: null }),
+    );
+  });
+
+  it('enforces the backend 100-character structured-name limit', () => {
+    fillDraft(component);
+    component.draft.firstName = 'a'.repeat(101);
+
+    expect(component.valid()).toBe(false);
+    component.save();
+    expect(api.create).not.toHaveBeenCalled();
+
+    const inputs = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLInputElement>(
+        'input[autocomplete="given-name"], input[autocomplete="additional-name"], input[autocomplete="family-name"]',
+      ),
+    );
+    expect(inputs).toHaveLength(3);
+    expect(inputs.every((input) => input.maxLength === 100)).toBe(true);
+  });
+
+  it('does not derive structured names from the legacy full name', () => {
+    component.parties.set([{ ...existing, firstName: null, middleName: null, lastName: null }]);
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.textContent).toContain(existing.name);
+    expect(element.textContent).not.toContain('DHS forms:');
   });
 
   it('prevents duplicate submission while saving', () => {
@@ -110,10 +163,14 @@ describe('ClientResponsiblePartiesComponent', () => {
   });
 
   it('uses the same form for edit and returns to Add mode after update', () => {
-    const updated = { ...existing, name: 'Updated Party' };
+    const updated = { ...existing, name: 'Updated Party', firstName: 'Updated' };
     api.update.mockReturnValue(of(updated));
     component.edit(existing);
+    expect(component.draft.firstName).toBe('Jordan');
+    expect(component.draft.middleName).toBe('Avery');
+    expect(component.draft.lastName).toBe('Northstar');
     component.draft.name = updated.name;
+    component.draft.firstName = ` ${updated.firstName} `;
     fixture.detectChanges();
     expect((fixture.nativeElement as HTMLElement).textContent).toContain(
       'Update responsible party',
@@ -122,6 +179,16 @@ describe('ClientResponsiblePartiesComponent', () => {
     component.save();
 
     expect(api.update).toHaveBeenCalledTimes(1);
+    expect(api.update).toHaveBeenCalledWith(
+      'client-1',
+      existing.id,
+      expect.objectContaining({
+        name: updated.name,
+        firstName: updated.firstName,
+        middleName: existing.middleName,
+        lastName: existing.lastName,
+      }),
+    );
     expect(component.parties()[0].name).toBe(updated.name);
     expect(component.editing()).toBeNull();
   });
@@ -157,6 +224,9 @@ describe('ClientResponsiblePartiesComponent', () => {
 function fillDraft(component: ClientResponsiblePartiesComponent): void {
   Object.assign(component.draft, {
     name: ' New Responsible Party ',
+    firstName: ' New ',
+    middleName: ' Structured ',
+    lastName: ' Name ',
     relationship: 'Guardian',
     phone: '(612) 555-0199',
     email: ' party@example.test ',

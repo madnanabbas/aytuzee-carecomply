@@ -44,6 +44,9 @@ export class ClientResponsiblePartiesComponent implements OnInit {
   readonly editing = signal<ResponsibleParty | null>(null);
   readonly draft = {
     name: '',
+    firstName: '',
+    middleName: '',
+    lastName: '',
     relationship: '',
     phone: '',
     email: '',
@@ -82,6 +85,9 @@ export class ClientResponsiblePartiesComponent implements OnInit {
     this.editing.set(party);
     Object.assign(this.draft, {
       name: party.name,
+      firstName: party.firstName ?? '',
+      middleName: party.middleName ?? '',
+      lastName: party.lastName ?? '',
       relationship: party.relationship,
       phone: formatContactPhone(party.phone),
       email: party.email,
@@ -114,6 +120,9 @@ export class ClientResponsiblePartiesComponent implements OnInit {
     if (this.saving() || !this.valid()) return;
     const request: SaveResponsibleParty = {
       name: this.draft.name.trim(),
+      firstName: this.nullableTrimmed(this.draft.firstName),
+      middleName: this.nullableTrimmed(this.draft.middleName),
+      lastName: this.nullableTrimmed(this.draft.lastName),
       relationship: this.draft.relationship.trim(),
       phone: this.draft.phone.trim(),
       email: this.draft.email.trim(),
@@ -153,6 +162,9 @@ export class ClientResponsiblePartiesComponent implements OnInit {
       !!this.draft.relationship.trim() &&
       this.validPhone() &&
       this.draft.name.length <= 200 &&
+      this.draft.firstName.length <= 100 &&
+      this.draft.middleName.length <= 100 &&
+      this.draft.lastName.length <= 100 &&
       this.draft.relationship.length <= 100 &&
       this.draft.phone.length <= 30 &&
       this.draft.address.length <= 500 &&
@@ -167,6 +179,9 @@ export class ClientResponsiblePartiesComponent implements OnInit {
     return (
       this.editing() !== null ||
       !!this.draft.name.trim() ||
+      !!this.draft.firstName.trim() ||
+      !!this.draft.middleName.trim() ||
+      !!this.draft.lastName.trim() ||
       !!this.draft.relationship.trim() ||
       !!this.draft.phone.trim() ||
       !!this.draft.email.trim() ||
@@ -183,10 +198,19 @@ export class ClientResponsiblePartiesComponent implements OnInit {
     return false;
   }
 
+  structuredName(party: ResponsibleParty): string {
+    return [party.firstName, party.middleName, party.lastName]
+      .filter((part): part is string => !!part)
+      .join(' ');
+  }
+
   private resetDraft(): void {
     this.editing.set(null);
     Object.assign(this.draft, {
       name: '',
+      firstName: '',
+      middleName: '',
+      lastName: '',
       relationship: '',
       phone: '',
       email: '',
@@ -196,5 +220,10 @@ export class ClientResponsiblePartiesComponent implements OnInit {
       isActive: true,
     });
     this.error.set(null);
+  }
+
+  private nullableTrimmed(value: string): string | null {
+    const trimmed = value.trim();
+    return trimmed || null;
   }
 }

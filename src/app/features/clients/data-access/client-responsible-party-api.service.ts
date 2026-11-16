@@ -6,6 +6,9 @@ import { API_BASE_URL } from '../../../core/config/app-config';
 export interface ResponsibleParty {
   readonly id: string;
   readonly name: string;
+  readonly firstName: string | null;
+  readonly middleName: string | null;
+  readonly lastName: string | null;
   readonly relationship: string;
   readonly phone: string;
   readonly email: string;
