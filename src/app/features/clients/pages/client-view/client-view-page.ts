@@ -10,6 +10,7 @@ import { ClientDetails } from '../../models/client-api.models';
 import { ClientTodosComponent } from '../../components/client-todos/client-todos';
 import { ClientServiceAgreementsComponent } from '../../components/client-service-agreements/client-service-agreements';
 import { ClientCoveragesComponent } from '../../components/client-coverages/client-coverages';
+import { ClientDocumentsComponent } from '../../components/client-documents/client-documents';
 import {
   ClientDialog,
   ClientTabDefinition,
@@ -32,6 +33,7 @@ import { ClientIntakeProfileComponent } from './client-intake-profile';
     ClientTodosComponent,
     ClientServiceAgreementsComponent,
     ClientCoveragesComponent,
+    ClientDocumentsComponent,
     ClientViewOverviewComponent,
     ClientViewDialogComponent,
     ClientIntakeProfileComponent,

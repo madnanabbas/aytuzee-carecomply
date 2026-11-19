@@ -1,0 +1,221 @@
+<section class="rounded-lg border border-border bg-surface">
+  <header class="flex flex-wrap items-center justify-between gap-3 border-b border-border p-5">
+    <div>
+      <h2 class="text-card-title text-text-primary">Documents</h2>
+      <p class="mt-1 text-small text-text-secondary">
+        Secure client document metadata and version history.
+      </p>
+    </div>
+    @if (canUpload()) {
+      <button
+        type="button"
+        class="h-11 rounded-md bg-primary px-4 text-button text-white hover:bg-primary-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        (click)="beginUpload()"
+      >
+        Upload document
+      </button>
+    }
+  </header>
+
+  @if (error()) {
+    <div role="alert" class="m-5 rounded-md border border-danger px-4 py-3 text-body text-danger">
+      {{ error() }}
+    </div>
+  }
+  @if (loading()) {
+    <p class="p-5 text-body text-text-secondary">Loading documents…</p>
+  } @else if (documents().length === 0) {
+    <p class="p-8 text-center text-body text-text-muted">No client documents have been uploaded.</p>
+  } @else {
+    <div class="overflow-x-auto">
+      <table class="w-full min-w-[52rem] text-left text-table">
+        <thead
+          class="border-b border-border bg-surface-muted text-table-heading text-text-secondary"
+        >
+          <tr>
+            <th class="px-4 py-3">Title</th>
+            <th class="px-4 py-3">Category</th>
+            <th class="px-4 py-3">File</th>
+            <th class="px-4 py-3">Version</th>
+            <th class="px-4 py-3">Status</th>
+            <th class="px-4 py-3">Expiry</th>
+            <th class="px-4 py-3">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of documents(); track item.id) {
+            <tr class="border-b border-border last:border-0">
+              <td class="px-4 py-3 font-medium text-text-primary">{{ item.title }}</td>
+              <td class="px-4 py-3">{{ item.category }}</td>
+              <td class="px-4 py-3">
+                {{ item.originalFileName }}
+                <span class="text-text-muted">({{ formatSize(item.sizeBytes) }})</span>
+              </td>
+              <td class="px-4 py-3">v{{ item.currentVersionNumber }}</td>
+              <td class="px-4 py-3">
+                <span class="rounded-full border border-border px-2 py-1 text-small">{{
+                  item.status
+                }}</span>
+              </td>
+              <td class="px-4 py-3">{{ item.expiryDate || '—' }}</td>
+              <td class="px-4 py-3">
+                <button
+                  type="button"
+                  class="text-primary underline-offset-2 hover:underline"
+                  (click)="open(item)"
+                >
+                  View details
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+@if (showEditor()) {
+  <section
+    aria-labelledby="document-editor-title"
+    class="mt-4 rounded-lg border border-border bg-surface p-5"
+  >
+    <h3 id="document-editor-title" class="text-card-title">
+      {{ selected() ? 'Edit document metadata' : 'Upload document' }}
+    </h3>
+    <form class="mt-4 grid gap-4 md:grid-cols-2" (ngSubmit)="save()">
+      <label class="text-label"
+        >Title<input
+          class="mt-1 h-11 w-full rounded-md border border-border px-3 text-body focus:border-primary focus:outline-none"
+          name="title"
+          maxlength="200"
+          required
+          [(ngModel)]="draft.title"
+      /></label>
+      <label class="text-label"
+        >Category<input
+          class="mt-1 h-11 w-full rounded-md border border-border px-3 text-body focus:border-primary focus:outline-none"
+          name="category"
+          maxlength="100"
+          required
+          [(ngModel)]="draft.category"
+      /></label>
+      <label class="text-label md:col-span-2"
+        >Description<textarea
+          class="mt-1 min-h-24 w-full rounded-md border border-border p-3 text-body focus:border-primary focus:outline-none"
+          name="description"
+          maxlength="2000"
+          [(ngModel)]="draft.description"
+        ></textarea>
+      </label>
+      <label class="text-label"
+        >Expiry date<input
+          class="mt-1 h-11 w-full rounded-md border border-border px-3"
+          type="date"
+          name="expiryDate"
+          [(ngModel)]="draft.expiryDate"
+      /></label>
+      <label class="text-label"
+        >Review date<input
+          class="mt-1 h-11 w-full rounded-md border border-border px-3"
+          type="date"
+          name="reviewDate"
+          [(ngModel)]="draft.reviewDate"
+      /></label>
+      @if (!selected()) {
+        <label class="text-label md:col-span-2"
+          >File (PDF, JPEG or PNG; maximum 10 MB)<input
+            class="mt-1 block w-full rounded-md border border-border p-2 text-body"
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+            required
+            (change)="chooseFile($event)"
+        /></label>
+      }
+      <div class="flex justify-end gap-3 md:col-span-2">
+        <button type="button" class="h-11 rounded-md border border-border px-4" (click)="close()">
+          Cancel</button
+        ><button
+          type="submit"
+          class="h-11 rounded-md bg-primary px-4 text-white disabled:opacity-60"
+          [disabled]="busy()"
+        >
+          {{ busy() ? 'Saving…' : 'Save' }}
+        </button>
+      </div>
+    </form>
+  </section>
+}
+
+@if (selected(); as details) {
+  <section class="mt-4 rounded-lg border border-border bg-surface p-5">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <h3 class="text-card-title">{{ details.document.title }}</h3>
+        <p class="text-small text-text-secondary">
+          {{ details.document.category }} · {{ details.document.status }}
+        </p>
+      </div>
+      <button type="button" class="text-primary" (click)="close()">Close</button>
+    </div>
+    <div class="mt-4 flex flex-wrap gap-3">
+      @if (canUpload() && details.document.status === 'Active') {
+        <button
+          type="button"
+          class="h-10 rounded-md border border-border px-3"
+          (click)="beginEdit(details)"
+        >
+          Edit metadata
+        </button>
+      }
+      @if (canReplace() && details.document.status === 'Active') {
+        <label class="h-10 cursor-pointer rounded-md border border-border px-3 py-2 text-button"
+          >Choose replacement<input
+            class="sr-only"
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png"
+            (change)="chooseFile($event)" /></label
+        ><button
+          type="button"
+          class="h-10 rounded-md border border-border px-3 disabled:opacity-60"
+          [disabled]="!file || busy()"
+          (click)="replace()"
+        >
+          Replace
+        </button>
+      }
+      @if (canArchive() && details.document.status === 'Active') {
+        <button
+          type="button"
+          class="h-10 rounded-md border border-danger px-3 text-danger"
+          (click)="archive()"
+        >
+          Archive
+        </button>
+      }
+    </div>
+    <h4 class="mt-6 text-label text-text-primary">Version history</h4>
+    <ul class="mt-2 divide-y divide-border border-y border-border">
+      @for (version of details.versions; track version.id) {
+        <li class="flex flex-wrap items-center justify-between gap-3 py-3 text-body">
+          <span
+            >v{{ version.versionNumber }} · {{ version.originalFileName }} ·
+            {{ formatSize(version.sizeBytes) }}
+            @if (version.isCurrent) {
+              <strong>(Current)</strong>
+            }
+          </span>
+          @if (canDownload()) {
+            <button
+              type="button"
+              class="text-primary"
+              (click)="download(details.document.id, version.id, version.originalFileName)"
+            >
+              Download
+            </button>
+          }
+        </li>
+      }
+    </ul>
+  </section>
+}

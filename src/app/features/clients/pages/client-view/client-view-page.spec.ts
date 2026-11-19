@@ -4,6 +4,7 @@ import { of } from 'rxjs';
 import { AuthorizationService } from '../../../../core/authorization/authorization.service';
 import { PayerLookupService } from '../../../../core/lookups/payer-lookup.service';
 import { ClientApiService } from '../../data-access/client-api.service';
+import { ClientDocumentApiService } from '../../data-access/client-document-api.service';
 import { ClientCareCoordinatorApiService } from '../../data-access/client-care-coordinator-api.service';
 import { ClientCaregiverApiService } from '../../data-access/client-caregiver-api.service';
 import { ClientClinicalContactsApiService } from '../../data-access/client-clinical-contacts-api.service';
@@ -90,6 +91,7 @@ describe('ClientViewPageComponent record navigation', () => {
           useValue: { snapshot: { paramMap: convertToParamMap({ clientId: details.id }) } },
         },
         { provide: AuthorizationService, useValue: { hasPermission } },
+        { provide: ClientDocumentApiService, useValue: { list: () => of([]) } },
         { provide: PayerLookupService, useValue: { list: relatedList } },
         {
           provide: ClientApiService,

@@ -331,61 +331,7 @@
               </div>
             </section>
           } @else if (activeTab() === 'documents') {
-            <section class="panel-card">
-              <header class="panel-header">
-                <div>
-                  <h2>Documents</h2>
-                  <p>Secure client documents, metadata, expiry and review status.</p>
-                </div>
-                @if (canUploadDocuments()) {
-                  <button class="primary-action" type="button" (click)="openDialog('document')">
-                    Upload document
-                  </button>
-                }
-              </header>
-              <div class="overflow-x-auto">
-                <table class="compact-table min-w-[80rem]">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Type</th>
-                      <th>Document</th>
-                      <th>Size</th>
-                      <th>Status</th>
-                      <th>Expiry</th>
-                      <th>Created by</th>
-                      <th>Created</th>
-                      <th>Updated</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (row of documents; track row.file) {
-                      <tr>
-                        <td class="font-medium text-text-primary">{{ row.name }}</td>
-                        <td>{{ row.type }}</td>
-                        <td class="text-primary">{{ row.file }}</td>
-                        <td>{{ row.size }}</td>
-                        <td>
-                          <span class="status-pill" [class]="statusClass(row.status)">{{
-                            row.status
-                          }}</span>
-                        </td>
-                        <td>{{ row.expiry }}</td>
-                        <td>{{ row.createdBy }}</td>
-                        <td>{{ row.created }}</td>
-                        <td>{{ row.updated }}</td>
-                        <td>
-                          @if (hasPermission(permissions.ClientDocument.View)) {
-                            <button class="table-link">View</button>
-                          }
-                        </td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            </section>
+            <app-client-documents [clientId]="client.id" />
           } @else if (activeTab() === 'email-logs') {
             <section class="panel-card">
               <header class="panel-header">
